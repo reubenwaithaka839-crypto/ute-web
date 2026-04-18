@@ -8,9 +8,8 @@ class UTE:
         self.create_tables()
         self.create_wallet_table()
 
-    # ================= TABLES =================
+    # ================= CORE TABLES =================
     def create_tables(self):
-        # USERS TABLE
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +19,6 @@ class UTE:
         )
         """)
 
-        # USER BANK DETAILS
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS user_bank_details (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,13 +30,21 @@ class UTE:
         )
         """)
 
-        # ADMIN BANK
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS admin_bank (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             bank_name TEXT,
             account_name TEXT,
             account_number TEXT
+        )
+        """)
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS payroll (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employer TEXT,
+            employee TEXT,
+            salary REAL
         )
         """)
 
@@ -91,7 +97,7 @@ class UTE:
             return True
         return False
 
-    # ================= PAYMENT WITH COMMISSION =================
+    # ================= PAYMENTS (WITH COMMISSION) =================
     def transfer_with_commission(self, sender, receiver, amount, commission_rate=0.02):
         sender_balance = self.get_balance(sender)
 
@@ -99,7 +105,7 @@ class UTE:
             commission = amount * commission_rate
             receiver_amount = amount - commission
 
-            # deduct from sender
+            # deduct sender
             self.cursor.execute("""
             UPDATE wallets
             SET balance = balance - ?
@@ -134,13 +140,11 @@ class UTE:
             """, (name, password, role))
             self.conn.commit()
 
-            # create wallet automatically
             self.init_wallet(name)
 
         except:
             pass
 
-        # ensure admin wallet exists
         if role == "admin":
             self.init_wallet(name)
 
@@ -165,6 +169,49 @@ class UTE:
         VALUES (?, ?, ?)
         """, (bank, name, number))
         self.conn.commit()
+
+    # ================= PAYROLL SYSTEM =================
+    def set_salary(self, employer, employee, salary):
+        self.cursor.execute("""
+        INSERT INTO payroll (employer, employee, salary)
+        VALUES (?, ?, ?)
+        """, (employer, employee, salary))
+        self.conn.commit()
+
+    def run_payroll(self):
+        self.cursor.execute("SELECT employer, employee, salary FROM payroll")
+        records = self.cursor.fetchall()
+
+        for employer, employee, salary in records:
+            if self.get_balance(employer) >= salary:
+                # deduct employer
+                self.cursor.execute("""
+                UPDATE wallets
+                SET balance = balance - ?
+                WHERE user=?
+                """, (salary, employer))
+
+                # credit employee
+                self.cursor.execute("""
+                UPDATE wallets
+                SET balance = balance + ?
+                WHERE user=?
+                """, (salary, employee))
+
+        self.conn.commit()
+
+    def get_all_payroll(self):
+        self.cursor.execute("""
+        SELECT employer, employee, salary FROM payroll
+        """)
+        return self.cursor.fetchall()
+
+    def get_total_payroll_amount(self):
+        self.cursor.execute("""
+        SELECT SUM(salary) FROM payroll
+        """)
+        result = self.cursor.fetchone()[0]
+        return result if result else 0
 
     # ================= ADMIN STATS =================
     def get_total_users(self):
