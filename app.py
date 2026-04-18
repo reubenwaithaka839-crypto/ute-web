@@ -38,18 +38,21 @@ def auth():
 
         session["user"] = username
         session["role"] = role
+
         return redirect("/dashboard")
 
     return """
     <h2>UTE LOGIN</h2>
     <form method="POST">
-        <input name="username" placeholder="Username"><br><br>
+        <input name="username"><br><br>
         <input name="password" type="password"><br><br>
+
         <select name="role">
             <option value="admin">Admin</option>
             <option value="employer">Employer</option>
             <option value="employee">Employee</option>
         </select><br><br>
+
         <button>Continue</button>
     </form>
     """
@@ -60,21 +63,31 @@ def dashboard():
     if "user" not in session:
         return redirect("/auth")
 
-    return f"""
+    user = session["user"]
+    role = session["role"]
+
+    html = f"""
     <h1>UTE DASHBOARD</h1>
-    <h3>{session['user']} ({session['role']})</h3>
+    <h3>{user} ({role})</h3>
 
     <a href="/jobs">View Jobs</a><br>
-    <a href="/post_job">Post Job</a><br>
-    <a href="/deposit">Deposit M-Pesa</a><br>
-    <a href="/logout">Logout</a>
     """
 
-# ================= POST JOB =================
+    if role == "employer":
+        html += "<a href='/post_job'>Post Job</a><br>"
+
+    if role == "employee":
+        html += "<a href='/jobs'>Apply for Jobs</a><br>"
+
+    html += "<a href='/logout'>Logout</a>"
+
+    return html
+
+# ================= POST JOB (ONLY EMPLOYER) =================
 @app.route("/post_job", methods=["GET", "POST"])
 def post_job():
-    if session.get("role") not in ["admin", "employer"]:
-        return "Access denied"
+    if session.get("role") != "employer":
+        return "Only employers can post jobs"
 
     if request.method == "POST":
         ute.add_job(
@@ -99,65 +112,38 @@ def post_job():
     </form>
     """
 
-# ================= VIEW JOBS =================
+# ================= VIEW JOBS (ALL USERS) =================
 @app.route("/jobs")
 def jobs():
     jobs = ute.get_jobs()
-    html = "<h2>Jobs</h2>"
+
+    html = "<h2>Available Jobs</h2>"
 
     for j in jobs:
-        html += f"<p><b>{j[2]}</b> - {j[5]} | {j[6]}</p>"
+        html += f"""
+        <div style="border:1px solid #ccc;padding:10px;margin:10px;">
+            <h3>{j[2]}</h3>
+            <p>{j[3]}</p>
+            <p><b>Requirements:</b> {j[4]}</p>
+            <p><b>Location:</b> {j[5]}</p>
+            <p><b>Salary:</b> {j[6]}</p>
+        """
+
+        if session.get("role") == "employee":
+            html += f"<a href='/apply/{j[0]}'>Apply</a>"
+
+        html += "</div>"
 
     return html
 
-# ================= MPESA DEPOSIT =================
-@app.route("/deposit", methods=["GET", "POST"])
-def deposit():
-    if request.method == "POST":
-        phone = request.form["phone"]
-        amount = request.form["amount"]
+# ================= APPLY JOB =================
+@app.route("/apply/<int:job_id>")
+def apply(job_id):
+    if session.get("role") != "employee":
+        return "Only employees can apply"
 
-        stk_push(phone, amount, "https://your-app.onrender.com/callback")
-
-        return "STK SENT"
-
-    return """
-    <form method="POST">
-        <input name="phone"><br>
-        <input name="amount"><br>
-        <button>Pay</button>
-    </form>
-    """
-
-# ================= CALLBACK =================
-@app.route("/callback", methods=["POST"])
-def callback():
-    data = request.json
-
-    try:
-        result = data["Body"]["stkCallback"]
-
-        if result["ResultCode"] == 0:
-            items = result["CallbackMetadata"]["Item"]
-
-            amount = 0
-            phone = ""
-
-            for i in items:
-                if i["Name"] == "Amount":
-                    amount = i["Value"]
-                if i["Name"] == "PhoneNumber":
-                    phone = i["Value"]
-
-            user = session.get("user")
-
-            ute.update_balance(user, amount)
-            ute.add_transaction(phone, user, amount, "MPESA")
-
-    except:
-        pass
-
-    return "OK"
+    ute.apply_job(job_id, session["user"])
+    return "Applied successfully"
 
 # ================= LOGOUT =================
 @app.route("/logout")
