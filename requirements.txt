@@ -1,4 +1,5 @@
 Flask
-bcrypt
 gunicorn
 requests
+bcrypt
+python-dotenv
