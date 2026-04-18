@@ -9,7 +9,6 @@ class UTE:
     # ================= DATABASE =================
     def create_tables(self):
 
-        # USERS
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -19,7 +18,6 @@ class UTE:
         )
         """)
 
-        # WALLET
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS wallets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,18 +26,6 @@ class UTE:
         )
         """)
 
-        # BANK DETAILS
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS bank_details (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
-            bank_name TEXT,
-            account_name TEXT,
-            account_number TEXT
-        )
-        """)
-
-        # PAYROLL
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS payroll (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +35,6 @@ class UTE:
         )
         """)
 
-        # MPESA TRANSACTIONS (CALLBACK STORAGE)
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS mpesa_transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +46,6 @@ class UTE:
         )
         """)
 
-        # FRAUD FLAGS
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS fraud_flags (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,17 +53,6 @@ class UTE:
             reason TEXT,
             amount REAL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-
-        # ML DATASET
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS fraud_dataset (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender TEXT,
-            receiver TEXT,
-            amount REAL,
-            is_fraud INTEGER
         )
         """)
 
@@ -95,8 +68,8 @@ class UTE:
 
     def get_balance(self, user):
         self.cursor.execute("SELECT balance FROM wallets WHERE user=?", (user,))
-        result = self.cursor.fetchone()
-        return result[0] if result else 0
+        res = self.cursor.fetchone()
+        return res[0] if res else 0
 
     def update_balance(self, user, amount):
         self.cursor.execute("""
@@ -106,30 +79,25 @@ class UTE:
 
     def withdraw(self, user, amount):
         if self.get_balance(user) >= amount:
-            self.cursor.execute("""
-            UPDATE wallets SET balance = balance - ? WHERE user=?
-            """, (amount, user))
-            self.conn.commit()
+            self.update_balance(user, -amount)
             return True
         return False
 
     # ================= PAYMENTS =================
-    def transfer_with_commission(self, sender, receiver, amount, commission=0.02):
-
+    def transfer_with_commission(self, sender, receiver, amount):
         if sender == receiver:
             self.flag_fraud(sender, "Self transfer", amount)
             return False
 
-        sender_balance = self.get_balance(sender)
-        if sender_balance < amount:
+        if self.get_balance(sender) < amount:
             return False
 
-        fee = amount * commission
-        receive_amount = amount - fee
+        commission = amount * 0.02
+        receive = amount - commission
 
         self.update_balance(sender, -amount)
-        self.update_balance(receiver, receive_amount)
-        self.update_balance("admin", fee)
+        self.update_balance(receiver, receive)
+        self.update_balance("admin", commission)
 
         return True
 
@@ -141,14 +109,6 @@ class UTE:
         """, (name, password, role))
         self.conn.commit()
         self.init_wallet(name)
-
-    # ================= BANK =================
-    def save_bank(self, user, bank, acc_name, acc_number):
-        self.cursor.execute("""
-        INSERT INTO bank_details (user, bank_name, account_name, account_number)
-        VALUES (?, ?, ?, ?)
-        """, (user, bank, acc_name, acc_number))
-        self.conn.commit()
 
     # ================= PAYROLL =================
     def set_salary(self, employer, employee, salary):
@@ -162,10 +122,10 @@ class UTE:
         self.cursor.execute("SELECT employer, employee, salary FROM payroll")
         data = self.cursor.fetchall()
 
-        for employer, employee, salary in data:
-            if self.get_balance(employer) >= salary:
-                self.update_balance(employer, -salary)
-                self.update_balance(employee, salary)
+        for e, emp, sal in data:
+            if self.get_balance(e) >= sal:
+                self.update_balance(e, -sal)
+                self.update_balance(emp, sal)
 
         self.conn.commit()
 
@@ -175,11 +135,11 @@ class UTE:
 
     def get_total_payroll_amount(self):
         self.cursor.execute("SELECT SUM(salary) FROM payroll")
-        result = self.cursor.fetchone()[0]
-        return result if result else 0
+        r = self.cursor.fetchone()[0]
+        return r if r else 0
 
     # ================= MPESA =================
-    def save_mpesa_transaction(self, phone, amount, status, receipt):
+    def save_mpesa(self, phone, amount, status, receipt):
         self.cursor.execute("""
         INSERT INTO mpesa_transactions (phone, amount, status, receipt)
         VALUES (?, ?, ?, ?)
@@ -195,34 +155,20 @@ class UTE:
         self.conn.commit()
 
     def get_fraud_logs(self):
-        self.cursor.execute("SELECT * FROM fraud_flags ORDER BY id DESC")
+        self.cursor.execute("SELECT user, reason, amount FROM fraud_flags")
         return self.cursor.fetchall()
 
-    # ================= ML DATA =================
-    def log_ml_data(self, sender, receiver, amount, is_fraud):
-        self.cursor.execute("""
-        INSERT INTO fraud_dataset (sender, receiver, amount, is_fraud)
-        VALUES (?, ?, ?, ?)
-        """, (sender, receiver, amount, is_fraud))
-        self.conn.commit()
-
-    def get_ml_data(self):
-        self.cursor.execute("""
-        SELECT sender, receiver, amount, is_fraud FROM fraud_dataset
-        """)
-        return self.cursor.fetchall()
-
-    # ================= ANALYTICS =================
+    # ================= ADMIN =================
     def get_total_users(self):
         self.cursor.execute("SELECT COUNT(*) FROM users")
         return self.cursor.fetchone()[0]
 
     def get_total_system_balance(self):
         self.cursor.execute("SELECT SUM(balance) FROM wallets")
-        result = self.cursor.fetchone()[0]
-        return result if result else 0
+        r = self.cursor.fetchone()[0]
+        return r if r else 0
 
     def get_admin_earnings(self):
         self.cursor.execute("SELECT balance FROM wallets WHERE user='admin'")
-        result = self.cursor.fetchone()
-        return result[0] if result else 0
+        r = self.cursor.fetchone()
+        return r[0] if r else 0
