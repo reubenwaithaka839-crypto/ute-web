@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, render_template_string
+from flask import Flask, request, redirect, session
 from ute import UTE
 import os
 
@@ -7,36 +7,42 @@ app.secret_key = os.environ.get("SECRET_KEY", "ute-secret-key")
 
 ute = UTE()
 
-# ================= UI STYLE =================
+# ================= STYLE (STRIPE-LIKE UI) =================
 STYLE = """
 <style>
 body {
     margin: 0;
     font-family: Arial;
-    background: #0f172a;
+    background: #0b1220;
     color: white;
 }
-.center {
-    text-align: center;
-    margin-top: 120px;
+
+.nav {
+    background: #111827;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
 }
+
 .card {
-    background: rgba(255,255,255,0.08);
-    padding: 20px;
+    background: #1f2937;
     margin: 10px;
+    padding: 15px;
     border-radius: 12px;
 }
+
 button {
-    padding: 10px 20px;
-    border: none;
     background: #38bdf8;
-    color: black;
-    border-radius: 8px;
-}
-input {
+    border: none;
     padding: 10px;
-    width: 80%;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+input {
+    padding: 8px;
     margin: 5px;
+    width: 80%;
 }
 </style>
 """
@@ -45,118 +51,94 @@ input {
 @app.route("/")
 def home():
     return STYLE + """
-    <div class="center">
-        <h1>🌍 UTE PLATFORM</h1>
-        <a href="/auth?role=company"><button>Company</button></a>
-        <a href="/auth?role=worker"><button>Worker</button></a>
-        <a href="/auth?role=admin"><button>Admin</button></a>
+    <div class="nav">
+        <h3>UTE FINTECH SYSTEM</h3>
+    </div>
+
+    <div class="card">
+        <h2>Welcome to UTE</h2>
+        <a href="/auth"><button>Login / Register</button></a>
     </div>
     """
 
 # ================= AUTH =================
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
-    role = request.args.get("role")
 
     if request.method == "POST":
         name = request.form["name"]
         password = request.form["password"]
 
         ute.register_company(name, password)
-        user = ute.login_company(name, password)
 
-        if user:
-            session["user"] = name
-            session["role"] = role
+        session["user"] = name
 
-            if role == "admin":
-                session["admin"] = True
-                return redirect("/admin")
+        return redirect("/dashboard")
 
-            return redirect(f"/{role}")
-
-    return STYLE + f"""
-    <div class="center">
-        <h2>{role.upper()} LOGIN</h2>
+    return STYLE + """
+    <div class="card">
+        <h2>Login</h2>
         <form method="post">
-            <input name="name" placeholder="Name" required><br>
-            <input name="password" type="password" placeholder="Password" required><br>
+            <input name="name" placeholder="Name"><br>
+            <input name="password" type="password" placeholder="Password"><br>
             <button>Login</button>
         </form>
     </div>
     """
 
-# ================= COMPANY =================
-@app.route("/company")
-def company():
-    if session.get("role") != "company":
-        return redirect("/")
+# ================= DASHBOARD =================
+@app.route("/dashboard")
+def dashboard():
 
-    employees = ute.get_company_employees(session["user"])
+    user = session.get("user")
 
-    html = "".join([f"<div class='card'>{e[0]} - {e[1]} months</div>" for e in employees])
+    if not user:
+        return redirect("/auth")
 
-    return STYLE + f"""
-    <h2>Company Dashboard</h2>
-
-    <div class="card">
-        <form method="post" action="/process">
-            <input name="employee" placeholder="Employee"><br>
-            <input name="salary" placeholder="Salary"><br>
-            <button>Process Salary</button>
-        </form>
-    </div>
-
-    {html}
-    """
-
-@app.route("/process", methods=["POST"])
-def process():
-    ute.process_salary(
-        session["user"],
-        request.form["employee"],
-        request.form["salary"],
-        False
-    )
-    return redirect("/company")
-
-# ================= WORKER =================
-@app.route("/worker")
-def worker():
-    jobs = ute.get_jobs()
-
-    html = "".join([
-        f"<div class='card'><h3>{j['title']}</h3><p>{j['location']}</p><p>KES {j['salary']}</p></div>"
-        for j in jobs
-    ])
-
-    return STYLE + f"""
-    <h2>Jobs</h2>
-    {html}
-    """
-
-# ================= ADMIN =================
-@app.route("/admin")
-def admin():
-    if not session.get("admin"):
-        return redirect("/")
-
+    balance = ute.get_balance(user)
     tx = ute.get_transactions()
 
     tx_html = "".join([
-        f"<div class='card'>{t[0]} → {t[1]} | +{t[2]}</div>"
-        for t in tx
+        f"<div class='card'>{t[0]} → {t[1]} | KES {t[2]} | {t[3]}</div>"
+        for t in tx[:5]
     ])
 
     return STYLE + f"""
-    <h2>Admin Dashboard</h2>
-
-    <div class="card">
-        Revenue: KES {ute.get_revenue()}
+    <div class="nav">
+        <h3>Dashboard</h3>
+        <a href="/logout">Logout</a>
     </div>
 
-    {tx_html}
+    <div class="card">
+        <h2>Balance: KES {balance}</h2>
+    </div>
+
+    <div class="card">
+        <h3>Send Money (Payroll / Transfer)</h3>
+        <form method="post" action="/pay">
+            <input name="receiver" placeholder="Receiver"><br>
+            <input name="amount" placeholder="Amount"><br>
+            <button>Send</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Recent Transactions</h3>
+        {tx_html}
+    </div>
     """
+
+# ================= PAYMENT =================
+@app.route("/pay", methods=["POST"])
+def pay():
+
+    sender = session.get("user")
+    receiver = request.form["receiver"]
+    amount = float(request.form["amount"])
+
+    ute.process_salary(sender, receiver, amount)
+
+    return redirect("/dashboard")
 
 # ================= LOGOUT =================
 @app.route("/logout")
