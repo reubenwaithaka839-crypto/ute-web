@@ -2,7 +2,7 @@ import sqlite3
 
 DB = "ute.db"
 
-# ================= INIT DATABASE =================
+# ================= INIT DB =================
 def init_db():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
@@ -35,7 +35,18 @@ def init_db():
         description TEXT,
         requirements TEXT,
         location TEXT,
-        salary REAL
+        salary REAL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # APPLICATIONS
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id INTEGER,
+        applicant TEXT,
+        status TEXT DEFAULT 'pending'
     )
     """)
 
@@ -54,26 +65,28 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 # ================= WALLET =================
-def get_balance(username):
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute("SELECT balance FROM wallet WHERE username=?", (username,))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else 0
-
-
-def update_balance(username, amount):
+def update_balance(user, amount):
     conn = sqlite3.connect(DB)
     c = conn.cursor()
 
-    c.execute("""
-    UPDATE wallet SET balance = balance + ? WHERE username=?
-    """, (amount, username))
+    c.execute("UPDATE wallet SET balance = balance + ? WHERE username=?", (amount, user))
 
     conn.commit()
     conn.close()
+
+
+def get_balance(user):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    c.execute("SELECT balance FROM wallet WHERE username=?", (user,))
+    row = c.fetchone()
+
+    conn.close()
+    return row[0] if row else 0
+
 
 # ================= JOBS =================
 def add_job(employer, title, description, requirements, location, salary):
@@ -88,23 +101,27 @@ def add_job(employer, title, description, requirements, location, salary):
     conn.commit()
     conn.close()
 
+
 def get_jobs():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
+
     c.execute("SELECT * FROM jobs ORDER BY id DESC")
     jobs = c.fetchall()
+
     conn.close()
     return jobs
 
-# ================= TRANSACTIONS =================
-def add_transaction(sender, receiver, amount, tx_type):
+
+# ================= APPLICATIONS =================
+def apply_job(job_id, user):
     conn = sqlite3.connect(DB)
     c = conn.cursor()
 
     c.execute("""
-    INSERT INTO transactions (sender, receiver, amount, type)
-    VALUES (?, ?, ?, ?)
-    """, (sender, receiver, amount, tx_type))
+    INSERT INTO applications (job_id, applicant)
+    VALUES (?, ?)
+    """, (job_id, user))
 
     conn.commit()
     conn.close()
