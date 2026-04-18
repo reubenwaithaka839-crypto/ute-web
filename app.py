@@ -7,42 +7,91 @@ app.secret_key = os.environ.get("SECRET_KEY", "ute-secret-key")
 
 ute = UTE()
 
-# ================= STYLE (STRIPE-LIKE UI) =================
+# ================= PREMIUM UI STYLE =================
 STYLE = """
 <style>
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     background: #0b1220;
     color: white;
 }
 
+/* NAVBAR */
 .nav {
-    background: #111827;
-    padding: 15px;
+    background: #0f172a;
+    padding: 18px 25px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+/* CARDS */
 .card {
-    background: #1f2937;
-    margin: 10px;
-    padding: 15px;
-    border-radius: 12px;
+    background: linear-gradient(145deg, #111827, #0f172a);
+    margin: 15px auto;
+    padding: 20px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 750px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
-button {
-    background: #38bdf8;
-    border: none;
-    padding: 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
+/* INPUTS */
 input {
-    padding: 8px;
-    margin: 5px;
-    width: 80%;
+    width: 90%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #0f172a;
+    color: white;
+    outline: none;
+}
+
+/* ================= PREMIUM BUTTONS ================= */
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+
+    font-weight: 600;
+    letter-spacing: 0.5px;
+
+    transition: all 0.25s ease;
+    background: linear-gradient(135deg, #38bdf8, #2563eb);
+    color: white;
+
+    box-shadow: 0 6px 18px rgba(56,189,248,0.25);
+}
+
+button:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(56,189,248,0.4);
+}
+
+button:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+/* GREEN BUTTON (LOGIN / ACTION) */
+.green {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 6px 18px rgba(34,197,94,0.25);
+}
+
+/* RED BUTTON (LOGOUT) */
+.logout {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    box-shadow: 0 6px 18px rgba(239,68,68,0.25);
+}
+
+/* CENTER */
+.center {
+    text-align: center;
+    margin-top: 80px;
 }
 </style>
 """
@@ -52,12 +101,12 @@ input {
 def home():
     return STYLE + """
     <div class="nav">
-        <h3>UTE FINTECH SYSTEM</h3>
+        <h3>UTE FINTECH</h3>
     </div>
 
-    <div class="card">
-        <h2>Welcome to UTE</h2>
-        <a href="/auth"><button>Login / Register</button></a>
+    <div class="center">
+        <h1>Welcome to UTE System</h1>
+        <a href="/auth"><button>🚀 Get Started</button></a>
     </div>
     """
 
@@ -81,7 +130,7 @@ def auth():
         <form method="post">
             <input name="name" placeholder="Name"><br>
             <input name="password" type="password" placeholder="Password"><br>
-            <button>Login</button>
+            <button class="green">Login</button>
         </form>
     </div>
     """
@@ -100,30 +149,30 @@ def dashboard():
 
     tx_html = "".join([
         f"<div class='card'>{t[0]} → {t[1]} | KES {t[2]} | {t[3]}</div>"
-        for t in tx[:5]
+        for t in tx[:6]
     ])
 
     return STYLE + f"""
     <div class="nav">
         <h3>Dashboard</h3>
-        <a href="/logout">Logout</a>
+        <a href="/logout"><button class="logout">Logout</button></a>
     </div>
 
     <div class="card">
-        <h2>Balance: KES {balance}</h2>
+        <h2>💰 Balance: KES {balance}</h2>
     </div>
 
     <div class="card">
-        <h3>Send Money (Payroll / Transfer)</h3>
+        <h3>💸 Send Money / Payroll</h3>
         <form method="post" action="/pay">
             <input name="receiver" placeholder="Receiver"><br>
             <input name="amount" placeholder="Amount"><br>
-            <button>Send</button>
+            <button>Send Payment</button>
         </form>
     </div>
 
     <div class="card">
-        <h3>Recent Transactions</h3>
+        <h3>📊 Recent Transactions</h3>
         {tx_html}
     </div>
     """
