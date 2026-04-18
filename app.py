@@ -1,137 +1,168 @@
-from flask import Flask, request, jsonify, session, redirect
+from flask import Flask, request, redirect, session, render_template_string
 from ute import UTE
-import bcrypt
-import joblib
 import os
 
 app = Flask(__name__)
-app.secret_key = "UTE_PRODUCTION_KEY"
+app.secret_key = os.environ.get("SECRET_KEY", "ute-secret-key")
 
 ute = UTE()
 
-# ================= LOAD AI MODEL =================
-MODEL_PATH = "fraud_model.pkl"
-model = joblib.load(MODEL_PATH) if os.path.exists(MODEL_PATH) else None
+# ================= UI STYLE =================
+STYLE = """
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+}
+.center {
+    text-align: center;
+    margin-top: 120px;
+}
+.card {
+    background: rgba(255,255,255,0.08);
+    padding: 20px;
+    margin: 10px;
+    border-radius: 12px;
+}
+button {
+    padding: 10px 20px;
+    border: none;
+    background: #38bdf8;
+    color: black;
+    border-radius: 8px;
+}
+input {
+    padding: 10px;
+    width: 80%;
+    margin: 5px;
+}
+</style>
+"""
 
-# ================= AI FRAUD PREDICTION =================
-def predict_fraud(amount, sender, receiver):
-    if model is None:
-        return 0, 0.0
+# ================= HOME =================
+@app.route("/")
+def home():
+    return STYLE + """
+    <div class="center">
+        <h1>🌍 UTE PLATFORM</h1>
+        <a href="/auth?role=company"><button>Company</button></a>
+        <a href="/auth?role=worker"><button>Worker</button></a>
+        <a href="/auth?role=admin"><button>Admin</button></a>
+    </div>
+    """
 
-    self_transfer = 1 if sender == receiver else 0
-    prediction = model.predict([[amount, self_transfer]])[0]
-    probability = model.predict_proba([[amount, self_transfer]])[0][1]
+# ================= AUTH =================
+@app.route("/auth", methods=["GET", "POST"])
+def auth():
+    role = request.args.get("role")
 
-    return prediction, probability
+    if request.method == "POST":
+        name = request.form["name"]
+        password = request.form["password"]
 
-# ================= AUTH API =================
-@app.route("/api/register", methods=["POST"])
-def register():
-    data = request.json
+        ute.register_company(name, password)
+        user = ute.login_company(name, password)
 
-    name = data["name"]
-    password = bcrypt.hashpw(data["password"].encode(), bcrypt.gensalt())
-    role = data["role"]
+        if user:
+            session["user"] = name
+            session["role"] = role
 
-    ute.register_user(name, password, role)
-    ute.init_wallet(name)
+            if role == "admin":
+                session["admin"] = True
+                return redirect("/admin")
 
-    return jsonify({"status": "success"})
+            return redirect(f"/{role}")
 
-@app.route("/api/login", methods=["POST"])
-def login():
-    return jsonify({"message": "Use frontend auth or extend DB validation here"})
+    return STYLE + f"""
+    <div class="center">
+        <h2>{role.upper()} LOGIN</h2>
+        <form method="post">
+            <input name="name" placeholder="Name" required><br>
+            <input name="password" type="password" placeholder="Password" required><br>
+            <button>Login</button>
+        </form>
+    </div>
+    """
 
-# ================= WALLET API =================
-@app.route("/api/wallet/<user>")
-def wallet(user):
-    return jsonify({
-        "user": user,
-        "balance": ute.get_balance(user)
-    })
+# ================= COMPANY =================
+@app.route("/company")
+def company():
+    if session.get("role") != "company":
+        return redirect("/")
 
-# ================= TRANSFER (WITH AI FRAUD) =================
-@app.route("/api/transfer", methods=["POST"])
-def transfer():
-    data = request.json
+    employees = ute.get_company_employees(session["user"])
 
-    sender = data["sender"]
-    receiver = data["receiver"]
-    amount = float(data["amount"])
+    html = "".join([f"<div class='card'>{e[0]} - {e[1]} months</div>" for e in employees])
 
-    # AI FRAUD CHECK
-    prediction, risk = predict_fraud(amount, sender, receiver)
+    return STYLE + f"""
+    <h2>Company Dashboard</h2>
 
-    if prediction == 1:
-        ute.flag_fraud(sender, "AI BLOCKED TRANSACTION", amount)
-        return jsonify({
-            "status": "blocked",
-            "risk_score": risk
-        })
+    <div class="card">
+        <form method="post" action="/process">
+            <input name="employee" placeholder="Employee"><br>
+            <input name="salary" placeholder="Salary"><br>
+            <button>Process Salary</button>
+        </form>
+    </div>
 
-    success = ute.transfer_with_commission(sender, receiver, amount)
+    {html}
+    """
 
-    return jsonify({
-        "status": "success" if success else "failed",
-        "risk_score": risk
-    })
+@app.route("/process", methods=["POST"])
+def process():
+    ute.process_salary(
+        session["user"],
+        request.form["employee"],
+        request.form["salary"],
+        False
+    )
+    return redirect("/company")
 
-# ================= PAYROLL API =================
-@app.route("/api/payroll/run", methods=["POST"])
-def run_payroll():
-    ute.run_payroll()
-    return jsonify({"status": "payroll_executed"})
+# ================= WORKER =================
+@app.route("/worker")
+def worker():
+    jobs = ute.get_jobs()
 
-# ================= PAYROLL DATA =================
-@app.route("/api/payroll")
-def payroll():
-    return jsonify(ute.get_all_payroll())
+    html = "".join([
+        f"<div class='card'><h3>{j['title']}</h3><p>{j['location']}</p><p>KES {j['salary']}</p></div>"
+        for j in jobs
+    ])
 
-# ================= MPESA CALLBACK (LIVE INTEGRATION READY) =================
-@app.route("/api/mpesa/callback", methods=["POST"])
-def mpesa_callback():
-    data = request.json
+    return STYLE + f"""
+    <h2>Jobs</h2>
+    {html}
+    """
 
-    try:
-        stk = data["Body"]["stkCallback"]
-        result_code = stk["ResultCode"]
+# ================= ADMIN =================
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/")
 
-        metadata = stk.get("CallbackMetadata", {}).get("Item", [])
+    tx = ute.get_transactions()
 
-        phone = None
-        amount = None
-        receipt = None
+    tx_html = "".join([
+        f"<div class='card'>{t[0]} → {t[1]} | +{t[2]}</div>"
+        for t in tx
+    ])
 
-        for item in metadata:
-            if item["Name"] == "PhoneNumber":
-                phone = item["Value"]
-            if item["Name"] == "Amount":
-                amount = item["Value"]
-            if item["Name"] == "MpesaReceiptNumber":
-                receipt = item["Value"]
+    return STYLE + f"""
+    <h2>Admin Dashboard</h2>
 
-        status = "SUCCESS" if result_code == 0 else "FAILED"
+    <div class="card">
+        Revenue: KES {ute.get_revenue()}
+    </div>
 
-        ute.save_mpesa(phone, amount, status, receipt)
+    {tx_html}
+    """
 
-        return jsonify({"Result": "OK"})
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-# ================= FRAUD DASHBOARD API =================
-@app.route("/api/fraud")
-def fraud():
-    return jsonify(ute.get_fraud_logs())
-
-# ================= ADMIN ANALYTICS =================
-@app.route("/api/admin/summary")
-def admin_summary():
-    return jsonify({
-        "users": ute.get_total_users(),
-        "system_balance": ute.get_total_system_balance(),
-        "admin_earnings": ute.get_admin_earnings()
-    })
+# ================= LOGOUT =================
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 # ================= RUN =================
 if __name__ == "__main__":
