@@ -1,127 +1,75 @@
 import sqlite3
-import os
-from datetime import datetime
 
 DB = "ute.db"
 
-# -----------------------------
-# DATABASE CONNECTION
-# -----------------------------
-def connect():
-    conn = sqlite3.connect(DB)
-    return conn
-
-# -----------------------------
-# INITIALIZE DATABASE
-# -----------------------------
+# ---------------- INIT DB ----------------
 def init_db():
-    conn = connect()
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
 
-    print("🚀 Initializing UTE Database...")
-
-    # USERS TABLE
+    # USERS
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
+        username TEXT,
         password TEXT,
         role TEXT
     )
     """)
 
-    # WALLET TABLE
+    # WALLET
     c.execute("""
     CREATE TABLE IF NOT EXISTS wallet (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
+        username TEXT,
         balance REAL DEFAULT 0
     )
     """)
 
-    # TRANSACTIONS TABLE
+    # JOBS
     c.execute("""
-    CREATE TABLE IF NOT EXISTS transactions (
+    CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender TEXT,
-        receiver TEXT,
-        amount REAL,
-        type TEXT,
-        created_at TEXT
+        employer TEXT,
+        title TEXT,
+        description TEXT,
+        requirements TEXT,
+        location TEXT,
+        salary REAL
     )
     """)
 
     conn.commit()
     conn.close()
 
-    print("✅ DATABASE READY (users + wallet + transactions)")
 
-# -----------------------------
-# WALLET FUNCTIONS
-# -----------------------------
-def get_balance(username):
-    conn = connect()
-    c = conn.cursor()
-
-    c.execute("SELECT balance FROM wallet WHERE username=?", (username,))
-    row = c.fetchone()
-
-    conn.close()
-    return row[0] if row else 0
-
-
-def update_balance(username, amount):
-    conn = connect()
+# ---------------- ADD JOB ----------------
+def add_job(employer, title, description, requirements, location, salary):
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
 
     c.execute("""
-    UPDATE wallet
-    SET balance = balance + ?
-    WHERE username=?
-    """, (amount, username))
+    INSERT INTO jobs (employer, title, description, requirements, location, salary)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, (employer, title, description, requirements, location, salary))
 
     conn.commit()
     conn.close()
 
-    print(f"💰 BALANCE UPDATED → {username}: +{amount}")
+    print(f"📢 JOB POSTED → {title}")
 
-# -----------------------------
-# TRANSACTIONS
-# -----------------------------
-def add_transaction(sender, receiver, amount, tx_type):
-    conn = connect()
+
+# ---------------- GET JOBS ----------------
+def get_jobs():
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
 
-    c.execute("""
-    INSERT INTO transactions (sender, receiver, amount, type, created_at)
-    VALUES (?, ?, ?, ?, ?)
-    """, (
-        sender,
-        receiver,
-        amount,
-        tx_type,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
+    c.execute("SELECT * FROM jobs ORDER BY id DESC")
+    jobs = c.fetchall()
 
-    conn.commit()
     conn.close()
+    return jobs
 
-    print(f"📊 TRANSACTION LOGGED → {sender} → {receiver} | {amount} | {tx_type}")
 
-# -----------------------------
-# SYSTEM START MESSAGE
-# -----------------------------
-def start_system():
-    print("===================================")
-    print("💼 UTE FINTECH SYSTEM STARTING...")
-    print("===================================")
-
-    init_db()
-
-    print("✅ SYSTEM READY")
-
-# -----------------------------
-# RUN DIRECTLY
-# -----------------------------
-if __name__ == "__main__":
-    start_system()
+# ---------------- START ----------------
+init_db()
