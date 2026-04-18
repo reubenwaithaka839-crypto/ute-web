@@ -2,49 +2,43 @@ import requests
 import base64
 from datetime import datetime
 
-class Mpesa:
+consumer_key = "YOUR_CONSUMER_KEY"
+consumer_secret = "YOUR_CONSUMER_SECRET"
+shortcode = "174379"
+passkey = "YOUR_PASSKEY"
 
-    def __init__(self, key, secret, shortcode, passkey, base_url):
-        self.key = key
-        self.secret = secret
-        self.shortcode = shortcode
-        self.passkey = passkey
-        self.base_url = base_url
+def get_access_token():
+    url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
 
-    def get_token(self):
-        url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
-        res = requests.get(url, auth=(self.key, self.secret))
-        return res.json()["access_token"]
+    response = requests.get(url, auth=(consumer_key, consumer_secret))
+    return response.json()["access_token"]
 
-    def generate_password(self):
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        data = f"{self.shortcode}{self.passkey}{timestamp}"
-        return base64.b64encode(data.encode()).decode(), timestamp
+def lipa_na_mpesa_online(phone, amount):
+    access_token = get_access_token()
 
-    def stk_push(self, phone, amount, callback_url):
+    url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
 
-        token = self.get_token()
-        password, timestamp = self.generate_password()
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    password = base64.b64encode((shortcode + passkey + timestamp).encode()).decode()
 
-        url = f"{self.base_url}/mpesa/stkpush/v1/processrequest"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
 
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
+    payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": amount,
+        "PartyA": phone,
+        "PartyB": shortcode,
+        "PhoneNumber": phone,
+        "CallBackURL": "https://your-app.onrender.com/callback",
+        "AccountReference": "UTE",
+        "TransactionDesc": "Payment"
+    }
 
-        payload = {
-            "BusinessShortCode": self.shortcode,
-            "Password": password,
-            "Timestamp": timestamp,
-            "TransactionType": "CustomerPayBillOnline",
-            "Amount": int(amount),
-            "PartyA": phone,
-            "PartyB": self.shortcode,
-            "PhoneNumber": phone,
-            "CallBackURL": callback_url,
-            "AccountReference": "UTE",
-            "TransactionDesc": "Payment"
-        }
+    response = requests.post(url, json=payload, headers=headers)
 
-        return requests.post(url, json=payload, headers=headers).json()
+    return response.json()
