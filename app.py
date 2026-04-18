@@ -1,78 +1,72 @@
 from flask import Flask, request, redirect, session
+import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "ute-secret-key"
 
-# ================= TEMP STORAGE =================
-users = {}
+# ================= DATABASE SETUP =================
+def init_db():
+    conn = sqlite3.connect("ute.db")
+    c = conn.cursor()
 
-# ================= STRIPE STYLE UI =================
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        password TEXT,
+        role TEXT,
+        balance REAL DEFAULT 0
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender TEXT,
+        receiver TEXT,
+        amount REAL,
+        type TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ================= STYLE =================
 STYLE = """
 <style>
 body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+    font-family: Arial;
     background: #0a0f1c;
     color: white;
-}
-
-.nav {
-    background: #0f172a;
-    padding: 18px;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 20px;
+    margin: 0;
 }
 
 .card {
     background: #111827;
+    margin: 15px auto;
     padding: 20px;
-    border-radius: 16px;
-    margin: 15px 0;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    width: 90%;
+    max-width: 700px;
+    border-radius: 14px;
 }
 
 input, select {
     width: 100%;
-    padding: 14px;
-    margin: 8px 0;
-    border-radius: 12px;
-    border: none;
-    background: #0f172a;
-    color: white;
-    font-size: 15px;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 10px;
 }
 
 button {
     width: 100%;
     padding: 14px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #635bff, #4f46e5);
+    background: #4f46e5;
     color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(99,91,255,0.3);
-}
-
-.badge {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #1f2937;
-    font-size: 12px;
+    border: none;
+    border-radius: 10px;
 }
 </style>
 """
@@ -81,12 +75,9 @@ button:hover {
 @app.route("/")
 def home():
     return STYLE + """
-    <div class="container">
-        <h1>🚀 UTE FINTECH SYSTEM</h1>
-        <div class="card">
-            <p>Next-generation payment & payroll platform</p>
-            <a href="/auth"><button>Get Started</button></a>
-        </div>
+    <div class="card">
+        <h2>UTE FINTECH</h2>
+        <a href="/auth"><button>Register / Login</button></a>
     </div>
     """
 
@@ -95,15 +86,18 @@ def home():
 def auth():
 
     if request.method == "POST":
-
         name = request.form["name"]
         password = request.form["password"]
         role = request.form["role"]
 
-        users[name] = {
-            "password": password,
-            "role": role
-        }
+        conn = sqlite3.connect("ute.db")
+        c = conn.cursor()
+
+        c.execute("INSERT INTO users (name, password, role, balance) VALUES (?, ?, ?, ?)",
+                  (name, password, role, 0))
+
+        conn.commit()
+        conn.close()
 
         session["user"] = name
         session["role"] = role
@@ -111,124 +105,122 @@ def auth():
         return redirect("/dashboard")
 
     return STYLE + """
-    <div class="container">
+    <div class="card">
+        <h2>Create Account</h2>
 
-        <h2>🧾 Create Account</h2>
+        <form method="post">
+            <input name="name" placeholder="Name">
+            <input name="password" type="password" placeholder="Password">
 
-        <div class="card">
-            <form method="post">
+            <select name="role">
+                <option value="admin">Admin</option>
+                <option value="employer">Employer</option>
+                <option value="employee">Employee</option>
+            </select>
 
-                <input name="name" placeholder="Full Name / Company" required>
-
-                <input name="password" type="password" placeholder="Password" required>
-
-                <select name="role">
-                    <option value="admin">👑 Admin</option>
-                    <option value="employer">🏢 Employer</option>
-                    <option value="employee">👷 Employee</option>
-                </select>
-
-                <button>Create Account</button>
-            </form>
-        </div>
-
+            <button>Create</button>
+        </form>
     </div>
     """
 
-# ================= DASHBOARD ROUTER =================
+# ================= GET BALANCE =================
+def get_balance(user):
+    conn = sqlite3.connect("ute.db")
+    c = conn.cursor()
+
+    c.execute("SELECT balance FROM users WHERE name=?", (user,))
+    result = c.fetchone()
+
+    conn.close()
+
+    return result[0] if result else 0
+
+# ================= UPDATE BALANCE =================
+def update_balance(user, amount):
+    conn = sqlite3.connect("ute.db")
+    c = conn.cursor()
+
+    c.execute("UPDATE users SET balance = balance + ? WHERE name=?", (amount, user))
+
+    conn.commit()
+    conn.close()
+
+# ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
 
+    user = session.get("user")
     role = session.get("role")
 
-    if role == "admin":
-        return admin_dashboard()
+    if not user:
+        return redirect("/auth")
 
-    if role == "employer":
-        return employer_dashboard()
+    balance = get_balance(user)
 
-    if role == "employee":
-        return employee_dashboard()
-
-    return redirect("/auth")
-
-# ================= ADMIN DASHBOARD =================
-def admin_dashboard():
-    return STYLE + """
-    <div class="nav">
-        <h3>Admin Panel</h3>
-        <span class="badge">ADMIN</span>
+    return STYLE + f"""
+    <div class="card">
+        <h2>Welcome {user}</h2>
+        <h3>Role: {role}</h3>
+        <h2>💰 Balance: KES {balance}</h2>
     </div>
 
-    <div class="container">
+    <div class="card">
+        <h3>Deposit (Simulated)</h3>
 
-        <div class="card">
-            <h2>👑 System Overview</h2>
-            <button>View Users</button>
-            <button>Revenue Reports</button>
-            <button>Fraud Monitoring</button>
-        </div>
-
-    </div>
-    """
-
-# ================= EMPLOYER DASHBOARD =================
-def employer_dashboard():
-    return STYLE + """
-    <div class="nav">
-        <h3>Employer Dashboard</h3>
-        <span class="badge">EMPLOYER</span>
+        <form method="post" action="/deposit">
+            <input name="amount" placeholder="Amount">
+            <button>Deposit</button>
+        </form>
     </div>
 
-    <div class="container">
+    <div class="card">
+        <h3>Transfer</h3>
 
-        <div class="card">
-            <h2>🏢 Payroll System</h2>
-
-            <input placeholder="Employee Name">
-            <input placeholder="Amount">
-
-            <button>Send Salary (M-Pesa)</button>
-        </div>
-
-        <div class="card">
-            <h2>💸 Payments</h2>
-
-            <input placeholder="Phone 2547XXXXXX">
-            <input placeholder="Amount">
-
-            <button>Send STK Push</button>
-        </div>
-
+        <form method="post" action="/transfer">
+            <input name="receiver" placeholder="Receiver">
+            <input name="amount" placeholder="Amount">
+            <button>Send</button>
+        </form>
     </div>
     """
 
-# ================= EMPLOYEE DASHBOARD =================
-def employee_dashboard():
-    return STYLE + """
-    <div class="nav">
-        <h3>Employee Dashboard</h3>
-        <span class="badge">EMPLOYEE</span>
-    </div>
+# ================= DEPOSIT =================
+@app.route("/deposit", methods=["POST"])
+def deposit():
 
-    <div class="container">
+    user = session["user"]
+    amount = float(request.form["amount"])
 
-        <div class="card">
-            <h2>💰 Wallet</h2>
-            <h1>KES 0.00</h1>
-        </div>
+    update_balance(user, amount)
 
-        <div class="card">
-            <h2>📲 Withdraw</h2>
+    return redirect("/dashboard")
 
-            <input placeholder="M-Pesa Number">
-            <input placeholder="Amount">
+# ================= TRANSFER =================
+@app.route("/transfer", methods=["POST"])
+def transfer():
 
-            <button>Withdraw Funds</button>
-        </div>
+    sender = session["user"]
+    receiver = request.form["receiver"]
+    amount = float(request.form["amount"])
 
-    </div>
-    """
+    conn = sqlite3.connect("ute.db")
+    c = conn.cursor()
+
+    c.execute("SELECT balance FROM users WHERE name=?", (sender,))
+    sender_balance = c.fetchone()[0]
+
+    if sender_balance >= amount:
+
+        c.execute("UPDATE users SET balance = balance - ? WHERE name=?", (amount, sender))
+        c.execute("UPDATE users SET balance = balance + ? WHERE name=?", (amount, receiver))
+
+        c.execute("INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)",
+                  (sender, receiver, amount, "TRANSFER"))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/dashboard")
 
 # ================= RUN =================
 if __name__ == "__main__":
