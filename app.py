@@ -1,19 +1,16 @@
-from flask import Flask, request, redirect, session
+from flask import Flask, request, session, redirect
 from ute import UTE
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = "UTE_FINAL_SYSTEM_KEY"
+app.secret_key = "UTE_FINAL_KEY"
 
 ute = UTE()
 
 # ================= HOME =================
 @app.route("/")
 def home():
-    return """
-    <h1>UTE FINTECH SYSTEM</h1>
-    <a href="/auth">Login / Register</a>
-    """
+    return "<h1>UTE FINTECH SYSTEM</h1><a href='/auth'>Start</a>"
 
 # ================= AUTH =================
 @app.route("/auth", methods=["GET", "POST"])
@@ -35,52 +32,40 @@ def auth():
 
     return """
     <form method="POST">
-        <input name="name" placeholder="Name"><br>
-        <input name="password" type="password" placeholder="Password"><br>
-
+        <input name="name"><br>
+        <input name="password" type="password"><br>
         <select name="role">
-            <option value="employee">Employee</option>
-            <option value="employer">Employer</option>
-            <option value="admin">Admin</option>
+            <option>employee</option>
+            <option>employer</option>
+            <option>admin</option>
         </select><br>
-
-        <button type="submit">Submit</button>
+        <button>Submit</button>
     </form>
     """
 
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
-    if "user" not in session:
-        return redirect("/auth")
-
     user = session["user"]
     role = session["role"]
-    balance = ute.get_balance(user)
+    bal = ute.get_balance(user)
 
     return f"""
-    <h1>{role.upper()} DASHBOARD</h1>
-    <h3>User: {user}</h3>
-    <h3>Balance: {balance}</h3>
+    <h1>{role} DASHBOARD</h1>
+    <p>User: {user}</p>
+    <p>Balance: {bal}</p>
 
     <a href="/wallet">Wallet</a><br>
     <a href="/pay">Transfer</a><br>
-    <a href="/set_salary">Set Salary</a><br>
-    <a href="/payroll_dashboard">Payroll Dashboard</a><br>
-    <a href="/fraud_dashboard">Fraud Dashboard</a><br>
-    <a href="/transactions">Transactions</a><br>
-    <a href="/compliance_report">Compliance Report</a><br>
-
-    {"<a href='/admin'>Admin Panel</a><br>" if role == "admin" else ""}
-    <a href="/logout">Logout</a>
+    <a href="/set_salary">Payroll</a><br>
+    <a href="/admin">Admin</a><br>
     """
 
 # ================= WALLET =================
 @app.route("/wallet")
 def wallet():
     user = session["user"]
-    balance = ute.get_balance(user)
-    return f"<h1>Wallet: {balance}</h1><a href='/dashboard'>Back</a>"
+    return f"<h1>Balance: {ute.get_balance(user)}</h1>"
 
 # ================= TRANSFER =================
 @app.route("/pay", methods=["GET", "POST"])
@@ -105,109 +90,48 @@ def pay():
 @app.route("/set_salary", methods=["GET", "POST"])
 def set_salary():
     if request.method == "POST":
-        employer = session["user"]
-        employee = request.form["employee"]
-        salary = float(request.form["salary"])
-
-        ute.set_salary(employer, employee, salary)
+        ute.set_salary(
+            session["user"],
+            request.form["employee"],
+            float(request.form["salary"])
+        )
         return redirect("/dashboard")
 
     return """
     <form method="POST">
         Employee: <input name="employee"><br>
         Salary: <input name="salary"><br>
-        <button>Assign</button>
+        <button>Set</button>
     </form>
     """
 
 @app.route("/run_payroll")
 def run_payroll():
-    if session.get("role") != "admin":
-        return "Access Denied"
+    if session["role"] != "admin":
+        return "Denied"
 
     ute.run_payroll()
-    return "Payroll Executed"
-
-# ================= PAYROLL DASHBOARD =================
-@app.route("/payroll_dashboard")
-def payroll_dashboard():
-    data = ute.get_all_payroll()
-    total = ute.get_total_payroll_amount()
-
-    rows = ""
-    for e, emp, sal in data:
-        rows += f"<tr><td>{e}</td><td>{emp}</td><td>{sal}</td></tr>"
-
-    return f"""
-    <h1>Payroll Dashboard</h1>
-    <h3>Total: {total}</h3>
-    <table border="1">
-        <tr><th>Employer</th><th>Employee</th><th>Salary</th></tr>
-        {rows}
-    </table>
-    """
-
-# ================= FRAUD DASHBOARD =================
-@app.route("/fraud_dashboard")
-def fraud_dashboard():
-    data = ute.get_fraud_logs()
-
-    rows = ""
-    for r in data:
-        rows += f"<tr><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td></tr>"
-
-    return f"""
-    <h1>Fraud Dashboard</h1>
-    <table border="1">
-        <tr><th>User</th><th>Reason</th><th>Amount</th></tr>
-        {rows}
-    </table>
-    """
-
-# ================= TRANSACTIONS =================
-@app.route("/transactions")
-def transactions():
-    data = ute.cursor.execute("SELECT * FROM mpesa_transactions").fetchall()
-
-    rows = ""
-    for r in data:
-        rows += f"<tr><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td></tr>"
-
-    return f"""
-    <h1>Transactions</h1>
-    <table border="1">
-        <tr><th>Phone</th><th>Amount</th><th>Status</th></tr>
-        {rows}
-    </table>
-    """
+    return "Payroll Done"
 
 # ================= ADMIN =================
 @app.route("/admin")
 def admin():
-    if session.get("role") != "admin":
-        return "Access Denied"
-
-    users = ute.get_total_users()
-    balance = ute.get_total_system_balance()
-    earnings = ute.get_admin_earnings()
+    if session["role"] != "admin":
+        return "Denied"
 
     return f"""
-    <h1>Admin Dashboard</h1>
-    <p>Users: {users}</p>
-    <p>System Balance: {balance}</p>
-    <p>Earnings: {earnings}</p>
+    <h1>ADMIN</h1>
+    <p>Users: {ute.get_total_users()}</p>
+    <p>Balance: {ute.get_total_system_balance()}</p>
+    <p>Earnings: {ute.get_admin_earnings()}</p>
     <a href="/run_payroll">Run Payroll</a>
     """
 
-# ================= COMPLIANCE =================
-@app.route("/compliance_report")
-def compliance():
-    return f"""
-    <h1>Compliance Report</h1>
-    <p>Total Users: {ute.get_total_users()}</p>
-    <p>Total Balance: {ute.get_total_system_balance()}</p>
-    <p>Admin Earnings: {ute.get_admin_earnings()}</p>
-    """
+# ================= FRAUD =================
+@app.route("/fraud")
+def fraud():
+    data = ute.get_fraud_logs()
+    return "<br>".join(str(x) for x in data)
 
 # ================= LOGOUT =================
 @app.route("/logout")
