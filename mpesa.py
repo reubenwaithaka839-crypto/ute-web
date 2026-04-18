@@ -11,25 +11,25 @@ class Mpesa:
         self.passkey = passkey
         self.base_url = base_url
 
-    # ================= GET ACCESS TOKEN =================
+    # ================= ACCESS TOKEN =================
     def get_token(self):
 
-        url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
 
         response = requests.get(url, auth=(self.consumer_key, self.consumer_secret))
 
-        token = response.json()['access_token']
+        response.raise_for_status()
 
-        return token
+        return response.json()["access_token"]
 
-    # ================= GENERATE PASSWORD =================
+    # ================= PASSWORD =================
     def generate_password(self):
 
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-        data_to_encode = self.shortcode + self.passkey + timestamp
+        data = f"{self.shortcode}{self.passkey}{timestamp}"
 
-        encoded = base64.b64encode(data_to_encode.encode()).decode('utf-8')
+        encoded = base64.b64encode(data.encode()).decode("utf-8")
 
         return encoded, timestamp
 
@@ -40,10 +40,10 @@ class Mpesa:
 
         password, timestamp = self.generate_password()
 
-        url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        url = f"{self.base_url}/mpesa/stkpush/v1/processrequest"
 
         headers = {
-            "Authorization": "Bearer " + token,
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
@@ -52,7 +52,7 @@ class Mpesa:
             "Password": password,
             "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
-            "Amount": amount,
+            "Amount": int(amount),
             "PartyA": phone,
             "PartyB": self.shortcode,
             "PhoneNumber": phone,
