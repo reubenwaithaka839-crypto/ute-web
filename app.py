@@ -1,54 +1,74 @@
-from flask import Flask, request, jsonify, render_template_string, redirect, session
+from flask import Flask, request, redirect, session, render_template_string
 import sqlite3
-import os
-from mpesa import lipa_na_mpesa_online
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-DATABASE = "ute.db"
+DB = "ute.db"
 
-# ------------------ DATABASE ------------------
+# -----------------------------
+# DATABASE INIT
+# -----------------------------
 def init_db():
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
 
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
         password TEXT,
-        role TEXT,
+        role TEXT
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS wallet (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
         balance REAL DEFAULT 0
-    )''')
+    )
+    """)
 
     conn.commit()
     conn.close()
+    print("✅ DB INITIALIZED")
 
+init_db()
+
+# -----------------------------
+# HELPERS
+# -----------------------------
 def get_balance(username):
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
-
-    c.execute("SELECT balance FROM users WHERE username=?", (username,))
-    result = c.fetchone()
-
+    c.execute("SELECT balance FROM wallet WHERE username=?", (username,))
+    row = c.fetchone()
     conn.close()
-    return result[0] if result else 0
+    return row[0] if row else 0
 
 def update_balance(username, amount):
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
-
-    c.execute("UPDATE users SET balance = balance + ? WHERE username=?", (amount, username))
-
+    c.execute("UPDATE wallet SET balance = balance + ? WHERE username=?", (amount, username))
     conn.commit()
     conn.close()
+    print(f"💰 BALANCE UPDATED → {username}: +{amount}")
 
-# ------------------ ROUTES ------------------
-
+# -----------------------------
+# HOME
+# -----------------------------
 @app.route("/")
 def home():
-    return redirect("/auth")
+    print("🏠 HOME LOADED")
+    return """
+    <h1>UTE FINTECH SYSTEM</h1>
+    <a href="/auth">Enter System</a>
+    """
 
-# -------- AUTH --------
+# -----------------------------
+# AUTH
+# -----------------------------
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
     if request.method == "POST":
@@ -56,25 +76,39 @@ def auth():
         password = request.form["password"]
         role = request.form["role"]
 
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect(DB)
         c = conn.cursor()
 
-        c.execute("INSERT OR REPLACE INTO users VALUES (?, ?, ?, COALESCE((SELECT balance FROM users WHERE username=?),0))",
-                  (username, password, role, username))
+        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        user = c.fetchone()
 
-        conn.commit()
-        conn.close()
+        if user:
+            if user[2] == password:
+                session["user"] = username
+                session["role"] = user[3]
+                print(f"✅ LOGIN SUCCESS → {username}")
+                return redirect("/dashboard")
+            else:
+                print("❌ WRONG PASSWORD")
+                return "Wrong password"
+        else:
+            c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                      (username, password, role))
+            c.execute("INSERT INTO wallet (username, balance) VALUES (?, 0)", (username,))
+            conn.commit()
+            conn.close()
 
-        session["user"] = username
-        session["role"] = role
+            print(f"🆕 USER CREATED → {username} ({role})")
 
-        return redirect("/dashboard")
+            session["user"] = username
+            session["role"] = role
+            return redirect("/dashboard")
 
-    return render_template_string("""
-    <h2>UTE FINTECH REGISTER</h2>
+    return """
+    <h2>Register / Login</h2>
     <form method="POST">
-        <input name="username" placeholder="Username" required><br><br>
-        <input name="password" type="password" placeholder="Password" required><br><br>
+        <input name="username" placeholder="Username"><br><br>
+        <input name="password" type="password" placeholder="Password"><br><br>
 
         <select name="role">
             <option value="admin">Admin</option>
@@ -82,105 +116,206 @@ def auth():
             <option value="employee">Employee</option>
         </select><br><br>
 
-        <button type="submit">Register / Login</button>
+        <button type="submit">Continue</button>
     </form>
-    """)
+    """
 
-# -------- DASHBOARD --------
+# -----------------------------
+# DASHBOARD (PREMIUM UI)
+# -----------------------------
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
+        print("⚠️ NO SESSION")
         return redirect("/auth")
 
     user = session["user"]
     role = session["role"]
     balance = get_balance(user)
 
-    return render_template_string(f"""
-    <h1>UTE DASHBOARD</h1>
-    <p>User: {user}</p>
-    <p>Role: {role}</p>
-    <p>Balance: KES {balance}</p>
+    print(f"📊 DASHBOARD → {user}")
 
-    <h3>Actions</h3>
-    <a href="/deposit">Deposit (M-Pesa)</a><br><br>
-    <a href="/pay">Payroll Payment</a><br><br>
-    <a href="/logout">Logout</a>
+    return render_template_string(f"""
+    <html>
+    <head>
+        <title>UTE Dashboard</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <style>
+            body {{
+                margin: 0;
+                font-family: 'Segoe UI', sans-serif;
+                background: #0b1120;
+                color: white;
+            }}
+
+            .header {{
+                padding: 20px;
+                background: linear-gradient(90deg, #0ea5e9, #22c55e);
+                text-align: center;
+                font-size: 24px;
+                font-weight: bold;
+            }}
+
+            .container {{
+                padding: 20px;
+            }}
+
+            .card {{
+                background: #111827;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            }}
+
+            .balance {{
+                font-size: 30px;
+                color: #22c55e;
+                font-weight: bold;
+            }}
+
+            .grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }}
+
+            .btn {{
+                padding: 20px;
+                border-radius: 14px;
+                text-align: center;
+                text-decoration: none;
+                color: white;
+                font-weight: bold;
+                font-size: 16px;
+            }}
+
+            .deposit {{ background: #22c55e; }}
+            .pay {{ background: #3b82f6; }}
+            .logout {{ background: #ef4444; }}
+            .admin {{ background: #f59e0b; }}
+
+        </style>
+    </head>
+
+    <body>
+
+        <div class="header">💼 UTE FINTECH</div>
+
+        <div class="container">
+
+            <div class="card">
+                <h2>{user}</h2>
+                <p>Role: {role}</p>
+                <div class="balance">KES {balance}</div>
+            </div>
+
+            <div class="card">
+                <h3>⚡ Actions</h3>
+
+                <div class="grid">
+                    <a class="btn deposit" href="/deposit">💰 Deposit</a>
+                    <a class="btn pay" href="/pay">📤 Pay</a>
+                    {"<a class='btn admin' href='/admin'>🛠 Admin</a>" if role == "admin" else ""}
+                    <a class="btn logout" href="/logout">🚪 Logout</a>
+                </div>
+
+            </div>
+
+        </div>
+
+    </body>
+    </html>
     """)
 
-# -------- LOGOUT --------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/auth")
-
-# -------- DEPOSIT (M-PESA) --------
+# -----------------------------
+# DEPOSIT
+# -----------------------------
 @app.route("/deposit", methods=["GET", "POST"])
 def deposit():
     if request.method == "POST":
-        phone = request.form["phone"]
-        amount = int(request.form["amount"])
+        amount = float(request.form["amount"])
+        user = session["user"]
 
-        response = lipa_na_mpesa_online(phone, amount)
+        print(f"📲 DEPOSIT REQUEST → {user}: {amount}")
 
-        return jsonify(response)
+        update_balance(user, amount)
 
-    return render_template_string("""
-    <h2>Deposit via M-Pesa</h2>
+        print("✅ DEPOSIT SUCCESS")
+        return redirect("/dashboard")
+
+    return """
+    <h2>Deposit</h2>
     <form method="POST">
-        <input name="phone" placeholder="2547XXXXXXXX" required><br><br>
-        <input name="amount" placeholder="Amount" required><br><br>
-        <button type="submit">Pay</button>
+        <input name="amount" placeholder="Amount"><br><br>
+        <button>Deposit</button>
     </form>
-    """)
+    """
 
-# -------- CALLBACK --------
-@app.route("/callback", methods=["POST"])
-def callback():
-    data = request.json
-
-    try:
-        result = data["Body"]["stkCallback"]
-
-        if result["ResultCode"] == 0:
-            amount = result["CallbackMetadata"]["Item"][0]["Value"]
-            phone = result["CallbackMetadata"]["Item"][4]["Value"]
-
-            user = session.get("user")
-            if user:
-                update_balance(user, amount)
-
-        return jsonify({"status": "success"})
-
-    except:
-        return jsonify({"error": "callback error"})
-
-# -------- PAYROLL --------
+# -----------------------------
+# PAYROLL
+# -----------------------------
 @app.route("/pay", methods=["GET", "POST"])
 def pay():
     if request.method == "POST":
         employee = request.form["employee"]
         amount = float(request.form["amount"])
 
+        print(f"💼 PAYROLL → {employee}: {amount}")
+
         update_balance(employee, amount)
 
-        return "Salary Paid!"
+        return redirect("/dashboard")
 
-    return render_template_string("""
-    <h2>Payroll</h2>
+    return """
+    <h2>Send Salary</h2>
     <form method="POST">
         <input name="employee" placeholder="Employee Username"><br><br>
         <input name="amount" placeholder="Amount"><br><br>
-        <button type="submit">Send Salary</button>
+        <button>Send</button>
     </form>
-    """)
+    """
 
-# -------- HEALTH CHECK --------
+# -----------------------------
+# ADMIN PANEL
+# -----------------------------
+@app.route("/admin")
+def admin():
+    if session.get("role") != "admin":
+        return "Access denied"
+
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("SELECT username, role FROM users")
+    users = c.fetchall()
+    conn.close()
+
+    print("🛠 ADMIN PANEL LOADED")
+
+    user_list = "<br>".join([f"{u[0]} ({u[1]})" for u in users])
+
+    return f"<h2>All Users</h2>{user_list}<br><br><a href='/dashboard'>Back</a>"
+
+# -----------------------------
+# LOGOUT
+# -----------------------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    print("🚪 LOGOUT")
+    return redirect("/")
+
+# -----------------------------
+# HEALTH CHECK
+# -----------------------------
 @app.route("/health")
 def health():
     return "OK"
 
-# ------------------ RUN ------------------
+# -----------------------------
+# RUN
+# -----------------------------
 if __name__ == "__main__":
-    init_db()
+    print("🚀 UTE STARTED")
     app.run(debug=True)
