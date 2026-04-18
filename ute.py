@@ -14,7 +14,7 @@ class UTE:
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE,
-            password BLOB,
+            password TEXT,
             role TEXT
         )
         """)
@@ -28,61 +28,36 @@ class UTE:
         )
         """)
 
-        # PAYROLL
+        # TRANSACTIONS
         self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS payroll (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            employer TEXT,
-            employee TEXT,
-            salary REAL
-        )
-        """)
-
-        # MPESA TRANSACTIONS
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS mpesa_transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            phone TEXT,
-            amount REAL,
-            status TEXT,
-            receipt TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-
-        # FRAUD LOGS
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS fraud_flags (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
-            reason TEXT,
-            amount REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-
-        # ML DATASET (FOR AI TRAINING)
-        self.cursor.execute("""
-        CREATE TABLE IF NOT EXISTS fraud_dataset (
+        CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sender TEXT,
             receiver TEXT,
             amount REAL,
-            is_fraud INTEGER
+            type TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
 
         self.conn.commit()
 
     # ================= USERS =================
-    def register_user(self, name, password, role):
+    def register_company(self, name, password):
         self.cursor.execute("""
         INSERT OR IGNORE INTO users (name, password, role)
         VALUES (?, ?, ?)
-        """, (name, password, role))
-        self.conn.commit()
+        """, (name, password, "company"))
 
+        self.conn.commit()
         self.init_wallet(name)
+
+    def login_company(self, name, password):
+        self.cursor.execute("""
+        SELECT * FROM users WHERE name=? AND password=?
+        """, (name, password))
+
+        return self.cursor.fetchone()
 
     # ================= WALLET =================
     def init_wallet(self, user):
@@ -90,12 +65,14 @@ class UTE:
         INSERT OR IGNORE INTO wallets (user, balance)
         VALUES (?, 0)
         """, (user,))
+
         self.conn.commit()
 
     def get_balance(self, user):
         self.cursor.execute("""
         SELECT balance FROM wallets WHERE user=?
         """, (user,))
+
         res = self.cursor.fetchone()
         return res[0] if res else 0
 
@@ -103,110 +80,68 @@ class UTE:
         self.cursor.execute("""
         UPDATE wallets SET balance = balance + ? WHERE user=?
         """, (amount, user))
+
         self.conn.commit()
 
-    def withdraw(self, user, amount):
-        if self.get_balance(user) >= amount:
-            self.update_balance(user, -amount)
+    # ================= PAYROLL / TRANSFER =================
+    def process_salary(self, sender, receiver, amount, approved=True):
+
+        amount = float(amount)
+
+        if self.get_balance(sender) >= amount:
+
+            # debit sender
+            self.update_balance(sender, -amount)
+
+            # credit receiver
+            self.update_balance(receiver, amount)
+
+            # log transaction
+            self.log_transaction(sender, receiver, amount, "PAYROLL")
+
             return True
+
         return False
 
-    # ================= TRANSFER =================
-    def transfer_with_commission(self, sender, receiver, amount):
-        if sender == receiver:
-            self.flag_fraud(sender, "Self transfer attempt", amount)
-            return False
-
-        if self.get_balance(sender) < amount:
-            return False
-
-        commission = amount * 0.02
-        receive = amount - commission
-
-        self.update_balance(sender, -amount)
-        self.update_balance(receiver, receive)
-        self.update_balance("admin", commission)
-
-        return True
-
-    # ================= PAYROLL =================
-    def set_salary(self, employer, employee, salary):
+    # ================= TRANSACTIONS =================
+    def log_transaction(self, sender, receiver, amount, type_):
         self.cursor.execute("""
-        INSERT INTO payroll (employer, employee, salary)
-        VALUES (?, ?, ?)
-        """, (employer, employee, salary))
-        self.conn.commit()
-
-    def run_payroll(self):
-        self.cursor.execute("SELECT employer, employee, salary FROM payroll")
-        data = self.cursor.fetchall()
-
-        for employer, employee, salary in data:
-            if self.get_balance(employer) >= salary:
-                self.update_balance(employer, -salary)
-                self.update_balance(employee, salary)
-
-        self.conn.commit()
-
-    def get_all_payroll(self):
-        self.cursor.execute("SELECT employer, employee, salary FROM payroll")
-        return self.cursor.fetchall()
-
-    def get_total_payroll_amount(self):
-        self.cursor.execute("SELECT SUM(salary) FROM payroll")
-        res = self.cursor.fetchone()[0]
-        return res if res else 0
-
-    # ================= MPESA =================
-    def save_mpesa(self, phone, amount, status, receipt):
-        self.cursor.execute("""
-        INSERT INTO mpesa_transactions (phone, amount, status, receipt)
+        INSERT INTO transactions (sender, receiver, amount, type)
         VALUES (?, ?, ?, ?)
-        """, (phone, amount, status, receipt))
+        """, (sender, receiver, amount, type_))
+
         self.conn.commit()
 
-    # ================= FRAUD =================
-    def flag_fraud(self, user, reason, amount):
+    def get_transactions(self):
         self.cursor.execute("""
-        INSERT INTO fraud_flags (user, reason, amount)
-        VALUES (?, ?, ?)
-        """, (user, reason, amount))
-        self.conn.commit()
-
-    def get_fraud_logs(self):
-        self.cursor.execute("""
-        SELECT user, reason, amount FROM fraud_flags
+        SELECT sender, receiver, amount, type
+        FROM transactions
         ORDER BY id DESC
         """)
+
         return self.cursor.fetchall()
 
-    # ================= ML DATA =================
-    def log_ml_data(self, sender, receiver, amount, is_fraud):
-        self.cursor.execute("""
-        INSERT INTO fraud_dataset (sender, receiver, amount, is_fraud)
-        VALUES (?, ?, ?, ?)
-        """, (sender, receiver, amount, is_fraud))
-        self.conn.commit()
+    # ================= JOBS (STATIC SAMPLE) =================
+    def get_jobs(self):
+        return [
+            {"title": "Electrician", "location": "Nairobi", "salary": 20000},
+            {"title": "Driver", "location": "Mombasa", "salary": 15000},
+            {"title": "Clerk", "location": "Kisumu", "salary": 12000}
+        ]
 
-    def get_ml_data(self):
+    # ================= ADMIN REVENUE =================
+    def get_revenue(self):
         self.cursor.execute("""
-        SELECT sender, receiver, amount, is_fraud FROM fraud_dataset
+        SELECT SUM(amount) FROM transactions WHERE type='PAYROLL'
         """)
-        return self.cursor.fetchall()
 
-    # ================= ADMIN ANALYTICS =================
-    def get_total_users(self):
-        self.cursor.execute("SELECT COUNT(*) FROM users")
-        return self.cursor.fetchone()[0]
-
-    def get_total_system_balance(self):
-        self.cursor.execute("SELECT SUM(balance) FROM wallets")
         res = self.cursor.fetchone()[0]
         return res if res else 0
 
-    def get_admin_earnings(self):
-        self.cursor.execute("""
-        SELECT balance FROM wallets WHERE user='admin'
-        """)
-        res = self.cursor.fetchone()
-        return res[0] if res else 0
+    # ================= EMPLOYEES (PLACEHOLDER) =================
+    def get_company_employees(self, company):
+        return [
+            ("John Doe", "6 months"),
+            ("Jane Smith", "3 months"),
+            ("Mike Johnson", "1 year")
+        ]
