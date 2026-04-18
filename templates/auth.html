@@ -7,28 +7,27 @@
 <body class="bg-light">
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-4 card p-4 shadow-sm border-0" style="border-radius: 15px;">
+            <div class="col-md-4 card p-4 shadow-sm border-0">
                 <h2 class="text-center mb-4 text-primary fw-bold">UTE LOGIN</h2>
                 <form method="POST">
                     <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input name="username" class="form-control" placeholder="Enter username" required>
+                        <input name="username" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input name="password" type="password" class="form-control" placeholder="Enter password" required>
+                        <input name="password" type="password" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">I want to:</label>
+                        <label class="form-label">Select Role:</label>
                         <select name="role" class="form-select">
-                            <option value="employee">Employee (Find Work)</option>
-                            <option value="employer">Employer (Hire Talent)</option>
-                            <option value="admin">Administrator (System Manager)</option>
+                            <option value="employee">Employee</option>
+                            <option value="employer">Employer</option>
+                            <option value="admin">Administrator</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary w-100 py-2 fw-bold">Continue</button>
+                    <button class="btn btn-primary w-100 fw-bold">Login / Register</button>
                 </form>
-                <p class="text-muted small text-center mt-3">Registering a new account? Select your role and click continue.</p>
             </div>
         </div>
     </div>
