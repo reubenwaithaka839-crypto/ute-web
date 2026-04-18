@@ -77,19 +77,15 @@ init_db()
 def update_balance(user, amount):
     conn = sqlite3.connect("ute.db")
     c = conn.cursor()
-
     c.execute("UPDATE users SET balance = balance + ? WHERE name=?", (amount, user))
-
     conn.commit()
     conn.close()
 
 def get_balance(user):
     conn = sqlite3.connect("ute.db")
     c = conn.cursor()
-
     c.execute("SELECT balance FROM users WHERE name=?", (user,))
     data = c.fetchone()
-
     conn.close()
     return data[0] if data else 0
 
@@ -149,7 +145,7 @@ def dashboard():
     <h3>Balance: {balance}</h3>
 
     <a href='/payroll'>Payroll</a><br>
-    <a href='/deposit'>M-Pesa Deposit</a>
+    <a href='/deposit'>M-Pesa</a>
     """
 
 # ================= PAYROLL =================
@@ -193,13 +189,13 @@ def stk():
     if not rate_limit(phone):
         return {"error": "Too many requests"}, 429
 
-    response = mpesa.stk_push(
+    res = mpesa.stk_push(
         phone,
         amount,
         "https://your-app.onrender.com/callback"
     )
 
-    return jsonify(response)
+    return jsonify(res)
 
 # ================= CALLBACK =================
 @app.route("/callback", methods=["POST"])
