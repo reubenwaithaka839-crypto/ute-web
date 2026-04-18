@@ -1,4 +1,4 @@
-from flask import Flask, request, session, redirect, jsonify
+from flask import Flask, request, session, redirect, jsonify, render_template
 import sqlite3
 import os
 import time
@@ -18,7 +18,7 @@ mpesa = Mpesa(
     "https://sandbox.safaricom.co.ke"
 )
 
-# ================= LOAD AI MODEL =================
+# ================= AI MODEL =================
 fraud_model = joblib.load("fraud_model.pkl")
 
 # ================= RATE LIMIT =================
@@ -87,16 +87,16 @@ def get_balance(user):
     conn.close()
     return data[0] if data else 0
 
-# ================= AI FRAUD SYSTEM =================
+# ================= AI FRAUD =================
 def fraud_check(amount):
     hour = int(time.strftime("%H"))
-    features = np.array([[amount, 2, hour]])  # simplified model input
+    features = np.array([[amount, 2, hour]])
     return fraud_model.predict(features)[0]
 
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "<h1>UTE FINTECH SYSTEM</h1>"
+    return redirect("/dashboard")
 
 # ================= AUTH =================
 @app.route("/auth", methods=["GET", "POST"])
@@ -124,14 +124,14 @@ def auth():
 
     return """
     <form method="post">
-        <input name="name" placeholder="Name">
+        <input name="name">
         <input name="password" type="password">
         <select name="role">
             <option value="admin">Admin</option>
             <option value="employer">Employer</option>
             <option value="employee">Employee</option>
         </select>
-        <button>Create Account</button>
+        <button>Create</button>
     </form>
     """
 
@@ -139,48 +139,38 @@ def auth():
 @app.route("/dashboard")
 def dashboard():
 
-    user = session.get("user")
-    role = session.get("role")
+    user = session.get("user", "Guest")
+    role = session.get("role", "None")
 
-    return f"""
-    <h2>{user} ({role})</h2>
-    <h3>Balance: {get_balance(user)}</h3>
-    <a href="/payroll">Payroll</a><br>
-    <a href="/stk">Deposit</a>
-    """
+    return render_template(
+        "dashboard.html",
+        user=user,
+        balance=get_balance(user),
+        role=role
+    )
 
 # ================= PAYROLL =================
-@app.route("/payroll", methods=["GET", "POST"])
+@app.route("/payroll", methods=["POST"])
 def payroll():
 
-    if request.method == "POST":
+    employer = session["user"]
+    employee = request.form["employee"]
+    amount = float(request.form["amount"])
 
-        employer = session["user"]
-        employee = request.form["employee"]
-        amount = float(request.form["amount"])
+    update_balance(employee, amount)
 
-        update_balance(employee, amount)
+    conn = sqlite3.connect("ute.db")
+    c = conn.cursor()
 
-        conn = sqlite3.connect("ute.db")
-        c = conn.cursor()
+    c.execute("INSERT INTO payroll VALUES (NULL, ?, ?, ?, ?)",
+              (employer, employee, amount, "PAID"))
 
-        c.execute("INSERT INTO payroll VALUES (NULL, ?, ?, ?, ?)",
-                  (employer, employee, amount, "PAID"))
+    conn.commit()
+    conn.close()
 
-        conn.commit()
-        conn.close()
+    return redirect("/dashboard")
 
-        return redirect("/dashboard")
-
-    return """
-    <form method="post">
-        <input name="employee">
-        <input name="amount">
-        <button>Pay</button>
-    </form>
-    """
-
-# ================= STK PUSH + AI FRAUD =================
+# ================= STK + AI FRAUD =================
 @app.route("/stk", methods=["POST"])
 def stk():
 
@@ -190,9 +180,8 @@ def stk():
     if not rate_limit(phone):
         return {"error": "Too many requests"}, 429
 
-    # AI FRAUD CHECK
     if fraud_check(amount) == 1:
-        return {"status": "blocked", "reason": "fraud detected"}
+        return {"status": "blocked", "reason": "AI fraud detected"}
 
     return jsonify(mpesa.stk_push(
         phone,
