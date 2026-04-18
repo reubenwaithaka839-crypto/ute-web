@@ -1,97 +1,67 @@
-from flask import Flask, request, redirect, session
+from flask import Flask, request, redirect, session, jsonify
 from ute import UTE
+from mpesa import Mpesa
 import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "ute-secret-key")
 
 ute = UTE()
+mpesa = Mpesa()
 
-# ================= PREMIUM UI STYLE =================
+# ================= UI STYLE =================
 STYLE = """
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     background: #0b1220;
     color: white;
 }
 
-/* NAVBAR */
 .nav {
     background: #0f172a;
     padding: 18px 25px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* CARDS */
 .card {
-    background: linear-gradient(145deg, #111827, #0f172a);
-    margin: 15px auto;
-    padding: 20px;
-    border-radius: 16px;
+    background: #1f2937;
+    margin: 12px auto;
+    padding: 18px;
+    border-radius: 14px;
     width: 90%;
     max-width: 750px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
-/* INPUTS */
 input {
     width: 90%;
-    padding: 12px;
-    margin: 8px 0;
+    padding: 10px;
+    margin: 6px 0;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: none;
     background: #0f172a;
     color: white;
-    outline: none;
 }
 
-/* ================= PREMIUM BUTTONS ================= */
 button {
-    padding: 12px 20px;
+    padding: 12px 18px;
     border: none;
     border-radius: 12px;
-    cursor: pointer;
-
-    font-weight: 600;
-    letter-spacing: 0.5px;
-
-    transition: all 0.25s ease;
     background: linear-gradient(135deg, #38bdf8, #2563eb);
     color: white;
-
-    box-shadow: 0 6px 18px rgba(56,189,248,0.25);
+    cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 10px 25px rgba(56,189,248,0.4);
+    transform: scale(1.03);
 }
 
-button:active {
-    transform: translateY(1px) scale(0.98);
-}
-
-/* GREEN BUTTON (LOGIN / ACTION) */
-.green {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    box-shadow: 0 6px 18px rgba(34,197,94,0.25);
-}
-
-/* RED BUTTON (LOGOUT) */
 .logout {
     background: linear-gradient(135deg, #ef4444, #b91c1c);
-    box-shadow: 0 6px 18px rgba(239,68,68,0.25);
-}
-
-/* CENTER */
-.center {
-    text-align: center;
-    margin-top: 80px;
 }
 </style>
 """
@@ -104,9 +74,9 @@ def home():
         <h3>UTE FINTECH</h3>
     </div>
 
-    <div class="center">
-        <h1>Welcome to UTE System</h1>
-        <a href="/auth"><button>🚀 Get Started</button></a>
+    <div class="card">
+        <h2>Welcome</h2>
+        <a href="/auth"><button>Get Started</button></a>
     </div>
     """
 
@@ -119,7 +89,6 @@ def auth():
         password = request.form["password"]
 
         ute.register_company(name, password)
-
         session["user"] = name
 
         return redirect("/dashboard")
@@ -130,7 +99,7 @@ def auth():
         <form method="post">
             <input name="name" placeholder="Name"><br>
             <input name="password" type="password" placeholder="Password"><br>
-            <button class="green">Login</button>
+            <button>Login</button>
         </form>
     </div>
     """
@@ -140,7 +109,6 @@ def auth():
 def dashboard():
 
     user = session.get("user")
-
     if not user:
         return redirect("/auth")
 
@@ -163,31 +131,83 @@ def dashboard():
     </div>
 
     <div class="card">
-        <h3>💸 Send Money / Payroll</h3>
+        <h3>💸 Payroll / Transfer</h3>
         <form method="post" action="/pay">
             <input name="receiver" placeholder="Receiver"><br>
             <input name="amount" placeholder="Amount"><br>
-            <button>Send Payment</button>
+            <button>Send</button>
         </form>
     </div>
 
     <div class="card">
-        <h3>📊 Recent Transactions</h3>
+        <h3>📲 M-Pesa Deposit (STK Push)</h3>
+        <form method="post" action="/mpesa/stk">
+            <input name="phone" placeholder="2547XXXXXXXX"><br>
+            <input name="amount" placeholder="Amount"><br>
+            <button>Pay with M-Pesa</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>📊 Transactions</h3>
         {tx_html}
     </div>
     """
 
-# ================= PAYMENT =================
+# ================= PAYROLL =================
 @app.route("/pay", methods=["POST"])
 def pay():
 
-    sender = session.get("user")
+    sender = session["user"]
     receiver = request.form["receiver"]
     amount = float(request.form["amount"])
 
     ute.process_salary(sender, receiver, amount)
 
     return redirect("/dashboard")
+
+# ================= MPESA STK PUSH =================
+@app.route("/mpesa/stk", methods=["POST"])
+def stk():
+
+    phone = request.form["phone"]
+    amount = request.form["amount"]
+
+    callback_url = "https://yourdomain.com/mpesa/callback"
+
+    response = mpesa.stk_push(phone, amount, callback_url)
+
+    return jsonify(response)
+
+# ================= MPESA CALLBACK =================
+@app.route("/mpesa/callback", methods=["POST"])
+def callback():
+
+    data = request.json
+
+    try:
+        stk = data["Body"]["stkCallback"]
+
+        result_code = stk["ResultCode"]
+        metadata = stk.get("CallbackMetadata", {}).get("Item", [])
+
+        phone = None
+        amount = None
+
+        for item in metadata:
+            if item["Name"] == "PhoneNumber":
+                phone = item["Value"]
+            if item["Name"] == "Amount":
+                amount = item["Value"]
+
+        status = "SUCCESS" if result_code == 0 else "FAILED"
+
+        ute.log_transaction(phone, "UTE SYSTEM", amount, "MPESA")
+
+        return jsonify({"Result": "OK"})
+
+    except:
+        return jsonify({"error": "callback failed"})
 
 # ================= LOGOUT =================
 @app.route("/logout")
