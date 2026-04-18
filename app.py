@@ -1,10 +1,20 @@
-from flask import Flask, request, redirect, session
+from flask import Flask, request, redirect, session, jsonify
 import sqlite3
+from mpesa import Mpesa
 
 app = Flask(__name__)
 app.secret_key = "ute-secret-key"
 
-# ================= DATABASE SETUP =================
+# ================= INIT M-PESA =================
+mpesa = Mpesa(
+    consumer_key="YOUR_KEY",
+    consumer_secret="YOUR_SECRET",
+    shortcode="174379",
+    passkey="YOUR_PASSKEY",
+    base_url="https://sandbox.safaricom.co.ke"
+)
+
+# ================= DATABASE =================
 def init_db():
     conn = sqlite3.connect("ute.db")
     c = conn.cursor()
@@ -38,12 +48,11 @@ init_db()
 STYLE = """
 <style>
 body {
-    font-family: Arial;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI";
     background: #0a0f1c;
     color: white;
-    margin: 0;
 }
-
 .card {
     background: #111827;
     margin: 15px auto;
@@ -52,14 +61,12 @@ body {
     max-width: 700px;
     border-radius: 14px;
 }
-
 input, select {
     width: 100%;
     padding: 12px;
     margin: 6px 0;
     border-radius: 10px;
 }
-
 button {
     width: 100%;
     padding: 14px;
@@ -76,7 +83,7 @@ button {
 def home():
     return STYLE + """
     <div class="card">
-        <h2>UTE FINTECH</h2>
+        <h2>UTE FINTECH SYSTEM</h2>
         <a href="/auth"><button>Register / Login</button></a>
     </div>
     """
@@ -123,24 +130,24 @@ def auth():
     </div>
     """
 
-# ================= GET BALANCE =================
+# ================= WALLET =================
 def get_balance(user):
     conn = sqlite3.connect("ute.db")
     c = conn.cursor()
 
     c.execute("SELECT balance FROM users WHERE name=?", (user,))
-    result = c.fetchone()
+    data = c.fetchone()
 
     conn.close()
+    return data[0] if data else 0
 
-    return result[0] if result else 0
 
-# ================= UPDATE BALANCE =================
 def update_balance(user, amount):
     conn = sqlite3.connect("ute.db")
     c = conn.cursor()
 
-    c.execute("UPDATE users SET balance = balance + ? WHERE name=?", (amount, user))
+    c.execute("UPDATE users SET balance = balance + ? WHERE name=?",
+              (amount, user))
 
     conn.commit()
     conn.close()
@@ -165,62 +172,70 @@ def dashboard():
     </div>
 
     <div class="card">
-        <h3>Deposit (Simulated)</h3>
+        <h3>💳 M-Pesa Deposit</h3>
 
-        <form method="post" action="/deposit">
+        <form method="post" action="/stk">
+            <input name="phone" placeholder="2547XXXXXXXX">
             <input name="amount" placeholder="Amount">
-            <button>Deposit</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3>Transfer</h3>
-
-        <form method="post" action="/transfer">
-            <input name="receiver" placeholder="Receiver">
-            <input name="amount" placeholder="Amount">
-            <button>Send</button>
+            <button>Send STK Push</button>
         </form>
     </div>
     """
 
-# ================= DEPOSIT =================
-@app.route("/deposit", methods=["POST"])
-def deposit():
+# ================= STK PUSH =================
+@app.route("/stk", methods=["POST"])
+def stk():
 
-    user = session["user"]
-    amount = float(request.form["amount"])
+    phone = request.form["phone"]
+    amount = request.form["amount"]
 
-    update_balance(user, amount)
+    response = mpesa.stk_push(
+        phone,
+        amount,
+        "https://your-app.onrender.com/callback"
+    )
 
-    return redirect("/dashboard")
+    return jsonify(response)
 
-# ================= TRANSFER =================
-@app.route("/transfer", methods=["POST"])
-def transfer():
+# ================= CALLBACK =================
+@app.route("/callback", methods=["POST"])
+def callback():
 
-    sender = session["user"]
-    receiver = request.form["receiver"]
-    amount = float(request.form["amount"])
+    data = request.json
 
-    conn = sqlite3.connect("ute.db")
-    c = conn.cursor()
+    try:
+        stk = data["Body"]["stkCallback"]
 
-    c.execute("SELECT balance FROM users WHERE name=?", (sender,))
-    sender_balance = c.fetchone()[0]
+        if stk["ResultCode"] == 0:
 
-    if sender_balance >= amount:
+            metadata = stk["CallbackMetadata"]["Item"]
 
-        c.execute("UPDATE users SET balance = balance - ? WHERE name=?", (amount, sender))
-        c.execute("UPDATE users SET balance = balance + ? WHERE name=?", (amount, receiver))
+            phone = None
+            amount = None
 
-        c.execute("INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)",
-                  (sender, receiver, amount, "TRANSFER"))
+            for item in metadata:
+                if item["Name"] == "PhoneNumber":
+                    phone = str(item["Value"])
+                if item["Name"] == "Amount":
+                    amount = float(item["Value"])
 
-    conn.commit()
-    conn.close()
+            update_balance(phone, amount)
 
-    return redirect("/dashboard")
+            conn = sqlite3.connect("ute.db")
+            c = conn.cursor()
+
+            c.execute("""
+                INSERT INTO transactions (sender, receiver, amount, type)
+                VALUES (?, ?, ?, ?)
+            """, (phone, "WALLET", amount, "MPESA"))
+
+            conn.commit()
+            conn.close()
+
+        return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+    except:
+        return {"ResultCode": 1, "ResultDesc": "Failed"}
 
 # ================= RUN =================
 if __name__ == "__main__":
