@@ -3,7 +3,7 @@ from ute import UTE
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = "UTE_SUPER_SECURE_2026"
+app.secret_key = "UTE_FINAL_SECRET_2026"
 
 ute = UTE()
 
@@ -13,8 +13,8 @@ def home():
     return """
     <html>
     <body style="font-family:Arial;text-align:center;background:linear-gradient(to right,#0f2027,#203a43,#2c5364);color:white;">
-        <h1 style="margin-top:80px;">WELCOME TO UTE</h1>
-        <p>Smart Employment + Financial System</p>
+        <h1 style="margin-top:80px;">WELCOME TO UTE SYSTEM</h1>
+        <p>Smart Payroll + Wallet + Finance System</p>
         <a href="/auth"><button style="padding:15px 30px;background:#00c6ff;border:none;border-radius:10px;">Get Started</button></a>
     </body>
     </html>
@@ -27,14 +27,10 @@ def auth():
         name = request.form.get("name")
         password = request.form.get("password")
         role = request.form.get("role")
-        agree = request.form.get("agree")
 
         bank = request.form.get("bank")
         acc_name = request.form.get("acc_name")
         acc_number = request.form.get("acc_number")
-
-        if not agree:
-            return "You must accept Terms & Conditions"
 
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
@@ -67,8 +63,6 @@ def auth():
             <input name="acc_name" placeholder="Account Name" style="width:100%;padding:10px;margin:10px 0;">
             <input name="acc_number" placeholder="Account Number" style="width:100%;padding:10px;margin:10px 0;">
 
-            <label><input type="checkbox" name="agree"> I agree to Terms</label>
-
             <button type="submit" style="width:100%;padding:10px;background:#00c6ff;border:none;margin-top:10px;">Continue</button>
         </form>
     </body>
@@ -100,6 +94,8 @@ def dashboard():
         <a href="/deposit"><button>Deposit</button></a>
         <a href="/withdraw"><button>Withdraw</button></a>
         <a href="/pay"><button>Send Payment</button></a>
+        <a href="/set_salary"><button>Set Salary</button></a>
+        <a href="/payroll_dashboard"><button>Payroll Dashboard</button></a>
 
         { '<a href="/admin"><button>Admin Dashboard</button></a>' if role == "admin" else '' }
 
@@ -150,11 +146,9 @@ def withdraw():
 
     if request.method == "POST":
         amount = int(request.form.get("amount"))
-        success = ute.withdraw(user, amount)
-
-        if success:
+        if ute.withdraw(user, amount):
             return redirect("/wallet")
-        return "Insufficient Balance"
+        return "Insufficient balance"
 
     return """
     <html>
@@ -168,7 +162,7 @@ def withdraw():
     </html>
     """
 
-# ================= PAYMENTS =================
+# ================= PAYMENT =================
 @app.route("/pay", methods=["GET", "POST"])
 def pay():
     if "user" not in session:
@@ -180,9 +174,7 @@ def pay():
         receiver = request.form.get("receiver")
         amount = int(request.form.get("amount"))
 
-        success = ute.transfer_with_commission(sender, receiver, amount)
-
-        if success:
+        if ute.transfer_with_commission(sender, receiver, amount):
             return redirect("/wallet")
         return "Payment Failed"
 
@@ -200,7 +192,74 @@ def pay():
     </html>
     """
 
-# ================= ADMIN DASHBOARD =================
+# ================= SET SALARY =================
+@app.route("/set_salary", methods=["GET", "POST"])
+def set_salary():
+    if "user" not in session:
+        return redirect("/auth")
+
+    employer = session["user"]
+
+    if request.method == "POST":
+        employee = request.form.get("employee")
+        salary = int(request.form.get("salary"))
+
+        ute.set_salary(employer, employee, salary)
+        return "Salary Assigned"
+
+    return """
+    <html>
+    <body style="text-align:center;font-family:Arial;background:#111;color:white;">
+        <h1>Set Salary</h1>
+
+        <form method="POST">
+            <input name="employee" placeholder="Employee Username"><br><br>
+            <input name="salary" placeholder="Salary"><br><br>
+            <button type="submit">Assign</button>
+        </form>
+    </body>
+    </html>
+    """
+
+# ================= RUN PAYROLL =================
+@app.route("/run_payroll")
+def run_payroll():
+    if "user" not in session or session["role"] != "admin":
+        return "Access Denied"
+
+    ute.run_payroll()
+    return "Payroll Executed Successfully"
+
+# ================= PAYROLL DASHBOARD =================
+@app.route("/payroll_dashboard")
+def payroll_dashboard():
+    if "user" not in session or session["role"] != "admin":
+        return "Access Denied"
+
+    records = ute.get_all_payroll()
+    total = ute.get_total_payroll_amount()
+
+    rows = ""
+    for e, emp, sal in records:
+        rows += f"<tr><td>{e}</td><td>{emp}</td><td>{sal}</td></tr>"
+
+    return f"""
+    <html>
+    <body style="text-align:center;font-family:Arial;background:#0d0d0d;color:white;">
+        <h1>Payroll Dashboard</h1>
+        <h2>Total Payroll: {total}</h2>
+
+        <a href="/run_payroll"><button>Run Payroll</button></a>
+
+        <table border="1" style="margin:20px auto;width:80%;">
+            <tr><th>Employer</th><th>Employee</th><th>Salary</th></tr>
+            {rows}
+        </table>
+    </body>
+    </html>
+    """
+
+# ================= ADMIN =================
 @app.route("/admin")
 def admin():
     if "user" not in session or session["role"] != "admin":
@@ -212,14 +271,14 @@ def admin():
 
     return f"""
     <html>
-    <body style="font-family:Arial;text-align:center;background:#0d0d0d;color:white;">
+    <body style="text-align:center;font-family:Arial;background:#000;color:white;">
         <h1>ADMIN DASHBOARD</h1>
 
-        <h2>Total Users: {users}</h2>
-        <h2>Total System Balance: KES {total}</h2>
-        <h2>Admin Earnings: KES {earnings}</h2>
+        <h2>Users: {users}</h2>
+        <h2>System Balance: {total}</h2>
+        <h2>Earnings: {earnings}</h2>
 
-        <a href="/dashboard"><button>Back</button></a>
+        <a href="/payroll_dashboard"><button>Payroll Dashboard</button></a>
     </body>
     </html>
     """
