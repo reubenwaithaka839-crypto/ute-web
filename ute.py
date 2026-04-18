@@ -10,7 +10,7 @@ class UTE:
 
     # ================= TABLES =================
     def create_tables(self):
-        # USERS
+        # USERS TABLE
         self.cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,6 +77,54 @@ class UTE:
         """, (amount, user))
         self.conn.commit()
 
+    # ================= WITHDRAW =================
+    def withdraw(self, user, amount):
+        balance = self.get_balance(user)
+
+        if balance >= amount:
+            self.cursor.execute("""
+            UPDATE wallets
+            SET balance = balance - ?
+            WHERE user=?
+            """, (amount, user))
+            self.conn.commit()
+            return True
+        return False
+
+    # ================= PAYMENT WITH COMMISSION =================
+    def transfer_with_commission(self, sender, receiver, amount, commission_rate=0.02):
+        sender_balance = self.get_balance(sender)
+
+        if sender_balance >= amount:
+            commission = amount * commission_rate
+            receiver_amount = amount - commission
+
+            # deduct from sender
+            self.cursor.execute("""
+            UPDATE wallets
+            SET balance = balance - ?
+            WHERE user=?
+            """, (amount, sender))
+
+            # credit receiver
+            self.cursor.execute("""
+            UPDATE wallets
+            SET balance = balance + ?
+            WHERE user=?
+            """, (receiver_amount, receiver))
+
+            # credit admin
+            self.cursor.execute("""
+            UPDATE wallets
+            SET balance = balance + ?
+            WHERE user=?
+            """, (commission, "admin"))
+
+            self.conn.commit()
+            return True
+
+        return False
+
     # ================= USERS =================
     def register_user(self, name, password, role):
         try:
@@ -86,11 +134,15 @@ class UTE:
             """, (name, password, role))
             self.conn.commit()
 
-            # AUTO CREATE WALLET
+            # create wallet automatically
             self.init_wallet(name)
 
         except:
-            pass  # user exists
+            pass
+
+        # ensure admin wallet exists
+        if role == "admin":
+            self.init_wallet(name)
 
     def get_user(self, name):
         self.cursor.execute("""
@@ -98,7 +150,7 @@ class UTE:
         """, (name,))
         return self.cursor.fetchone()
 
-    # ================= USER BANK =================
+    # ================= BANK DETAILS =================
     def save_user_bank(self, user, role, bank, acc_name, acc_number):
         self.cursor.execute("""
         INSERT INTO user_bank_details (user, role, bank_name, account_name, account_number)
@@ -106,15 +158,6 @@ class UTE:
         """, (user, role, bank, acc_name, acc_number))
         self.conn.commit()
 
-    def get_user_bank(self, user):
-        self.cursor.execute("""
-        SELECT bank_name, account_name, account_number
-        FROM user_bank_details
-        WHERE user=?
-        """, (user,))
-        return self.cursor.fetchone()
-
-    # ================= ADMIN BANK =================
     def save_admin_bank(self, bank, name, number):
         self.cursor.execute("DELETE FROM admin_bank")
         self.cursor.execute("""
@@ -123,13 +166,22 @@ class UTE:
         """, (bank, name, number))
         self.conn.commit()
 
-    def get_admin_bank(self):
+    # ================= ADMIN STATS =================
+    def get_total_users(self):
+        self.cursor.execute("SELECT COUNT(*) FROM users")
+        return self.cursor.fetchone()[0]
+
+    def get_total_system_balance(self):
+        self.cursor.execute("SELECT SUM(balance) FROM wallets")
+        result = self.cursor.fetchone()[0]
+        return result if result else 0
+
+    def get_admin_earnings(self):
         self.cursor.execute("""
-        SELECT bank_name, account_name, account_number
-        FROM admin_bank
-        LIMIT 1
+        SELECT balance FROM wallets WHERE user='admin'
         """)
-        return self.cursor.fetchone()
+        result = self.cursor.fetchone()
+        return result[0] if result else 0
 
     # ================= CLOSE =================
     def close(self):
