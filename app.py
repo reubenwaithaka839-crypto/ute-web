@@ -26,11 +26,9 @@ last_request = {}
 
 def rate_limit(user):
     now = time.time()
-
     if user in last_request:
         if now - last_request[user] < 10:
             return False
-
     last_request[user] = now
     return True
 
@@ -47,20 +45,20 @@ def init_db():
         balance REAL DEFAULT 0
     )""")
 
-    c.execute("""CREATE TABLE IF NOT EXISTS transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender TEXT,
-        receiver TEXT,
-        amount REAL,
-        type TEXT
-    )""")
-
     c.execute("""CREATE TABLE IF NOT EXISTS payroll (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         employer TEXT,
         employee TEXT,
         amount REAL,
         status TEXT
+    )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender TEXT,
+        receiver TEXT,
+        amount REAL,
+        type TEXT
     )""")
 
     c.execute("""CREATE TABLE IF NOT EXISTS processed_payments (
@@ -92,12 +90,11 @@ def get_balance(user):
 # ================= HOME =================
 @app.route("/")
 def home():
-    return "<h1>UTE FINTECH SYSTEM</h1><a href='/auth'>Start</a>"
+    return "<h1>UTE FINTECH SYSTEM</h1>"
 
 # ================= AUTH =================
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
-
     if request.method == "POST":
 
         name = request.form["name"]
@@ -127,7 +124,7 @@ def auth():
             <option value="employer">Employer</option>
             <option value="employee">Employee</option>
         </select>
-        <button>Create</button>
+        <button>Create Account</button>
     </form>
     """
 
@@ -137,7 +134,6 @@ def dashboard():
 
     user = session.get("user")
     role = session.get("role")
-
     balance = get_balance(user)
 
     return f"""
@@ -145,7 +141,7 @@ def dashboard():
     <h3>Balance: {balance}</h3>
 
     <a href='/payroll'>Payroll</a><br>
-    <a href='/deposit'>M-Pesa</a>
+    <a href='/stk'>Deposit</a>
     """
 
 # ================= PAYROLL =================
@@ -175,7 +171,7 @@ def payroll():
     <form method="post">
         <input name="employee" placeholder="Employee">
         <input name="amount" placeholder="Amount">
-        <button>Pay</button>
+        <button>Pay Salary</button>
     </form>
     """
 
@@ -189,13 +185,11 @@ def stk():
     if not rate_limit(phone):
         return {"error": "Too many requests"}, 429
 
-    res = mpesa.stk_push(
+    return jsonify(mpesa.stk_push(
         phone,
         amount,
         "https://your-app.onrender.com/callback"
-    )
-
-    return jsonify(res)
+    ))
 
 # ================= CALLBACK =================
 @app.route("/callback", methods=["POST"])
