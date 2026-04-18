@@ -1,9 +1,9 @@
-from flask import Flask, request, redirect, session, url_for
+from flask import Flask, request, redirect, session
 from ute import UTE
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key_123"
+app.secret_key = "ute_super_secret_key_2026"
 
 ute = UTE()
 
@@ -13,15 +13,15 @@ def home():
     return """
     <html>
     <head>
-        <title>UTE System</title>
+        <title>UTE Platform</title>
         <style>
             body {
                 font-family: Arial;
-                background: linear-gradient(to right, #141E30, #243B55);
+                background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
                 color: white;
                 text-align: center;
             }
-            h1 {margin-top: 80px; font-size: 50px;}
+            h1 { margin-top: 80px; font-size: 50px; }
             .btn {
                 padding: 15px 30px;
                 background: #00c6ff;
@@ -29,12 +29,13 @@ def home():
                 border-radius: 10px;
                 font-size: 18px;
                 cursor: pointer;
+                margin-top: 20px;
             }
         </style>
     </head>
     <body>
         <h1>Welcome to UTE</h1>
-        <p>Smart Employment & Financial Platform</p>
+        <p>Employment + Financial System Platform</p>
         <a href="/auth"><button class="btn">Get Started</button></a>
     </body>
     </html>
@@ -54,18 +55,12 @@ def auth():
         acc_number = request.form.get("acc_number")
 
         if not agree:
-            return "You must agree to Terms"
+            return "You must accept Terms"
 
-        if not name or not password:
-            return "Missing fields"
-
-        # hash password safely
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        # save user
         ute.register_user(name, hashed, role)
 
-        # save bank for non-admin
         if role != "admin":
             ute.save_user_bank(name, role, bank, acc_name, acc_number)
 
@@ -76,54 +71,26 @@ def auth():
 
     return """
     <html>
-    <head>
-    <style>
-    body {font-family: Arial; background:#1e1e2f; color:white;}
-    form {
-        margin: 50px auto;
-        width: 350px;
-        background:#2b2b3c;
-        padding:20px;
-        border-radius:15px;
-    }
-    input, select {
-        width:100%;
-        padding:10px;
-        margin:10px 0;
-        border:none;
-        border-radius:5px;
-    }
-    button {
-        padding:10px;
-        width:100%;
-        background:#00c6ff;
-        border:none;
-        border-radius:5px;
-    }
-    </style>
-    </head>
-    <body>
-    <form method="POST">
+    <body style="font-family:Arial;background:#1e1e2f;color:white;">
+    <form method="POST" style="width:350px;margin:50px auto;background:#2b2b3c;padding:20px;border-radius:15px;">
         <h2>Register / Login</h2>
 
-        <input name="name" placeholder="Name" required>
-        <input type="password" name="password" placeholder="Password" required>
+        <input name="name" placeholder="Name" required style="width:100%;padding:10px;margin:10px 0;">
+        <input type="password" name="password" placeholder="Password" required style="width:100%;padding:10px;margin:10px 0;">
 
-        <select name="role">
+        <select name="role" style="width:100%;padding:10px;margin:10px 0;">
             <option value="employee">Employee</option>
             <option value="employer">Employer</option>
             <option value="admin">Admin</option>
         </select>
 
-        <input name="bank" placeholder="Bank Name">
-        <input name="acc_name" placeholder="Account Name">
-        <input name="acc_number" placeholder="Account Number">
+        <input name="bank" placeholder="Bank Name" style="width:100%;padding:10px;margin:10px 0;">
+        <input name="acc_name" placeholder="Account Name" style="width:100%;padding:10px;margin:10px 0;">
+        <input name="acc_number" placeholder="Account Number" style="width:100%;padding:10px;margin:10px 0;">
 
-        <label>
-            <input type="checkbox" name="agree"> Agree to Terms
-        </label>
+        <label><input type="checkbox" name="agree"> I agree to Terms</label>
 
-        <button type="submit">Continue</button>
+        <button type="submit" style="width:100%;padding:10px;background:#00c6ff;border:none;margin-top:10px;">Continue</button>
     </form>
     </body>
     </html>
@@ -138,67 +105,56 @@ def dashboard():
     user = session["user"]
     role = session["role"]
 
-    if role == "admin":
-        return f"""
-        <html>
-        <body style='background:#111;color:white;font-family:Arial;text-align:center'>
-        <h1>Admin Dashboard</h1>
-        <p>Welcome {user}</p>
-        <a href="/admin_bank">Set Bank Details</a><br><br>
-        <a href="/logout">Logout</a>
-        </body>
-        </html>
-        """
+    balance = ute.get_balance(user)
 
-    elif role == "employer":
-        return f"""
-        <html>
-        <body style='background:#222;color:white;font-family:Arial;text-align:center'>
-        <h1>Employer Dashboard</h1>
-        <p>Welcome {user}</p>
-        <a href="/logout">Logout</a>
-        </body>
-        </html>
-        """
-
-    else:
-        return f"""
-        <html>
-        <body style='background:#333;color:white;font-family:Arial;text-align:center'>
-        <h1>Employee Dashboard</h1>
-        <p>Welcome {user}</p>
-        <a href="/logout">Logout</a>
-        </body>
-        </html>
-        """
-
-# ================= ADMIN BANK =================
-@app.route("/admin_bank", methods=["GET", "POST"])
-def admin_bank():
-    if request.method == "POST":
-        bank = request.form.get("bank")
-        name = request.form.get("name")
-        number = request.form.get("number")
-
-        if not bank or not name or not number:
-            return "Fill all fields"
-
-        ute.save_admin_bank(bank, name, number)
-        return redirect("/dashboard")
-
-    return """
+    return f"""
     <html>
-    <body style='font-family:Arial;text-align:center'>
-    <h2>Admin Bank Setup</h2>
-    <form method="POST">
-        <input name="bank" placeholder="Bank Name"><br><br>
-        <input name="name" placeholder="Account Name"><br><br>
-        <input name="number" placeholder="Account Number"><br><br>
-        <button type="submit">Save</button>
-    </form>
+    <body style="font-family:Arial;background:#111;color:white;text-align:center;">
+        <h1>{role.upper()} DASHBOARD</h1>
+        <h2>Welcome {user}</h2>
+
+        <div style="background:#222;padding:20px;margin:20px;border-radius:10px;">
+            <h3>Wallet Balance</h3>
+            <h2 style="color:#00c6ff;">KES {balance}</h2>
+        </div>
+
+        <a href="/wallet"><button>Open Wallet</button></a>
+        <a href="/deposit"><button>Deposit +1000</button></a>
+        <a href="/logout"><button>Logout</button></a>
     </body>
     </html>
     """
+
+# ================= WALLET =================
+@app.route("/wallet")
+def wallet():
+    if "user" not in session:
+        return redirect("/auth")
+
+    user = session["user"]
+    balance = ute.get_balance(user)
+
+    return f"""
+    <html>
+    <body style="font-family:Arial;background:#222;color:white;text-align:center;">
+        <h1>Wallet</h1>
+        <h2>Your Balance: KES {balance}</h2>
+        <a href="/deposit"><button>Add 1000</button></a>
+        <a href="/dashboard"><button>Back</button></a>
+    </body>
+    </html>
+    """
+
+# ================= DEPOSIT =================
+@app.route("/deposit")
+def deposit():
+    if "user" not in session:
+        return redirect("/auth")
+
+    user = session["user"]
+    ute.update_balance(user, 1000)
+
+    return redirect("/wallet")
 
 # ================= LOGOUT =================
 @app.route("/logout")
