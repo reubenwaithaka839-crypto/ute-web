@@ -4,17 +4,17 @@ from datetime import datetime
 
 class Mpesa:
 
-    def __init__(self, consumer_key, consumer_secret, shortcode, passkey, base_url):
-        self.consumer_key = consumer_key
-        self.consumer_secret = consumer_secret
+    def __init__(self, key, secret, shortcode, passkey, base_url):
+        self.key = key
+        self.secret = secret
         self.shortcode = shortcode
         self.passkey = passkey
         self.base_url = base_url
 
     def get_token(self):
         url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(url, auth=(self.consumer_key, self.consumer_secret))
-        return response.json()["access_token"]
+        res = requests.get(url, auth=(self.key, self.secret))
+        return res.json()["access_token"]
 
     def generate_password(self):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
