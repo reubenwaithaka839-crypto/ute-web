@@ -1,15 +1,19 @@
 from flask import Flask, request, redirect, session, jsonify
 from ute import UTE
 from mpesa import Mpesa
+from dotenv import load_dotenv
 import os
 
+# Load environment variables (for local dev)
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "ute-secret-key")
+app.secret_key = os.getenv("SECRET_KEY", "ute-default-key")
 
 ute = UTE()
 mpesa = Mpesa()
 
-# ================= UI STYLE =================
+# ================= PREMIUM UI =================
 STYLE = """
 <style>
 body {
@@ -21,9 +25,10 @@ body {
 
 .nav {
     background: #0f172a;
-    padding: 18px 25px;
+    padding: 18px;
     display: flex;
     justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .card {
@@ -66,6 +71,16 @@ button:hover {
 </style>
 """
 
+# ================= HEALTH CHECK =================
+@app.route("/health")
+def health():
+    return {
+        "status": "UP",
+        "system": "UTE FINTECH",
+        "wallet": True,
+        "mpesa": True
+    }
+
 # ================= HOME =================
 @app.route("/")
 def home():
@@ -75,7 +90,7 @@ def home():
     </div>
 
     <div class="card">
-        <h2>Welcome</h2>
+        <h2>Welcome to UTE</h2>
         <a href="/auth"><button>Get Started</button></a>
     </div>
     """
@@ -140,7 +155,7 @@ def dashboard():
     </div>
 
     <div class="card">
-        <h3>📲 M-Pesa Deposit (STK Push)</h3>
+        <h3>📲 M-Pesa Deposit</h3>
         <form method="post" action="/mpesa/stk">
             <input name="phone" placeholder="2547XXXXXXXX"><br>
             <input name="amount" placeholder="Amount"><br>
@@ -173,7 +188,10 @@ def stk():
     phone = request.form["phone"]
     amount = request.form["amount"]
 
-    callback_url = "https://yourdomain.com/mpesa/callback"
+    callback_url = os.getenv(
+        "CALLBACK_URL",
+        "https://your-app.onrender.com/mpesa/callback"
+    )
 
     response = mpesa.stk_push(phone, amount, callback_url)
 
@@ -183,9 +201,8 @@ def stk():
 @app.route("/mpesa/callback", methods=["POST"])
 def callback():
 
-    data = request.json
-
     try:
+        data = request.json
         stk = data["Body"]["stkCallback"]
 
         result_code = stk["ResultCode"]
@@ -200,14 +217,13 @@ def callback():
             if item["Name"] == "Amount":
                 amount = item["Value"]
 
-        status = "SUCCESS" if result_code == 0 else "FAILED"
+        if result_code == 0:
+            ute.log_transaction(phone, "UTE SYSTEM", amount, "MPESA")
 
-        ute.log_transaction(phone, "UTE SYSTEM", amount, "MPESA")
-
-        return jsonify({"Result": "OK"})
+        return jsonify({"status": "ok"})
 
     except:
-        return jsonify({"error": "callback failed"})
+        return jsonify({"status": "failed"})
 
 # ================= LOGOUT =================
 @app.route("/logout")
@@ -217,4 +233,4 @@ def logout():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
