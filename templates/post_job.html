@@ -1,24 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Post a Job</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6 card p-4 shadow-sm border-0" style="border-radius: 20px;">
-                <h2 class="text-center mb-4 text-success fw-bold">Create Job Listing</h2>
-                <form method="POST">
-                    <input name="title" class="form-control mb-3" placeholder="Job Title" required>
-                    <input name="location" class="form-control mb-3" placeholder="Location" required>
-                    <input name="salary" type="number" class="form-control mb-3" placeholder="Salary (Ksh)" required>
-                    <textarea name="description" class="form-control mb-3" placeholder="Description" rows="3" required></textarea>
-                    <textarea name="requirements" class="form-control mb-3" placeholder="Requirements" rows="2" required></textarea>
-                    <button class="btn btn-success w-100 py-2 fw-bold">Post Job Now</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+<!DOCTYPE html><html><head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<body class="bg-light"><div class="container mt-5"><div class="card p-4 mx-auto" style="max-width:500px;"><h2>Post Job</h2>
+<form method="POST"><input name="title" class="form-control mb-2" placeholder="Title"><input name="location" class="form-control mb-2" placeholder="Location"><input name="salary" class="form-control mb-2" placeholder="Salary">
+<textarea name="description" class="form-control mb-2" placeholder="Description"></textarea><textarea name="requirements" class="form-control mb-2" placeholder="Requirements"></textarea>
+<button class="btn btn-success w-100">Submit</button></form></div></div></body></html>
