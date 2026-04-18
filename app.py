@@ -2,24 +2,24 @@ from flask import Flask, request, session, redirect, jsonify
 import sqlite3
 import os
 import time
+import numpy as np
+import joblib
 from mpesa import Mpesa
 
 app = Flask(__name__)
 app.secret_key = "ute-secret-key"
 
-# ================= ENV VARIABLES =================
-CONSUMER_KEY = os.environ.get("MPESA_KEY")
-CONSUMER_SECRET = os.environ.get("MPESA_SECRET")
-SHORTCODE = os.environ.get("MPESA_SHORTCODE")
-PASSKEY = os.environ.get("MPESA_PASSKEY")
-
+# ================= M-PESA CONFIG =================
 mpesa = Mpesa(
-    CONSUMER_KEY,
-    CONSUMER_SECRET,
-    SHORTCODE,
-    PASSKEY,
+    os.environ.get("MPESA_KEY"),
+    os.environ.get("MPESA_SECRET"),
+    os.environ.get("MPESA_SHORTCODE"),
+    os.environ.get("MPESA_PASSKEY"),
     "https://sandbox.safaricom.co.ke"
 )
+
+# ================= LOAD AI MODEL =================
+fraud_model = joblib.load("fraud_model.pkl")
 
 # ================= RATE LIMIT =================
 last_request = {}
@@ -45,20 +45,20 @@ def init_db():
         balance REAL DEFAULT 0
     )""")
 
-    c.execute("""CREATE TABLE IF NOT EXISTS payroll (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        employer TEXT,
-        employee TEXT,
-        amount REAL,
-        status TEXT
-    )""")
-
     c.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sender TEXT,
         receiver TEXT,
         amount REAL,
         type TEXT
+    )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS payroll (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employer TEXT,
+        employee TEXT,
+        amount REAL,
+        status TEXT
     )""")
 
     c.execute("""CREATE TABLE IF NOT EXISTS processed_payments (
@@ -87,6 +87,12 @@ def get_balance(user):
     conn.close()
     return data[0] if data else 0
 
+# ================= AI FRAUD SYSTEM =================
+def fraud_check(amount):
+    hour = int(time.strftime("%H"))
+    features = np.array([[amount, 2, hour]])  # simplified model input
+    return fraud_model.predict(features)[0]
+
 # ================= HOME =================
 @app.route("/")
 def home():
@@ -95,6 +101,7 @@ def home():
 # ================= AUTH =================
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
+
     if request.method == "POST":
 
         name = request.form["name"]
@@ -104,7 +111,7 @@ def auth():
         conn = sqlite3.connect("ute.db")
         c = conn.cursor()
 
-        c.execute("INSERT INTO users (name, password, role, balance) VALUES (?, ?, ?, ?)",
+        c.execute("INSERT INTO users VALUES (NULL, ?, ?, ?, ?)",
                   (name, password, role, 0))
 
         conn.commit()
@@ -134,14 +141,12 @@ def dashboard():
 
     user = session.get("user")
     role = session.get("role")
-    balance = get_balance(user)
 
     return f"""
     <h2>{user} ({role})</h2>
-    <h3>Balance: {balance}</h3>
-
-    <a href='/payroll'>Payroll</a><br>
-    <a href='/stk'>Deposit</a>
+    <h3>Balance: {get_balance(user)}</h3>
+    <a href="/payroll">Payroll</a><br>
+    <a href="/stk">Deposit</a>
     """
 
 # ================= PAYROLL =================
@@ -159,7 +164,7 @@ def payroll():
         conn = sqlite3.connect("ute.db")
         c = conn.cursor()
 
-        c.execute("INSERT INTO payroll (employer, employee, amount, status) VALUES (?, ?, ?, ?)",
+        c.execute("INSERT INTO payroll VALUES (NULL, ?, ?, ?, ?)",
                   (employer, employee, amount, "PAID"))
 
         conn.commit()
@@ -169,21 +174,25 @@ def payroll():
 
     return """
     <form method="post">
-        <input name="employee" placeholder="Employee">
-        <input name="amount" placeholder="Amount">
-        <button>Pay Salary</button>
+        <input name="employee">
+        <input name="amount">
+        <button>Pay</button>
     </form>
     """
 
-# ================= STK PUSH =================
+# ================= STK PUSH + AI FRAUD =================
 @app.route("/stk", methods=["POST"])
 def stk():
 
     phone = request.form["phone"]
-    amount = request.form["amount"]
+    amount = float(request.form["amount"])
 
     if not rate_limit(phone):
         return {"error": "Too many requests"}, 429
+
+    # AI FRAUD CHECK
+    if fraud_check(amount) == 1:
+        return {"status": "blocked", "reason": "fraud detected"}
 
     return jsonify(mpesa.stk_push(
         phone,
@@ -211,7 +220,7 @@ def callback():
             if c.fetchone():
                 return {"status": "duplicate"}
 
-            c.execute("INSERT INTO processed_payments (checkout_id) VALUES (?)", (checkout_id,))
+            c.execute("INSERT INTO processed_payments VALUES (NULL, ?)", (checkout_id,))
 
             items = stk["CallbackMetadata"]["Item"]
 
@@ -226,10 +235,8 @@ def callback():
 
             update_balance(phone, amount)
 
-            c.execute("""
-                INSERT INTO transactions (sender, receiver, amount, type)
-                VALUES (?, ?, ?, ?)
-            """, (phone, "WALLET", amount, "MPESA"))
+            c.execute("INSERT INTO transactions VALUES (NULL, ?, ?, ?, ?)",
+                      (phone, "WALLET", amount, "MPESA"))
 
             conn.commit()
             conn.close()
