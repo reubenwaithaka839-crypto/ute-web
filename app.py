@@ -145,8 +145,8 @@ def dashboard():
     return render_template(
         "dashboard.html",
         user=user,
-        balance=get_balance(user),
-        role=role
+        role=role,
+        balance=get_balance(user)
     )
 
 # ================= PAYROLL =================
@@ -170,7 +170,7 @@ def payroll():
 
     return redirect("/dashboard")
 
-# ================= STK + AI FRAUD =================
+# ================= STK PUSH + AI =================
 @app.route("/stk", methods=["POST"])
 def stk():
 
