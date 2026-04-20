@@ -7,80 +7,74 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; color: #1f2937; }
         .container { max-width: 900px; margin: 0 auto; }
-        
-        /* Header / Wallet Card */
         .wallet-card { 
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white; padding: 40px; border-radius: 24px; text-align: center;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4); margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); margin-bottom: 30px;
         }
-        .wallet-card h1 { font-size: 3rem; margin: 10px 0; }
-        
-        /* The Big Button Grid */
+        .wallet-card h1 { font-size: 3.5rem; margin: 10px 0; font-weight: 800; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-
         .btn-card {
-            background: white; border-radius: 20px; padding: 30px; text-decoration: none;
+            background: white; border-radius: 20px; padding: 35px; text-decoration: none;
             color: #374151; display: flex; flex-direction: column; align-items: center;
-            transition: all 0.3s ease; border: 1px solid #e5e7eb;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e5e7eb;
         }
-        .btn-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-color: #3b82f6; }
-        .icon { font-size: 3rem; margin-bottom: 15px; }
-        .label { font-weight: 800; font-size: 1.2rem; }
-
-        /* Logout special style */
-        .logout { color: #ef4444; border-color: #fee2e2; }
-
-        /* Modal styling */
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 15% auto; padding: 30px; border-radius: 20px; width: 300px; text-align: center; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-pay { background: #22c55e; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-card:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(0,0,0,0.1); border-color: #3b82f6; }
+        .icon { font-size: 3.5rem; margin-bottom: 15px; }
+        .label { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px; }
+        .logout { color: #ef4444; margin-top: 10px; grid-column: span 2; }
+        @media (max-width: 600px) { .logout { grid-column: span 1; } }
+        
+        /* Modal Popup */
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 10% auto; padding: 40px; border-radius: 24px; width: 320px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #f3f4f6; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        input:focus { border-color: #3b82f6; outline: none; }
+        .btn-pay { background: #059669; color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold; font-size: 1.1rem; margin-top: 10px; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="wallet-card">
-        <p>Welcome back, <strong>{{ user }}</strong></p>
-        <p style="opacity: 0.8;">Available Balance</p>
-        <h1>KES {{ balance }}</h1>
+        <p style="text-transform: uppercase; letter-spacing: 2px; font-weight: 600; font-size: 0.8rem;">Member: {{ user }}</p>
+        <h1 id="balance">KES {{ balance }}</h1>
+        <p style="opacity: 0.8;">Account Balance</p>
     </div>
 
     <div class="grid">
         {% if role == 'employer' %}
         <a href="/post_job" class="btn-card">
-            <div class="icon">💼</div>
+            <div class="icon">➕</div>
             <div class="label">Post a Job</div>
         </a>
         {% else %}
         <a href="/jobs" class="btn-card">
-            <div class="icon">🔍</div>
-            <div class="label">Find Jobs</div>
+            <div class="icon">💼</div>
+            <div class="label">Available Jobs</div>
         </a>
         {% endif %}
 
         <a href="javascript:void(0)" class="btn-card" onclick="openModal()">
-            <div class="icon">📱</div>
-            <div class="label">Deposit M-Pesa</div>
+            <div class="icon">💸</div>
+            <div class="label">Deposit Cash</div>
         </a>
 
         <a href="/logout" class="btn-card logout">
-            <div class="icon">🚪</div>
-            <div class="label">Sign Out</div>
+            <div class="icon">🏃</div>
+            <div class="label">Logout</div>
         </a>
     </div>
 </div>
 
 <div id="deposit-modal" class="modal">
     <div class="modal-content">
-        <h3>Deposit Money</h3>
+        <h2 style="margin-top:0;">M-Pesa Deposit</h2>
         <form action="/deposit" method="POST">
             <input type="text" name="phone" placeholder="2547XXXXXXXX" required>
-            <input type="number" name="amount" placeholder="Amount (KES)" required>
-            <button type="submit" class="btn-pay">Send STK Push</button>
-            <button type="button" onclick="closeModal()" style="background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">Cancel</button>
+            <input type="number" name="amount" placeholder="Amount" required>
+            <button type="submit" class="btn-pay">Pay Now</button>
+            <button type="button" onclick="closeModal()" style="background:none; border:none; color:#9ca3af; margin-top:15px; cursor:pointer; font-weight:600;">Close</button>
         </form>
     </div>
 </div>
@@ -88,7 +82,7 @@
 <script>
     function openModal() { document.getElementById('deposit-modal').style.display = 'block'; }
     function closeModal() { document.getElementById('deposit-modal').style.display = 'none'; }
+    window.onclick = function(event) { if (event.target == document.getElementById('deposit-modal')) closeModal(); }
 </script>
-
 </body>
 </html>
