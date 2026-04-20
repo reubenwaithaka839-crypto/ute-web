@@ -3,3 +3,4 @@ gunicorn
 requests
 bcrypt
 python-dotenv
+intasend-python
