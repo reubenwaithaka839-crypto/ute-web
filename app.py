@@ -1,10 +1,11 @@
 import os
 import sqlite3
 import bcrypt
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from intasend import APIService
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'ute_web_secret_12345') # Change this in Render env vars
 
 # Config
 API_PUBLISHABLE_KEY = os.environ.get('INTASEND_PUBLISHABLE_KEY', '').strip()
@@ -26,12 +27,18 @@ def query_db(query, args=(), one=False, commit=False):
 
 @app.route('/')
 def index():
-    # Hardcoded admin for your professional dashboard view
-    user_data = {'role': 'admin', 'name': 'Developer', 'username': 'admin_dev'}
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    # Get current logged-in user details
+    user_row = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
+    
+    # Fetch data for the dashboard
     jobs = query_db("SELECT * FROM jobs ORDER BY id DESC LIMIT 5")
-    wallet = query_db("SELECT balance FROM wallet WHERE username = ?", (user_data['username'],), one=True)
+    wallet = query_db("SELECT balance FROM wallet WHERE username = ?", (session['username'],), one=True)
     balance = wallet['balance'] if wallet else 0.0
-    return render_template('dashboard.html', user=user_data, jobs=jobs, balance=balance)
+    
+    return render_template('dashboard.html', user=user_row, jobs=jobs, balance=balance)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -40,40 +47,48 @@ def register():
         email = request.form.get('email')
         phone = request.form.get('phone')
         password = request.form.get('password')
-        role = request.form.get('role') # 'employee' or 'employer'
+        role = request.form.get('role')
         
-        # Secure password hashing
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         try:
-            query_db("""INSERT INTO users (username, email, phone, password, role) 
-                     VALUES (?, ?, ?, ?, ?)""", 
+            query_db("INSERT INTO users (username, email, phone, password, role) VALUES (?, ?, ?, ?, ?)", 
                      (username, email, phone, hashed, role), commit=True)
-            return redirect(url_for('index'))
-        except Exception as e:
-            return f"Registration Error: {str(e)}"
-            
+            return redirect(url_for('login'))
+        except:
+            return "Registration Error: User might already exist."
     return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = query_db("SELECT * FROM users WHERE username = ?", (username,), one=True)
+        
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+            session['username'] = user['username']
+            session['role'] = user['role']
+            return redirect(url_for('index'))
+        else:
+            return "Invalid Login Credentials"
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/post_job', methods=['POST'])
 def post_job():
+    if session.get('role') != 'employer' and session.get('role') != 'admin':
+        return jsonify({"error": "Unauthorized"}), 403
     data = request.json
     query_db("INSERT INTO jobs (employer, title, description, salary) VALUES (?, ?, ?, ?)",
              (data['employer'], data['title'], data['description'], data['salary']), commit=True)
     return jsonify({"status": "success"})
-
-@app.route('/pay', methods=['POST'])
-def initiate_payment():
-    try:
-        response = service.collect.mpesa_stk_push(
-            phone_number="254750289733", 
-            email="test@example.com",
-            amount=10,
-            narrative="UTE Web Funding"
-        )
-        return jsonify(response)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
