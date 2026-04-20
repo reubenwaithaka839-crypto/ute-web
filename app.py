@@ -1,14 +1,16 @@
 from flask import Flask, request, redirect, session, render_template, url_for, jsonify
-import sqlite3, ute, os, bcrypt
+import sqlite3, os, bcrypt
 
+# Initialize Flask
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "UTE_GLOBAL_v6_FINAL")
+app.secret_key = "UTE_SECRET_KEY_2026"
+DB = "ute.db"
 
-# REPLACE THIS WITH YOUR ACTUAL INTASEND PUBLIC KEY
-INTASEND_PUBLIC_KEY = "ISPubKey_test_YOUR_KEY_HERE"
+# YOUR INTASEND PUBLIC KEY
+INTASEND_PUBLIC_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
 
 def get_db():
-    conn = sqlite3.connect(ute.DB, timeout=10)
+    conn = sqlite3.connect(DB, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -30,7 +32,7 @@ def auth():
             conn.commit()
             session.update({"user": d.get("username"), "role": d.get("role"), "phone": d.get("phone"), "email": d.get("email")})
             return redirect(url_for("dashboard"))
-        except Exception as e: return f"Auth Error: {e}"
+        except: return "Error: Username/Email/Phone already exists."
         finally: conn.close()
     return render_template("auth.html")
 
@@ -41,19 +43,24 @@ def dashboard():
     res = conn.execute("SELECT balance FROM wallet WHERE username=?", (session["user"],)).fetchone()
     balance = res[0] if res else 0
     
-    if session["role"] == "employer":
-        my_jobs = conn.execute("SELECT * FROM jobs WHERE employer=?", (session["user"],)).fetchall()
-        return render_template("dashboard.html", user=session["user"], balance=balance, role="employer", my_jobs=my_jobs, is_key=INTASEND_PUBLIC_KEY)
+    # Get jobs based on role
+    if session.get("role") == "employer":
+        jobs = conn.execute("SELECT * FROM jobs WHERE employer=?", (session["user"],)).fetchall()
     else:
         jobs = conn.execute("SELECT * FROM jobs WHERE status='open'").fetchall()
-        my_contracts = conn.execute("SELECT * FROM contracts WHERE employee=?", (session["user"],)).fetchall()
-        return render_template("dashboard.html", user=session["user"], balance=balance, role="employee", jobs=jobs, my_contracts=my_contracts)
+        
+    conn.close()
+    return render_template("dashboard.html", 
+                           user=session["user"], 
+                           balance=balance, 
+                           role=session.get("role"), 
+                           jobs=jobs, 
+                           is_key=INTASEND_PUBLIC_KEY)
 
 @app.route("/payment_success", methods=["POST"])
 def payment_success():
     if "user" not in session: return jsonify({"status": "unauthorized"}), 401
     data = request.json
-    # results.net_amount from IntaSend is the money that actually reached you
     amount = float(data.get("amount", 0))
     
     conn = get_db()
