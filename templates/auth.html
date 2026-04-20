@@ -1,51 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE | Secure Identity Access</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
+    <title>UTE | Identity Vault</title>
     <style>
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0e14; color: white; display: flex; height: 100vh; overflow: hidden; }
-        .hero-side { flex: 1.2; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; padding: 60px; }
-        .form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; }
-        .box { width: 100%; max-width: 450px; }
-        h1 { font-size: 4rem; letter-spacing: -3px; margin: 0; }
-        input, select { width: 100%; padding: 16px; margin: 8px 0; background: #1e293b; border: 1px solid #334155; border-radius: 14px; color: white; font-size: 1rem; }
-        .btn { width: 100%; padding: 20px; background: #2563eb; border: none; border-radius: 14px; color: white; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
-        .btn:hover { transform: translateY(-3px); background: #1d4ed8; }
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1e293b; padding: 30px; border-radius: 15px; width: 350px; border: 1px solid #334155; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="hero-side">
-        <div>
-            <h1>UTE.</h1>
-            <p style="font-size: 1.5rem; opacity: 0.8;">The Closed-Loop Recruitment & Escrow Economy.</p>
-            <div style="margin-top: 40px; border-left: 4px solid white; padding-left: 20px; opacity: 0.6;">
-                <p>30% Month 1 Placement Fee</p>
-                <p>10% Loyalty Payroll Fee</p>
-                <p>3% Secured Transaction Protection</p>
-            </div>
-        </div>
+    <div class="box">
+        <h2>Identity Vault</h2>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="text" name="phone" placeholder="Phone (254...)" required>
+            <input type="text" name="national_id" placeholder="National ID" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="text" name="location" placeholder="Location (City)" required>
+            
+            <select name="role" id="roleSelect" onchange="updateLabel()">
+                <option value="employee">I am looking for Work (Employee)</option>
+                <option value="employer">I am Hiring (Organization)</option>
+            </select>
+
+            <label id="dynLabel" style="font-size: 0.8em; color: #94a3b8;">Professional Skills</label>
+            <input type="text" name="bio_or_company" id="dynInput" placeholder="e.g. Accounting, Java..." required>
+            
+            <button type="submit">Secure Identity & Enter</button>
+        </form>
     </div>
-    <div class="form-side">
-        <div class="box">
-            <h2>Digital Onboarding</h2>
-            <form action="/auth" method="POST">
-                <input type="text" name="username" placeholder="Full Name (Per National ID)" required>
-                <input type="email" name="email" placeholder="Verified Email" required>
-                <input type="text" name="phone" placeholder="Phone (M-Pesa Registered)" required>
-                <input type="text" name="national_id" placeholder="National ID Number" required>
-                <input type="text" name="location" placeholder="Current Location (City/Town)" required>
-                <input type="text" name="skills" placeholder="Skills (e.g. Driver, Coder, Accountant)" required>
-                <select name="role">
-                    <option value="employee">I am looking for Work (Employee)</option>
-                    <option value="employer">I am Hiring (Organization)</option>
-                </select>
-                <input type="password" name="password" placeholder="Complex Passcode (A-z, 0-9, @)" required>
-                <button type="submit" class="btn">Secure Identity & Enter</button>
-            </form>
-        </div>
-    </div>
+
+    <script>
+        function updateLabel() {
+            var role = document.getElementById("roleSelect").value;
+            document.getElementById("dynLabel").innerText = role === "employer" ? "Company Name" : "Professional Skills";
+            document.getElementById("dynInput").placeholder = role === "employer" ? "e.g. UTE Global Ltd" : "e.g. Accounting, Java...";
+        }
+    </script>
 </body>
 </html>
