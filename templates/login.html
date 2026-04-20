@@ -1,46 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE_WEB | Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
-    </style>
-</head>
-<body class="bg-[#0f172a] text-slate-200 min-h-screen flex items-center justify-center p-6">
-
-    <div class="glass w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border border-white/5">
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-black text-white mb-2 tracking-tighter">LOGIN</h1>
-            <p class="text-slate-500 uppercase tracking-widest text-xs font-bold">Secure Access to UTE_WEB</p>
-        </div>
-
-        <form action="/login" method="POST" class="space-y-6">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 mb-2 ml-1">USERNAME</label>
-                <input type="text" name="username" placeholder="Enter your username" required 
-                    class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition text-white">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-400 mb-2 ml-1">PASSWORD</label>
-                <input type="password" name="password" placeholder="••••••••" required 
-                    class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition text-white">
-            </div>
-
-            <button type="submit" class="w-full btn-blue py-5 rounded-2xl font-black text-xl text-white shadow-xl hover:shadow-blue-500/20 transition-all active:scale-95">
-                SIGN IN
-            </button>
-        </form>
-
-        <div class="mt-10 pt-6 border-t border-white/5 text-center">
-            <p class="text-slate-500">Don't have an account?</p>
-            <a href="/register" class="text-blue-400 font-bold text-lg hover:underline">Create a free account</a>
-        </div>
-    </div>
-
+<body class="bg-[#020617] flex items-center justify-center min-h-screen text-slate-300">
+    <form action="/login" method="POST" class="w-full max-w-sm glass p-10 rounded-[2.5rem]">
+        <h2 class="text-2xl font-black mb-6 text-white uppercase italic">Login</h2>
+        <input name="username" placeholder="Username" class="w-full bg-white/5 p-4 rounded-xl mb-4">
+        <input name="password" type="password" placeholder="Password" class="w-full bg-white/5 p-4 rounded-xl mb-6">
+        <button class="w-full bg-blue-600 p-4 rounded-xl font-black">ENTER CONSOLE</button>
+    </form>
 </body>
-</html>
