@@ -1,12 +1,12 @@
 import sqlite3
-from datetime import datetime
+import os
 
 DB = "ute.db"
 
 def init_db():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    # Fixed columns to match the registration form
+    # Create Users
     c.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, 
         username TEXT, 
@@ -18,6 +18,7 @@ def init_db():
         location TEXT,
         skills TEXT
     )""")
+    # Create Contracts
     c.execute("""CREATE TABLE IF NOT EXISTS contracts (
         id INTEGER PRIMARY KEY, 
         employer TEXT, 
@@ -25,12 +26,16 @@ def init_db():
         salary REAL, 
         total_months_paid INTEGER DEFAULT 0
     )""")
+    # Create Wallets
     c.execute("""CREATE TABLE IF NOT EXISTS wallet (
         username TEXT UNIQUE, 
         balance REAL DEFAULT 0
     )""")
     conn.commit()
     conn.close()
+
+# THIS LINE IS THE FIX: It runs the moment ANY file says 'import ute'
+init_db()
 
 def get_ute_math(salary, months_paid):
     fee = salary * 0.03
