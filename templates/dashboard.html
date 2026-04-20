@@ -1,34 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>UTE | Global Marketplace</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE | Command Center</title>
+    
     <script src="https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js"></script>
+
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        .btn { background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; border:none; cursor:pointer; font-weight:bold; }
-        .balance { font-size: 2.5em; color: #22c55e; font-weight: bold; }
-        .job-box { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+        body { background: #0f172a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn { background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; border:none; cursor:pointer; font-weight:bold; transition: background 0.3s; }
+        .btn:hover { background: #2563eb; }
+        .btn-green { background: #22c55e; }
+        .btn-green:hover { background: #16a34a; }
+        .balance { font-size: 2.8em; color: #22c55e; font-weight: 800; margin: 10px 0; }
+        .job-box { background: #334155; padding: 20px; margin-bottom: 15px; border-radius: 10px; border-left: 5px solid #3b82f6; }
+        hr { border: 0; border-top: 1px solid #334155; margin: 20px 0; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; box-sizing: border-box; }
     </style>
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>UTE.AI | {{ user }}</h2>
-        <a href="/logout" style="color: #ef4444; text-decoration: none;">Sign Out</a>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="margin:0;">UTE.AI <span style="color:#3b82f6; font-size: 0.6em;">GLOBAL</span></h2>
+        <div style="text-align: right;">
+            <span style="display:block; font-weight:bold;">{{ user }}</span>
+            <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 0.9em;">Sign Out</a>
+        </div>
     </div>
 
     <div class="card">
-        <p>LIQUID ESCROW BALANCE</p>
+        <p style="color: #94a3b8; margin:0; letter-spacing: 1px; font-size: 0.8em; font-weight: bold;">AVAILABLE ESCROW FUNDS</p>
         <div class="balance">KES {{ "{:,.2f}".format(balance) }}</div>
-        <hr style="border-color: #334155; margin: 20px 0;">
         
         {% if role == 'employer' %}
+        <hr>
+        <p style="font-size: 0.9em; margin-bottom: 15px; color: #cbd5e1;">Top up your wallet to hire workers instantly.</p>
+        
         <button class="intaSendPayButton btn" 
                 data-amount="10" 
                 data-currency="KES" 
                 data-email="{{ session['email'] }}" 
                 data-first_name="{{ user }}">
-            Deposit Funds (M-Pesa/Card)
+            Deposit KES 10.00
         </button>
         {% endif %}
     </div>
@@ -37,33 +52,46 @@
     <div class="card">
         <h3>Post a New Gig</h3>
         <form action="/post_job" method="POST">
-            <input type="text" name="title" placeholder="Job Title" style="width: 100%; padding: 10px; margin: 5px 0;">
-            <input type="number" name="salary" placeholder="Salary (KES)" style="width: 100%; padding: 10px; margin: 5px 0;">
+            <input type="text" name="title" placeholder="Job Title (e.g. Graphic Designer)" required>
+            <textarea name="description" placeholder="Describe the task and requirements..." rows="3"></textarea>
+            <input type="number" name="salary" placeholder="Salary Amount (KES)" required>
             <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Publish to Marketplace</button>
         </form>
     </div>
     {% else %}
     <div class="card">
-        <h3>Available Marketplace Gigs</h3>
+        <h3 style="margin-top:0;">Open Gigs Marketplace</h3>
         {% for job in jobs %}
         <div class="job-box">
-            <h4>{{ job[2] }}</h4>
-            <p><strong>Offer: KES {{ job[4] }}</strong></p>
-            <a href="/apply/{{ job[0] }}" class="btn" style="background: #22c55e;">Accept Work</a>
+            <h4 style="margin:0 0 10px 0;">{{ job[2] }}</h4>
+            <p style="color: #cbd5e1; font-size: 0.9em;">{{ job[3] }}</p>
+            <p><strong>Payment: KES {{ job[4] }}</strong></p>
+            <a href="/apply/{{ job[0] }}" class="btn btn-green">Accept & Start</a>
         </div>
         {% else %}
-        <p>No gigs available right now.</p>
+        <p style="color: #94a3b8;">The marketplace is currently quiet. Check back soon!</p>
         {% endfor %}
     </div>
     {% endif %}
 
     <script>
+        // Initialize IntaSend with your Public Key
         const intasend = new window.IntaSend({
             publicAPIKey: "{{ is_key }}",
-            live: false 
+            live: false // Set to true when you move from Sandbox to Live
         });
 
+        // 3. MANUAL BUTTON TRIGGER (Fixes the "Nothing happens" issue)
+        document.querySelector(".intaSendPayButton").addEventListener("click", (e) => {
+            e.preventDefault();
+            intasend.run(); // Force the checkout window to open
+        });
+
+        // 4. HANDLE SUCCESSFUL PAYMENT
         intasend.on("COMPLETE", (results) => {
+            console.log("Payment Successful:", results);
+            
+            // Tell the backend to update the user's wallet
             fetch("/payment_success", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -71,13 +99,19 @@
                     amount: results.net_amount,
                     tracking_id: results.tracking_id 
                 })
-            }).then(() => {
-                alert("Payment Successful!");
-                location.reload();
+            }).then(response => {
+                if (response.ok) {
+                    alert("Deposit confirmed! KES " + results.net_amount + " added to your wallet.");
+                    location.reload(); // Refresh to show new balance
+                }
             });
         })
         .on("FAILED", (results) => {
-            alert("Payment failed. Please try again.");
+            alert("Payment failed or cancelled. Try again.");
+            console.log("Payment Failed:", results);
+        })
+        .on("IN-PROGRESS", (results) => {
+            console.log("Payment is being processed...");
         });
     </script>
 </body>
