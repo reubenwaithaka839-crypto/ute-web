@@ -1,79 +1,47 @@
 from flask import Flask, request, redirect, session, render_template, url_for, jsonify
-import sqlite3
-import ute
-from mpesa import stk_push
+import sqlite3, ute, re, os
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 
 app = Flask(__name__)
-app.secret_key = "ute_secure_key_2026" 
-
-DB = "ute.db"
-ute.init_db()
-
-@app.route("/")
-def index():
-    if "user" in session: return redirect(url_for("dashboard"))
-    return redirect(url_for("auth"))
+app.secret_key = os.environ.get("SECRET_KEY", "MillionDollarSecret2026")
 
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
     if request.method == "POST":
-        username, password, role = request.form["username"], request.form["password"], request.form.get("role", "employee")
-        conn = sqlite3.connect(DB)
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=?", (username,))
-        user = c.fetchone()
-        if user:
-            if check_password_hash(user[2], password):
-                session["user"], session["role"] = username, user[3]
-                return redirect(url_for("dashboard"))
-            return "Invalid Password. <a href='/auth'>Try again</a>"
+        un, em, ph, nid, pw, role = request.form['username'], request.form['email'], request.form['phone'], request.form['national_id'], request.form['password'], request.form['role']
         
-        hashed_pw = generate_password_hash(password)
+        # Password AI: Check complexity
+        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$", pw):
+            return "Password too weak. Needs Upper, Lower, Number, and Special Char."
+
+        conn = sqlite3.connect(ute.DB)
         try:
-            c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, hashed_pw, role))
-            c.execute("INSERT INTO wallet (username, balance) VALUES (?, 0)", (username,))
+            hashed = generate_password_hash(pw)
+            conn.execute("INSERT INTO users (username, email, phone, national_id, password, role) VALUES (?,?,?,?,?,?)", (un, em, ph, nid, hashed, role))
+            conn.execute("INSERT INTO wallet (username, balance) VALUES (?, 0)", (un,))
             conn.commit()
-            session["user"], session["role"] = username, role
+            session.update({"user": un, "role": role, "nid": nid})
             return redirect(url_for("dashboard"))
-        except sqlite3.IntegrityError: return "Username taken."
+        except sqlite3.IntegrityError: return "ID, Email or Phone already exists."
         finally: conn.close()
     return render_template("auth.html")
 
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session: return redirect(url_for("auth"))
-    balance = ute.get_balance(session["user"])
-    return render_template("dashboard.html", user=session["user"], role=session["role"], balance=balance)
+    return render_template("dashboard.html", user=session["user"], role=session["role"], nid=session["nid"], balance=ute.get_balance(session["user"]))
 
-@app.route("/post_job", methods=["GET", "POST"])
-def post_job():
-    if session.get("role") != "employer": return "Unauthorized", 403
-    if request.method == "POST":
-        ute.add_job(session["user"], request.form["title"], request.form["description"], 
-                    request.form["requirements"], request.form["location"], request.form["salary"])
-        return redirect(url_for("jobs"))
-    return render_template("post_job.html")
-
-@app.route("/jobs")
-def jobs():
-    if "user" not in session: return redirect(url_for("auth"))
-    return render_template("jobs.html", jobs=ute.get_jobs(), role=session["role"])
-
-@app.route("/deposit", methods=["POST"])
-def deposit():
-    if "user" not in session: return redirect(url_for("auth"))
-    phone, amount = request.form.get("phone"), request.form.get("amount")
-    # CHANGE THIS to your actual Render URL
-    callback_url = "https://your-app-name.onrender.com/mpesa_callback" 
-    stk_push(phone, amount, callback_url)
+@app.route("/admin_approve/<int:uid>")
+def admin_approve(uid):
+    # Only you (the creator) should access this logic
+    conn = sqlite3.connect(ute.DB)
+    count = conn.execute("SELECT count(*) FROM users WHERE is_approved_admin=1").fetchone()[0]
+    if count < 2:
+        conn.execute("UPDATE users SET is_approved_admin=1 WHERE id=?", (uid,))
+        conn.commit()
+    conn.close()
     return redirect(url_for("dashboard"))
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("auth"))
-
 if __name__ == "__main__":
+    ute.init_db()
     app.run(debug=True)
