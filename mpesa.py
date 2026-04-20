@@ -4,51 +4,33 @@ import sqlite3
 import ute
 from datetime import datetime
 
-# REPLACE THESE WITH YOUR DARAJA API CREDENTIALS
-CONSUMER_KEY = 'Your_Consumer_Key'
-CONSUMER_SECRET = 'Your_Consumer_Secret'
-BUSINESS_SHORTCODE = 'Your_Paybill'
-PASSKEY = 'Your_Passkey'
+# REPLACE WITH YOUR DARAJA CREDENTIALS
+CONSUMER_KEY = 'YOUR_KEY'
+CONSUMER_SECRET = 'YOUR_SECRET'
+SHORTCODE = 'YOUR_PAYBILL'
+PASSKEY = 'YOUR_PASSKEY'
 
-def get_access_token():
-    api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    r = requests.get(api_url, auth=HTTPBasicAuth(CONSUMER_KEY, CONSUMER_SECRET))
-    return r.json()['access_token']
-
-def trigger_split_logic(contract_id, amount):
-    """
-    THIS IS THE CORE SETTLEMENT ENGINE.
-    1. Records the math in the Ledger.
-    2. Moves 20% or 6% to YOUR bank account.
-    3. Moves cashback to Employer wallet.
-    4. Moves salary to Employee escrow.
-    """
+def trigger_settlement(contract_id):
+    """Processes the split: You get your cut, Employer gets cashback, Employee gets net."""
     conn = sqlite3.connect(ute.DB)
     c = conn.cursor()
     
-    # Fetch contract details
     contract = c.execute("SELECT employer, employee, total_months_paid, salary FROM contracts WHERE id=?", (contract_id,)).fetchone()
     employer, employee, months, salary = contract
     
-    # Calculate the UTE Split (30% vs 10%)
     math = ute.get_ute_math(salary, months)
     
-    # 1. Update Ledger
-    c.execute("""INSERT INTO ledger (contract_id, gross_total, ute_share, employer_cashback, employee_net, fraud_score, timestamp)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)""", 
-              (contract_id, math['total'], math['ute'], math['cashback'], math['net'], 0.01, datetime.now()))
+    # 1. Update Ledger (Your revenue tracking)
+    c.execute("INSERT INTO ledger (contract_id, gross_total, ute_share, employer_cashback, employee_net, timestamp) VALUES (?,?,?,?,?,?)",
+              (contract_id, math['total'], math['ute'], math['cashback'], math['net'], datetime.now()))
     
     # 2. Update Wallets
     c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['cashback'], employer))
     c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['net'], employee))
     
-    # 3. Update Contract Timer
+    # 3. Increment the 12-month counter
     c.execute("UPDATE contracts SET total_months_paid = total_months_paid + 1 WHERE id = ?", (contract_id,))
     
-    # 4. Trigger BANK SETTLEMENT (Direct to You)
-    # Note: This requires a B2C API endpoint from your bank or M-Pesa B2C
-    print(f"SETTLING KES {math['ute']} TO SUPERADMIN BANK ACCOUNT...")
-
     conn.commit()
     conn.close()
     return True
