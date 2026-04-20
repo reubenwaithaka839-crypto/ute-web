@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Admin | UTE_WEB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#020617] text-slate-300 p-12">
+    <h1 class="text-4xl font-black text-white mb-8">ADMIN ROOM</h1>
+    <div class="grid grid-cols-2 gap-6 mb-12">
+        <div class="bg-blue-600/10 p-8 rounded-3xl border border-blue-600/20">
+            <p class="text-blue-500 text-xs font-bold uppercase">Total Liquidity</p>
+            <p class="text-3xl font-bold">KES {{ "{:,.2f}".format(total_liquidity) }}</p>
+        </div>
+    </div>
+    <table class="w-full text-left glass rounded-3xl overflow-hidden">
+        <thead class="bg-white/5"><tr><th class="p-6">User</th><th class="p-6">Role</th><th class="p-6">Phone</th></tr></thead>
+        <tbody>
+            {% for u in users %}
+            <tr class="border-b border-white/5"><td class="p-6 font-bold">{{ u.username }}</td><td class="p-6 uppercase text-xs">{{ u.role }}</td><td class="p-6">{{ u.phone }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
