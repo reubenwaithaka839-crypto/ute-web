@@ -3,81 +3,81 @@
 <head>
     <title>UTE | Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <script src="https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js"></script>
+
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        .btn { background: #3b82f6; color: white; padding: 12px 24px; border:none; border-radius: 6px; cursor:pointer; font-weight:bold; width: 100%; }
-        .balance { font-size: 2.5em; color: #22c55e; font-weight: bold; margin: 10px 0; }
-        .job-card { background: #334155; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #3b82f6; }
+        .btn { background: #3b82f6; color: white; padding: 15px; border:none; border-radius: 6px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1.1em; }
+        .balance { font-size: 3em; color: #22c55e; font-weight: bold; margin: 10px 0; }
+        .debug-box { background: #450a0a; color: #fecaca; padding: 10px; font-size: 0.8em; border-radius: 5px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
     <div style="display:flex; justify-content: space-between; align-items:center;">
-        <h2>UTE Dashboard</h2>
+        <h2>UTE Global Dashboard</h2>
         <a href="/logout" style="color:#ef4444; text-decoration:none;">Logout</a>
     </div>
 
     <div class="card">
-        <p>WALLET BALANCE (KES)</p>
-        <div class="balance">{{ "{:,.2f}".format(balance) }}</div>
+        <p>CURRENT WALLET BALANCE</p>
+        <div class="balance">KES {{ "{:,.2f}".format(balance) }}</div>
         
-        {% if role == 'employer' %}
-        <button id="deposit-btn" class="btn" 
-                data-amount="10" 
-                data-currency="KES" 
-                data-email="{{ session['email'] }}" 
-                data-first_name="{{ user }}">
-            DEPOSIT KES 10 (TEST)
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+        
+        <button id="deposit-btn" class="btn">
+            DEPOSIT KES 10.00
         </button>
-        {% endif %}
+
+        <div id="debug" class="debug-box"></div>
     </div>
 
     <div class="card">
-        <h3>{% if role == 'employer' %}My Job Posts{% else %}Marketplace{% endif %}</h3>
-        {% for job in jobs %}
-            <div class="job-card">
-                <strong>{{ job['title'] }}</strong><br>
-                Budget: KES {{ job['salary'] }}
-            </div>
-        {% else %}
-            <p>No activity yet.</p>
-        {% endfor %}
+        <h3>System Activity</h3>
+        <p>Logged in as: <strong>{{ user }}</strong> ({{ role }})</p>
     </div>
 
     <script>
+        const debug = document.getElementById('debug');
+        
         // 1. Initialize IntaSend
-        const intasend = new window.IntaSend({
-            publicAPIKey: "{{ is_key }}",
-            live: false 
-        });
-
-        // 2. Attach click event to button
-        const payBtn = document.getElementById("deposit-btn");
-        if (payBtn) {
-            payBtn.addEventListener("click", () => {
-                intasend.run(); // This launches the popup
+        try {
+            const intasend = new window.IntaSend({
+                publicAPIKey: "{{ is_key }}",
+                live: false 
             });
+
+            // 2. Attach Click Event
+            document.getElementById("deposit-btn").addEventListener("click", function() {
+                console.log("Button clicked...");
+                intasend.run()
+                    .catch(err => {
+                        debug.style.display = "block";
+                        debug.innerText = "IntaSend Error: " + err.message;
+                    });
+            });
+
+            // 3. Handle Success
+            intasend.on("COMPLETE", (results) => {
+                fetch("/payment_success", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        amount: results.net_amount,
+                        tracking_id: results.tracking_id 
+                    })
+                }).then(() => {
+                    alert("Deposit Successful! Refreshing...");
+                    location.reload();
+                });
+            });
+
+        } catch (e) {
+            debug.style.display = "block";
+            debug.innerText = "Script Failed to Load: " + e.message;
         }
-
-        // 3. Handle successful payment
-        intasend.on("COMPLETE", (results) => {
-            fetch("/payment_success", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    amount: results.net_amount,
-                    tracking_id: results.tracking_id 
-                })
-            }).then(() => {
-                alert("Payment Successful!");
-                location.reload();
-            });
-        })
-        .on("FAILED", (results) => {
-            alert("Payment failed. Please try again.");
-        });
     </script>
 </body>
 </html>
