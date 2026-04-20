@@ -1,12 +1,11 @@
 from flask import Flask, request, redirect, session, render_template, url_for, jsonify
 import sqlite3, os, bcrypt
 
-# Initialize Flask
 app = Flask(__name__)
 app.secret_key = "UTE_SECRET_KEY_2026"
 DB = "ute.db"
 
-# YOUR INTASEND PUBLIC KEY
+# YOUR PUBLIC KEY PLUGGED IN
 INTASEND_PUBLIC_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
 
 def get_db():
@@ -16,7 +15,9 @@ def get_db():
 
 @app.route("/")
 def index():
-    return redirect(url_for("dashboard")) if "user" in session else redirect(url_for("auth"))
+    if "user" in session:
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("auth"))
 
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
@@ -32,24 +33,25 @@ def auth():
             conn.commit()
             session.update({"user": d.get("username"), "role": d.get("role"), "phone": d.get("phone"), "email": d.get("email")})
             return redirect(url_for("dashboard"))
-        except: return "Error: Username/Email/Phone already exists."
-        finally: conn.close()
+        except Exception as e:
+            return f"Registration Error: {e}"
+        finally:
+            conn.close()
     return render_template("auth.html")
 
 @app.route("/dashboard")
 def dashboard():
-    if "user" not in session: return redirect(url_for("auth"))
+    if "user" not in session:
+        return redirect(url_for("auth"))
+    
     conn = get_db()
     res = conn.execute("SELECT balance FROM wallet WHERE username=?", (session["user"],)).fetchone()
     balance = res[0] if res else 0
     
-    # Get jobs based on role
-    if session.get("role") == "employer":
-        jobs = conn.execute("SELECT * FROM jobs WHERE employer=?", (session["user"],)).fetchall()
-    else:
-        jobs = conn.execute("SELECT * FROM jobs WHERE status='open'").fetchall()
-        
+    # Simple check for jobs
+    jobs = conn.execute("SELECT * FROM jobs LIMIT 10").fetchall()
     conn.close()
+    
     return render_template("dashboard.html", 
                            user=session["user"], 
                            balance=balance, 
@@ -59,15 +61,15 @@ def dashboard():
 
 @app.route("/payment_success", methods=["POST"])
 def payment_success():
-    if "user" not in session: return jsonify({"status": "unauthorized"}), 401
     data = request.json
     amount = float(data.get("amount", 0))
-    
-    conn = get_db()
-    conn.execute("UPDATE wallet SET balance = balance + ? WHERE username=?", (amount, session["user"]))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"})
+    if "user" in session:
+        conn = get_db()
+        conn.execute("UPDATE wallet SET balance = balance + ? WHERE username=?", (amount, session["user"]))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    return jsonify({"status": "failed"}), 401
 
 @app.route("/logout")
 def logout():
