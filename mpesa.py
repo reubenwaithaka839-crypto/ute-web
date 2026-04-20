@@ -1,7 +1,6 @@
 import requests, base64
 from datetime import datetime
 
-# REPLACE THESE WITH YOUR SANDBOX CREDENTIALS FROM DARAJA
 CONSUMER_KEY = "YOUR_KEY"
 CONSUMER_SECRET = "YOUR_SECRET"
 PASSKEY = "YOUR_PASSKEY"
@@ -19,8 +18,7 @@ def stk_push(phone, amount, callback):
         "BusinessShortCode": SHORTCODE, "Password": password, "Timestamp": timestamp,
         "TransactionType": "CustomerPayBillOnline", "Amount": int(amount), "PartyA": phone,
         "PartyB": SHORTCODE, "PhoneNumber": phone, "CallBackURL": callback,
-        "AccountReference": "UTE_JOB_PORTAL", "TransactionDesc": "Wallet Deposit"
+        "AccountReference": "UTE", "TransactionDesc": "Deposit"
     }
     headers = {"Authorization": f"Bearer {token}"}
-    response = requests.post("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", json=payload, headers=headers)
-    return response.json()
+    return requests.post("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", json=payload, headers=headers).json()
