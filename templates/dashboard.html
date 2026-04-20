@@ -1,83 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>UTE | Dashboard</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE | Dashboard</title>
     
     <script src="https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js"></script>
 
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        .btn { background: #3b82f6; color: white; padding: 15px; border:none; border-radius: 6px; cursor:pointer; font-weight:bold; width: 100%; font-size: 1.1em; }
-        .balance { font-size: 3em; color: #22c55e; font-weight: bold; margin: 10px 0; }
-        .debug-box { background: #450a0a; color: #fecaca; padding: 10px; font-size: 0.8em; border-radius: 5px; margin-top: 10px; display: none; }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155; margin-bottom: 20px; text-align: center; }
+        .balance-label { color: #94a3b8; font-size: 0.8em; letter-spacing: 1px; margin-bottom: 10px; }
+        .balance-amount { font-size: 3em; color: #22c55e; font-weight: bold; margin-bottom: 20px; }
+        .btn { 
+            background: #3b82f6; color: white; padding: 16px 32px; border: none; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; 
+            width: 100%; transition: 0.3s; 
+        }
+        .btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .status-msg { margin-top: 15px; font-size: 0.9em; padding: 10px; border-radius: 5px; display: none; }
+        .error { background: #450a0a; color: #fecaca; display: block; }
     </style>
 </head>
 <body>
 
-    <div style="display:flex; justify-content: space-between; align-items:center;">
-        <h2>UTE Global Dashboard</h2>
-        <a href="/logout" style="color:#ef4444; text-decoration:none;">Logout</a>
-    </div>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">UTE.AI</h2>
+            <a href="/logout" style="color: #ef4444; text-decoration: none;">Logout</a>
+        </div>
 
-    <div class="card">
-        <p>CURRENT WALLET BALANCE</p>
-        <div class="balance">KES {{ "{:,.2f}".format(balance) }}</div>
-        
-        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
-        
-        <button id="deposit-btn" class="btn">
-            DEPOSIT KES 10.00
-        </button>
+        <div class="card">
+            <div class="balance-label">WALLET BALANCE</div>
+            <div class="balance-amount">KES {{ "{:,.2f}".format(balance) }}</div>
+            
+            <button id="checkout-button" class="btn">
+                DEPOSIT KES 10.00
+            </button>
 
-        <div id="debug" class="debug-box"></div>
-    </div>
+            <div id="error-box" class="status-msg"></div>
+        </div>
 
-    <div class="card">
-        <h3>System Activity</h3>
-        <p>Logged in as: <strong>{{ user }}</strong> ({{ role }})</p>
+        <div class="card" style="text-align: left;">
+            <h3 style="margin-top: 0;">User Profile</h3>
+            <p><strong>Username:</strong> {{ user }}</p>
+            <p><strong>Account Type:</strong> {{ role }}</p>
+        </div>
     </div>
 
     <script>
-        const debug = document.getElementById('debug');
-        
-        // 1. Initialize IntaSend
-        try {
-            const intasend = new window.IntaSend({
-                publicAPIKey: "{{ is_key }}",
-                live: false 
-            });
+        // Use the key passed from app.py
+        const PUBLIC_KEY = "{{ is_key }}";
 
-            // 2. Attach Click Event
-            document.getElementById("deposit-btn").addEventListener("click", function() {
-                console.log("Button clicked...");
-                intasend.run()
-                    .catch(err => {
-                        debug.style.display = "block";
-                        debug.innerText = "IntaSend Error: " + err.message;
-                    });
-            });
+        // Initialize IntaSend
+        const intasend = new window.IntaSend({
+            publicAPIKey: PUBLIC_KEY,
+            live: false // Set to true only for real money
+        });
 
-            // 3. Handle Success
-            intasend.on("COMPLETE", (results) => {
-                fetch("/payment_success", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        amount: results.net_amount,
-                        tracking_id: results.tracking_id 
-                    })
-                }).then(() => {
-                    alert("Deposit Successful! Refreshing...");
-                    location.reload();
-                });
+        // Manual click listener
+        document.getElementById("checkout-button").addEventListener("click", () => {
+            console.log("Triggering IntaSend...");
+            
+            intasend.run({
+                amount: 10,
+                currency: "KES",
+                email: "{{ session['email'] }}",
+                first_name: "{{ user }}"
+            })
+            .catch((err) => {
+                console.error("SDK Error:", err);
+                const errBox = document.getElementById("error-box");
+                errBox.innerText = "Error: " + err.message;
+                errBox.classList.add("error");
             });
+        });
 
-        } catch (e) {
-            debug.style.display = "block";
-            debug.innerText = "Script Failed to Load: " + e.message;
-        }
+        // Listen for successful payment
+        intasend.on("COMPLETE", (results) => {
+            console.log("Payment complete:", results);
+            
+            // Send to Flask to update the database
+            fetch("/payment_success", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    amount: results.net_amount,
+                    tracking_id: results.tracking_id 
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    alert("Deposit Successful!");
+                    location.reload(); // Refresh to show new balance
+                }
+            });
+        })
+        .on("FAILED", (results) => {
+            alert("Payment failed or was cancelled.");
+        });
     </script>
+
 </body>
 </html>
