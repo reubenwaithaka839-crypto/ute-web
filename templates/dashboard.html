@@ -2,13 +2,12 @@
 <html>
 <head>
     <title>UTE Command Center</title>
+    <script src="https://unpkg.com/intasend-inlinejs-sdk@3.0.4/build/intasend-inline.js"></script>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
         .btn { background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; border:none; cursor:pointer; font-weight:bold; }
         .balance { font-size: 2em; color: #22c55e; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #334155; color: white; }
-        .job-box { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -18,56 +17,36 @@
     </div>
 
     <div class="card">
-        <p>LIQUID BALANCE</p>
+        <p>WALLET BALANCE (GLOBAL ESCROW)</p>
         <div class="balance">KES {{ "{:,.2f}".format(balance) }}</div>
+        <hr style="border-color: #334155; margin: 15px 0;">
+        
+        {% if role == 'employer' %}
+        <button class="intaSendPayButton btn" 
+                data-amount="1000" 
+                data-currency="KES" 
+                data-email="{{ session['email'] }}" 
+                data-first_name="{{ user }}">
+            Deposit Funds (M-Pesa/Card)
+        </button>
+        {% endif %}
     </div>
 
-    {% if role == 'employer' %}
-    <div class="card">
-        <h3>Post a New Gig</h3>
-        <form action="/post_job" method="POST">
-            <input type="text" name="title" placeholder="Job Title (e.g. Driver)" required>
-            <textarea name="description" placeholder="Describe the task..."></textarea>
-            <input type="number" name="salary" placeholder="Salary (KES)" required>
-            <button type="submit" class="btn">Publish to Marketplace</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3>My Active Postings</h3>
-        {% for job in my_jobs %}
-        <div class="job-box" style="border-left-color: {% if job[5]=='open' %}#22c55e{% else %}#64748b{% endif %};">
-            <h4>{{ job[2] }}</h4>
-            <p>KES {{ job[4] }} | Status: <strong>{{ job[5]|upper }}</strong></p>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    
-    <div class="card">
-        <h3>Open Marketplace Gigs</h3>
-        {% for job in jobs %}
-        <div class="job-box">
-            <h4>{{ job[2] }}</h4>
-            <p>{{ job[3] }}</p>
-            <p><strong>Offer: KES {{ job[4] }}</strong></p>
-            <a href="/apply/{{ job[0] }}" class="btn">Accept & Start Work</a>
-        </div>
-        {% else %}
-        <p style="color: #94a3b8;">No open gigs available. Check back soon!</p>
-        {% endfor %}
-    </div>
-
-    <div class="card">
-        <h3>My Active Gigs (Contracts)</h3>
-        {% for c in my_contracts %}
-        <div class="job-box" style="border-left-color: #f59e0b;">
-            <p>Employer: <strong>{{ c[1] }}</strong></p>
-            <p>Agreed Salary: <strong>KES {{ c[3] }}</strong></p>
-            <span style="font-size: 0.8em; color: #22c55e;">● Active (12-Month Loyalty Tracked)</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+    <script>
+        new window.IntaSend({
+            publicAPIKey: "{{ is_key }}",
+            live: false // Set to true when you go live
+        })
+        .on("COMPLETE", (results) => {
+            alert("Payment Successful! Wallet updating...");
+            location.reload();
+        })
+        .on("FAILED", (results) => {
+            alert("Payment Failed. Please try again.");
+        })
+        .on("IN-PROGRESS", (results) => {
+            console.log("Payment in progress...");
+        });
+    </script>
 </body>
 </html>
