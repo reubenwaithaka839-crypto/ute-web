@@ -29,6 +29,7 @@ def auth():
                 session["user"], session["role"] = username, user[3]
                 return redirect(url_for("dashboard"))
             return "Invalid Password. <a href='/auth'>Try again</a>"
+        
         hashed_pw = generate_password_hash(password)
         try:
             c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, hashed_pw, role))
@@ -46,11 +47,25 @@ def dashboard():
     balance = ute.get_balance(session["user"])
     return render_template("dashboard.html", user=session["user"], role=session["role"], balance=balance)
 
+@app.route("/post_job", methods=["GET", "POST"])
+def post_job():
+    if session.get("role") != "employer": return "Unauthorized", 403
+    if request.method == "POST":
+        ute.add_job(session["user"], request.form["title"], request.form["description"], 
+                    request.form["requirements"], request.form["location"], request.form["salary"])
+        return redirect(url_for("jobs"))
+    return render_template("post_job.html")
+
+@app.route("/jobs")
+def jobs():
+    if "user" not in session: return redirect(url_for("auth"))
+    return render_template("jobs.html", jobs=ute.get_jobs(), role=session["role"])
+
 @app.route("/deposit", methods=["POST"])
 def deposit():
     if "user" not in session: return redirect(url_for("auth"))
     phone, amount = request.form.get("phone"), request.form.get("amount")
-    # REPLACE with your actual Render URL
+    # CHANGE THIS to your actual Render URL
     callback_url = "https://your-app-name.onrender.com/mpesa_callback" 
     stk_push(phone, amount, callback_url)
     return redirect(url_for("dashboard"))
