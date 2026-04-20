@@ -5,15 +5,16 @@
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        .btn { background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; border:none; cursor:pointer; }
+        .btn { background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; border:none; cursor:pointer; font-weight:bold; }
         .balance { font-size: 2em; color: #22c55e; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #334155; color: white; }
+        .job-box { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #3b82f6; }
     </style>
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between;">
-        <h2>Welcome, {{ user }}</h2>
-        <a href="/logout" style="color: #ef4444;">Sign Out</a>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>UTE.AI | {{ user }}</h2>
+        <a href="/logout" style="color: #ef4444; text-decoration: none;">Sign Out</a>
     </div>
 
     <div class="card">
@@ -25,29 +26,45 @@
     <div class="card">
         <h3>Post a New Gig</h3>
         <form action="/post_job" method="POST">
-            <input type="text" name="title" placeholder="Job Title" required>
-            <textarea name="description" placeholder="Work description..."></textarea>
+            <input type="text" name="title" placeholder="Job Title (e.g. Driver)" required>
+            <textarea name="description" placeholder="Describe the task..."></textarea>
             <input type="number" name="salary" placeholder="Salary (KES)" required>
-            <button type="submit" class="btn">Publish Gig</button>
+            <button type="submit" class="btn">Publish to Marketplace</button>
         </form>
     </div>
 
     <div class="card">
-        <h3>Available Talent</h3>
-        {% for t in talents %}
-        <p><strong>{{ t[0] }}</strong> - {{ t[1] }} ({{ t[2] }})</p>
-        <hr style="border-color: #334155;">
+        <h3>My Active Postings</h3>
+        {% for job in my_jobs %}
+        <div class="job-box" style="border-left-color: {% if job[5]=='open' %}#22c55e{% else %}#64748b{% endif %};">
+            <h4>{{ job[2] }}</h4>
+            <p>KES {{ job[4] }} | Status: <strong>{{ job[5]|upper }}</strong></p>
+        </div>
         {% endfor %}
     </div>
     {% else %}
+    
     <div class="card">
-        <h3>Available Gigs</h3>
+        <h3>Open Marketplace Gigs</h3>
         {% for job in jobs %}
-        <div style="background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+        <div class="job-box">
             <h4>{{ job[2] }}</h4>
             <p>{{ job[3] }}</p>
-            <p><strong>KES {{ job[4] }}</strong></p>
-            <button class="btn">Apply Now</button>
+            <p><strong>Offer: KES {{ job[4] }}</strong></p>
+            <a href="/apply/{{ job[0] }}" class="btn">Accept & Start Work</a>
+        </div>
+        {% else %}
+        <p style="color: #94a3b8;">No open gigs available. Check back soon!</p>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h3>My Active Gigs (Contracts)</h3>
+        {% for c in my_contracts %}
+        <div class="job-box" style="border-left-color: #f59e0b;">
+            <p>Employer: <strong>{{ c[1] }}</strong></p>
+            <p>Agreed Salary: <strong>KES {{ c[3] }}</strong></p>
+            <span style="font-size: 0.8em; color: #22c55e;">● Active (12-Month Loyalty Tracked)</span>
         </div>
         {% endfor %}
     </div>
