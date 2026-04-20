@@ -1,66 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE | Secure Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <title>UTE | Secure Identity Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #0f172a; color: white;
-            display: flex; height: 100vh; width: 100vw;
-        }
-        .left-panel {
-            flex: 1; background: linear-gradient(135deg, #2563eb, #7c3aed);
-            display: flex; align-items: center; justify-content: center; padding: 60px;
-        }
-        .right-panel {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            background: #0b0e14; padding: 40px;
-        }
-        .form-box { width: 100%; max-width: 450px; }
-        h1 { font-size: 2.5rem; margin-bottom: 10px; }
-        input, select {
-            width: 100%; padding: 15px; margin: 10px 0;
-            background: #1e293b; border: 1px solid #334155;
-            border-radius: 12px; color: white; font-size: 1rem;
-        }
-        .btn {
-            width: 100%; padding: 18px; background: #2563eb;
-            border: none; border-radius: 12px; color: white;
-            font-weight: 800; cursor: pointer; margin-top: 20px;
-            transition: 0.3s;
-        }
-        .btn:hover { background: #1d4ed8; transform: translateY(-2px); }
-        @media (max-width: 900px) { .left-panel { display: none; } }
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0e14; color: white; display: flex; height: 100vh; overflow: hidden; }
+        .hero-side { flex: 1.2; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; padding: 60px; }
+        .form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; }
+        .box { width: 100%; max-width: 450px; }
+        h1 { font-size: 4rem; letter-spacing: -3px; margin: 0; }
+        input, select { width: 100%; padding: 16px; margin: 8px 0; background: #1e293b; border: 1px solid #334155; border-radius: 14px; color: white; font-size: 1rem; }
+        .btn { width: 100%; padding: 20px; background: #2563eb; border: none; border-radius: 14px; color: white; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+        .btn:hover { transform: translateY(-3px); background: #1d4ed8; }
     </style>
 </head>
 <body>
-    <div class="left-panel">
+    <div class="hero-side">
         <div>
-            <h1 style="font-size: 4rem;">UTE.AI</h1>
-            <p style="font-size: 1.5rem; opacity: 0.8;">The Closed-Loop Recruitment Economy.</p>
-            <ul style="margin-top: 40px; font-size: 1.1rem; line-height: 2;">
-                <li>Verified National ID Identification</li>
-                <li>12-Month Contract Escrow</li>
-                <li>Automated Cashback Incentives</li>
-            </ul>
+            <h1>UTE.</h1>
+            <p style="font-size: 1.5rem; opacity: 0.8;">The Closed-Loop Recruitment & Escrow Economy.</p>
+            <div style="margin-top: 40px; border-left: 4px solid white; padding-left: 20px; opacity: 0.6;">
+                <p>30% Month 1 Placement Fee</p>
+                <p>10% Loyalty Payroll Fee</p>
+                <p>3% Secured Transaction Protection</p>
+            </div>
         </div>
     </div>
-    <div class="right-panel">
-        <div class="form-box">
-            <h2>Secure Sign Up</h2>
+    <div class="form-side">
+        <div class="box">
+            <h2>Digital Onboarding</h2>
             <form action="/auth" method="POST">
                 <input type="text" name="username" placeholder="Full Name (Per National ID)" required>
-                <input type="email" name="email" placeholder="Email Address" required>
-                <input type="text" name="phone" placeholder="Phone (254...)" required>
+                <input type="email" name="email" placeholder="Verified Email" required>
+                <input type="text" name="phone" placeholder="Phone (M-Pesa Registered)" required>
                 <input type="text" name="national_id" placeholder="National ID Number" required>
+                <input type="text" name="location" placeholder="Current Location (City/Town)" required>
+                <input type="text" name="skills" placeholder="Skills (e.g. Driver, Coder, Accountant)" required>
                 <select name="role">
-                    <option value="employee">Looking for work (Employee)</option>
-                    <option value="employer">Hiring Manager (Organization)</option>
+                    <option value="employee">I am looking for Work (Employee)</option>
+                    <option value="employer">I am Hiring (Organization)</option>
                 </select>
                 <input type="password" name="password" placeholder="Complex Passcode (A-z, 0-9, @)" required>
-                <button type="submit" class="btn">Create Secure Account</button>
+                <button type="submit" class="btn">Secure Identity & Enter</button>
             </form>
         </div>
     </div>
