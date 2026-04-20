@@ -1,11 +1,11 @@
 from flask import Flask, request, redirect, session, render_template, url_for, jsonify
-import sqlite3, ute, os, bcrypt, requests
+import sqlite3, ute, os, bcrypt
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "UTE_GLOBAL_v6")
+app.secret_key = os.environ.get("SECRET_KEY", "UTE_GLOBAL_v6_FINAL")
 
-# Get these from https://intasend.com (Dashboard -> API Keys)
-INTASEND_PUBLIC_KEY = os.environ.get("IS_PUBLIC_KEY", "your_public_key_here")
+# REPLACE THIS WITH YOUR ACTUAL INTASEND PUBLIC KEY
+INTASEND_PUBLIC_KEY = "ISPubKey_test_YOUR_KEY_HERE"
 
 def get_db():
     conn = sqlite3.connect(ute.DB, timeout=10)
@@ -30,7 +30,7 @@ def auth():
             conn.commit()
             session.update({"user": d.get("username"), "role": d.get("role"), "phone": d.get("phone"), "email": d.get("email")})
             return redirect(url_for("dashboard"))
-        except: return "Registration Error: User already exists."
+        except Exception as e: return f"Auth Error: {e}"
         finally: conn.close()
     return render_template("auth.html")
 
@@ -49,16 +49,18 @@ def dashboard():
         my_contracts = conn.execute("SELECT * FROM contracts WHERE employee=?", (session["user"],)).fetchall()
         return render_template("dashboard.html", user=session["user"], balance=balance, role="employee", jobs=jobs, my_contracts=my_contracts)
 
-# NEW: Webhook to receive payment confirmation from IntaSend
-@app.route("/payment_callback", methods=["POST"])
-def payment_callback():
+@app.route("/payment_success", methods=["POST"])
+def payment_success():
+    if "user" not in session: return jsonify({"status": "unauthorized"}), 401
     data = request.json
-    if data.get("state") == "COMPLETE":
-        amount = data.get("net_amount")
-        user_email = data.get("email") # IntaSend returns the payer email
-        # Logic to update wallet goes here
-        return jsonify({"status": "ok"}), 200
-    return jsonify({"status": "failed"}), 400
+    # results.net_amount from IntaSend is the money that actually reached you
+    amount = float(data.get("amount", 0))
+    
+    conn = get_db()
+    conn.execute("UPDATE wallet SET balance = balance + ? WHERE username=?", (amount, session["user"]))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success"})
 
 @app.route("/logout")
 def logout():
