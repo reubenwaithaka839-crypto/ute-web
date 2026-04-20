@@ -1,20 +1,23 @@
 from flask import Flask, request, redirect, session, render_template, url_for
 import sqlite3, ute, mpesa, os, re
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "UTE_MILLION_DOLLAR_SECRET_2026"
+app.secret_key = "UTE_SECRET_MILLION_2026"
 
-# --- CORE ROUTES ---
+# AI Security Check
+def is_secure(pw):
+    return re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$", pw)
+
+@app.route("/")
+def index():
+    return redirect(url_for("auth"))
 
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
     if request.method == "POST":
         d = request.form
-        # Strong Password AI Check
-        if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$", d['password']):
-            return "Security Alert: Password too weak. Use A-Z, a-z, 0-9 and Symbols."
-        
+        if not is_secure(d['password']): return "Security Alert: Password too weak."
         conn = sqlite3.connect(ute.DB)
         try:
             hpw = generate_password_hash(d['password'])
@@ -24,7 +27,7 @@ def auth():
             conn.commit()
             session.update({"user": d['username'], "role": d['role'], "nid": d['national_id']})
             return redirect(url_for("dashboard"))
-        except sqlite3.IntegrityError: return "Identity Error: ID or Phone already exists."
+        except sqlite3.IntegrityError: return "Identity Alert: ID/Phone already exists."
         finally: conn.close()
     return render_template("auth.html")
 
@@ -32,39 +35,33 @@ def auth():
 def dashboard():
     if "user" not in session: return redirect(url_for("auth"))
     conn = sqlite3.connect(ute.DB)
-    # Alignment Logic: Show employees to employers based on location
     u_info = conn.execute("SELECT balance, is_approved_admin FROM users INNER JOIN wallet ON users.username = wallet.username WHERE users.username=?", (session["user"],)).fetchone()
-    
     data = []
     if session["role"] == "employer":
-        # MILLION DOLLAR ALIGNMENT: Show skills and location matches
-        data = conn.execute("SELECT username, location, skills, id FROM users WHERE role='employee'").fetchall()
-    
+        data = conn.execute("SELECT username, location, skills FROM users WHERE role='employee'").fetchall()
     conn.close()
     return render_template("dashboard.html", user=session["user"], role=session["role"], nid=session["nid"], balance=u_info[0], is_admin=u_info[1], data=data)
 
-# --- ADMIN ROUTES (The Gatekeeper) ---
-
-@app.route("/superadmin/ute")
-def superadmin():
-    # Only you access this
+@app.route("/pay_invoice/<employee>")
+def pay_invoice(employee):
+    if "user" not in session: return redirect(url_for("auth"))
     conn = sqlite3.connect(ute.DB)
-    requests = conn.execute("SELECT id, username, national_id FROM users WHERE admin_request_pending=1").fetchall()
-    admin_count = conn.execute("SELECT COUNT(*) FROM users WHERE is_approved_admin=1").fetchone()[0]
-    org_count = conn.execute("SELECT COUNT(*) FROM users WHERE role='employer'").fetchone()[0]
-    total_rev = conn.execute("SELECT SUM(ute_share) FROM ledger").fetchone()[0] or 0
-    conn.close()
-    return render_template("admin_panel.html", requests=requests, admin_count=admin_count, org_count=org_count, total_ute_revenue=total_rev)
-
-@app.route("/approve_admin/<int:uid>")
-def approve_admin(uid):
-    conn = sqlite3.connect(ute.DB)
-    count = conn.execute("SELECT COUNT(*) FROM users WHERE is_approved_admin=1").fetchone()[0]
-    if count < 2:
-        conn.execute("UPDATE users SET is_approved_admin=1, admin_request_pending=0 WHERE id=?", (uid,))
+    # Get or create 12-month mandate
+    c_data = conn.execute("SELECT id, salary, total_months_paid FROM contracts WHERE employee=?", (employee,)).fetchone()
+    if not c_data:
+        conn.execute("INSERT INTO contracts (employer, employee, salary, total_months_paid) VALUES (?, ?, ?, ?)", (session["user"], employee, 50000, 0))
         conn.commit()
+        c_data = conn.execute("SELECT id, salary, total_months_paid FROM contracts WHERE employee=?", (employee,)).fetchone()
     conn.close()
-    return redirect(url_for("superadmin"))
+    
+    math = ute.get_ute_math(c_data[1], c_data[2])
+    return render_template("pay.html", m=math, emp=employee, cid=c_data[0])
+
+@app.route("/execute_payment/<int:cid>")
+def execute_payment(cid):
+    if mpesa.trigger_settlement(cid):
+        return redirect(url_for("dashboard"))
+    return "Payment Failed."
 
 if __name__ == "__main__":
     ute.init_db()
