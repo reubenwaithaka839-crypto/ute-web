@@ -1,42 +1,97 @@
 <!DOCTYPE html>
-<html style="height:100%;">
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE | Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0e14; color: white; margin: 0; display: flex; height: 100vh; }
-        .sidebar { width: 300px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.1); padding: 40px; }
-        .main { flex: 1; padding: 60px; overflow-y: auto; }
-        .hero { background: linear-gradient(135deg, #2563eb, #7c3aed); padding: 80px; border-radius: 40px; position: relative; margin-bottom: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
-        .hero h1 { font-size: 4rem; margin: 0; letter-spacing: -2px; }
-        .balance-box { position: absolute; right: 80px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.2); padding: 30px; border-radius: 30px; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
-        .card { background: rgba(255,255,255,0.03); padding: 50px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.1); transition: 0.4s; text-decoration: none; color: white; }
-        .card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.07); border-color: #2563eb; }
-        .card i { font-size: 4rem; display: block; margin-bottom: 20px; }
+        :root { --primary: #2563eb; --accent: #7c3aed; --bg: #0b0e14; --glass: rgba(255,255,255,0.03); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: white; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Full Screen Sidebar */
+        nav { width: 300px; background: rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); padding: 40px; display: flex; flex-direction: column; }
+        
+        /* Scrollable Content Area */
+        main { flex: 1; padding: 60px; overflow-y: auto; background: radial-gradient(circle at top right, #1e293b, #0b0e14); }
+        
+        .hero { background: linear-gradient(135deg, var(--primary), var(--accent)); padding: 60px; border-radius: 40px; margin-bottom: 40px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .hero h1 { font-size: 3.5rem; letter-spacing: -2px; }
+        
+        .balance-card { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.2); padding: 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); }
+
+        /* Talent Alignment Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+        .card { background: var(--glass); border-radius: 35px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); transition: 0.4s; position: relative; }
+        .card:hover { transform: translateY(-10px); border-color: var(--primary); background: rgba(255,255,255,0.06); }
+        
+        .badge { position: absolute; top: 20px; right: 20px; background: #22c55e; font-size: 0.7rem; padding: 5px 15px; border-radius: 20px; font-weight: 800; }
+        .tag { display: inline-block; background: rgba(37,99,235,0.1); color: #60a5fa; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; margin: 4px; }
+        
+        .hire-btn { width: 100%; background: white; color: black; border: none; padding: 18px; border-radius: 15px; font-weight: 800; cursor: pointer; margin-top: 25px; transition: 0.3s; }
+        .hire-btn:hover { background: var(--primary); color: white; }
+
+        @media (max-width: 1000px) { nav { display: none; } .hero h1 { font-size: 2rem; } .balance-card { position: static; transform: none; margin-top: 20px; } }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h1 style="color: #2563eb;">UTE</h1>
-        <p style="opacity: 0.5;">ID: {{ nid }}</p>
-        <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 30px 0;">
-        <a href="/logout" style="color: #ef4444; text-decoration: none; font-weight: 800;">LOGOUT</a>
-    </div>
-    <div class="main">
+    <nav>
+        <h1 style="color: var(--primary); margin-bottom: 50px;">UTE.AI</h1>
+        <div style="display:flex; flex-direction:column; gap:25px;">
+            <a href="/dashboard" style="color:white; text-decoration:none; font-weight:800;">Command Center</a>
+            <a href="#" style="color:#64748b; text-decoration:none;">Global Ledger</a>
+            <a href="#" style="color:#64748b; text-decoration:none;">Identity Vault</a>
+            {% if is_admin == 1 or user == 'Creator' %}
+            <a href="/superadmin/ute" style="color:#f59e0b; text-decoration:none; font-weight:800;">Admin Panel</a>
+            {% endif %}
+        </div>
+        <a href="/logout" style="margin-top:auto; color:#ef4444; text-decoration:none; font-weight:800;">Sign Out</a>
+    </nav>
+
+    <main>
         <div class="hero">
-            <p>Ecosystem Status: <span style="color: #4ade80;">SECURED BY AI SENTINEL</span></p>
-            <h1>Hello, {{ user }}</h1>
-            <div class="balance-box">
-                <p style="margin:0; opacity:0.6;">WALET BALANCE</p>
-                <h2 style="font-size: 3rem; margin:0;">KES {{ balance }}</h2>
+            <p style="opacity:0.8;">Verified National ID: {{ nid }}</p>
+            <h1>Welcome, {{ user }}</h1>
+            <div class="balance-card">
+                <p style="font-size:0.7rem; opacity:0.6; margin:0;">LIQUID BALANCE</p>
+                <h2 style="font-size:2.5rem;">KES {{ "{:,.2f}".format(balance) }}</h2>
             </div>
         </div>
+
+        <h2 style="margin-bottom:30px; letter-spacing:-1px;">
+            {% if role == 'employer' %} Available Talent Alignment {% else %} Active Contract Status {% endif %}
+        </h2>
+
         <div class="grid">
-            <a href="#" class="card"><i>📊</i><strong>Ledger</strong><p>View all 12-month contract payouts & cashbacks.</p></a>
-            <a href="#" class="card"><i>💸</i><strong>Deposit</strong><p>Push salary via M-Pesa. Auto-deduct 30% or 10%.</p></a>
-            <a href="#" class="card"><i>🛡️</i><strong>AI Sentinel</strong><p>Fraud Score: 0.02 (Optimal). Identity verified via NID.</p></a>
+            {% if role == 'employer' %}
+                {% for worker in data %}
+                <div class="card">
+                    <span class="badge">VERIFIED</span>
+                    <h3>{{ worker[0] }}</h3>
+                    <p style="opacity:0.6; font-size:0.9rem; margin-bottom:15px;">📍 {{ worker[1] }}</p>
+                    <div>
+                        {% for skill in worker[2].split(',') %}
+                        <span class="tag">{{ skill.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    <form action="/pay_invoice/{{ worker[0] }}">
+                        <button class="hire-btn">Initiate Payment</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="card">
+                    <div class="badge" style="background:var(--primary);">ACTIVE MANDATE</div>
+                    <h3>Contract Progress</h3>
+                    <p style="margin:20px 0; opacity:0.7;">Your 12-month contractual lock with UTE ensures secure payments and legal protection.</p>
+                    <div style="height:10px; background:rgba(255,255,255,0.1); border-radius:10px;">
+                        <div style="width:8%; height:100%; background:var(--primary); border-radius:10px;"></div>
+                    </div>
+                    <p style="font-size:0.7rem; margin-top:10px; opacity:0.5;">Month 1 of 12 (Placement Phase)</p>
+                </div>
+            {% endif %}
         </div>
-    </div>
+    </main>
 </body>
 </html>
