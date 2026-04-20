@@ -19,8 +19,6 @@
             width: 100%; transition: 0.3s; 
         }
         .btn:hover { background: #2563eb; transform: translateY(-2px); }
-        .status-msg { margin-top: 15px; font-size: 0.9em; padding: 10px; border-radius: 5px; display: none; }
-        .error { background: #450a0a; color: #fecaca; display: block; }
     </style>
 </head>
 <body>
@@ -38,8 +36,6 @@
             <button id="checkout-button" class="btn">
                 DEPOSIT KES 10.00
             </button>
-
-            <div id="error-box" class="status-msg"></div>
         </div>
 
         <div class="card" style="text-align: left;">
@@ -50,38 +46,36 @@
     </div>
 
     <script>
-        // Use the key passed from app.py
+        // Use the public key passed from app.py
         const PUBLIC_KEY = "{{ is_key }}";
 
         // Initialize IntaSend
         const intasend = new window.IntaSend({
             publicAPIKey: PUBLIC_KEY,
-            live: false // Set to true only for real money
+            live: false 
         });
 
-        // Manual click listener
+        // This is the code you asked about - placed inside the script tag
         document.getElementById("checkout-button").addEventListener("click", () => {
             console.log("Triggering IntaSend...");
             
             intasend.run({
                 amount: 10,
                 currency: "KES",
+                label: "Deposit",
+                comment: "Test Topup", 
+                phone_number: "254700000000", 
                 email: "{{ session['email'] }}",
                 first_name: "{{ user }}"
             })
             .catch((err) => {
                 console.error("SDK Error:", err);
-                const errBox = document.getElementById("error-box");
-                errBox.innerText = "Error: " + err.message;
-                errBox.classList.add("error");
+                alert("Technical Error. Check browser console.");
             });
         });
 
-        // Listen for successful payment
+        // Listen for successful payment to update the database
         intasend.on("COMPLETE", (results) => {
-            console.log("Payment complete:", results);
-            
-            // Send to Flask to update the database
             fetch("/payment_success", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -93,7 +87,7 @@
             .then(res => {
                 if (res.ok) {
                     alert("Deposit Successful!");
-                    location.reload(); // Refresh to show new balance
+                    location.reload(); 
                 }
             });
         })
