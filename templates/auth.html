@@ -1,43 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>UTE | Identity Vault</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE | Join the Network</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1e293b; padding: 30px; border-radius: 15px; width: 350px; border: 1px solid #334155; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .auth-card { background: #1e293b; padding: 40px; border-radius: 15px; border: 1px solid #334155; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        h2 { text-align: center; margin-bottom: 30px; color: #3b82f6; font-size: 2em; letter-spacing: -1px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.85em; color: #94a3b8; }
+        input, select { 
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; 
+            background: #0f172a; color: white; box-sizing: border-box; font-size: 1em;
+        }
+        input:focus, select:focus { border-color: #3b82f6; outline: none; }
+        .btn { 
+            background: #3b82f6; color: white; padding: 14px; border: none; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; 
+            margin-top: 20px; font-size: 1.1em; transition: 0.3s;
+        }
+        .btn:hover { background: #2563eb; }
+        .toggle-text { text-align: center; margin-top: 20px; font-size: 0.9em; color: #94a3b8; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Identity Vault</h2>
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="email" name="email" placeholder="Email Address" required>
-            <input type="text" name="phone" placeholder="Phone (254...)" required>
-            <input type="text" name="national_id" placeholder="National ID" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="text" name="location" placeholder="Location (City)" required>
-            
-            <select name="role" id="roleSelect" onchange="updateLabel()">
-                <option value="employee">I am looking for Work (Employee)</option>
-                <option value="employer">I am Hiring (Organization)</option>
-            </select>
 
-            <label id="dynLabel" style="font-size: 0.8em; color: #94a3b8;">Professional Skills</label>
-            <input type="text" name="bio_or_company" id="dynInput" placeholder="e.g. Accounting, Java..." required>
-            
-            <button type="submit">Secure Identity & Enter</button>
+    <div class="auth-card">
+        <h2>UTE.AI</h2>
+        <form action="/auth" method="POST">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="johndoe" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="john@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number (M-Pesa)</label>
+                <input type="text" name="phone" placeholder="254..." required>
+            </div>
+
+            <div class="form-group">
+                <label>National ID / Passport</label>
+                <input type="text" name="national_id" placeholder="12345678" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label>I want to:</label>
+                <select name="role">
+                    <option value="employer">Hire Workers (Employer)</option>
+                    <option value="employee">Find Gigs (Worker)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="bio-field">
+                <label>Location / City</label>
+                <input type="text" name="location" placeholder="Nairobi, Kenya">
+            </div>
+
+            <button type="submit" class="btn">Create Account</button>
         </form>
+        
+        <p class="toggle-text">Already have an account? Log in here.</p>
     </div>
 
-    <script>
-        function updateLabel() {
-            var role = document.getElementById("roleSelect").value;
-            document.getElementById("dynLabel").innerText = role === "employer" ? "Company Name" : "Professional Skills";
-            document.getElementById("dynInput").placeholder = role === "employer" ? "e.g. UTE Global Ltd" : "e.g. Accounting, Java...";
-        }
-    </script>
 </body>
 </html>
