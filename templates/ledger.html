@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE | Financial Ledger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0e14; color: white; padding: 60px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .back-link { color: #2563eb; text-decoration: none; font-weight: 800; display: block; margin-bottom: 30px; }
+        .ledger-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        th, td { padding: 25px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(255,255,255,0.05); color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        .amount { font-family: monospace; font-weight: 800; font-size: 1.1rem; }
+        .ute-cut { color: #ef4444; } /* Red for deductions */
+        .cashback { color: #22c55e; } /* Green for rewards */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/dashboard" class="back-link">← RETURN TO COMMAND CENTER</a>
+        <h1 style="font-size: 2.5rem; letter-spacing: -1.5px; margin-bottom: 10px;">Platform Ledger</h1>
+        <p style="opacity: 0.5; margin-bottom: 40px;">Transparent breakdown of all 12-month contractual settlements.</p>
+
+        <table class="ledger-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Gross Salary</th>
+                    <th>UTE Share (Your Revenue)</th>
+                    <th>Employer Cashback</th>
+                    <th>Employee Net</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in history %}
+                <tr>
+                    <td>{{ entry[6] }}</td>
+                    <td class="amount">KES {{ "{:,.2f}".format(entry[2]) }}</td>
+                    <td class="amount ute-cut">KES {{ "{:,.2f}".format(entry[3]) }}</td>
+                    <td class="amount cashback">KES {{ "{:,.2f}".format(entry[4]) }}</td>
+                    <td class="amount">KES {{ "{:,.2f}".format(entry[5]) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
