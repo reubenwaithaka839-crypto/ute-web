@@ -2,99 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE | Dashboard</title>
-    
-    <script src="https://unpkg.com/intasend-inlinejs-sdk@4.0.7/build/intasend-inline.js"></script>
-
+    <title>Premium Dashboard</title>
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        .card { background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155; margin-bottom: 20px; text-align: center; }
-        .balance-label { color: #94a3b8; font-size: 0.8em; letter-spacing: 1px; margin-bottom: 10px; }
-        .balance-amount { font-size: 3em; color: #22c55e; font-weight: bold; margin-bottom: 20px; }
-        .btn { 
-            background: #3b82f6; color: white; padding: 16px 32px; border: none; 
-            border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; 
-            width: 100%; transition: 0.3s; 
+        body { font-family: 'Inter', sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
+        .header { background: #1e293b; color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 3rem auto; display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; }
+        
+        /* THE BIG ATTRACTIVE BUTTONS */
+        .btn-card {
+            width: 300px; height: 200px; border: none; border-radius: 24px;
+            font-size: 1.25rem; font-weight: 800; cursor: pointer;
+            transition: all 0.3s ease; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: white;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
-        .btn:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-card:hover { transform: translateY(-10px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        
+        .admin-theme { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .payment-theme { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); }
+        .employee-theme { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+        
+        .status-pill { padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; background: #e2e8f0; margin-top: 10px; color: #475569; }
     </style>
 </head>
 <body>
+    <div class="header"><h1>PREMIUM CONTROL SYSTEM</h1></div>
 
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0;">UTE.AI</h2>
-            <a href="/logout" style="color: #ef4444; text-decoration: none;">Logout</a>
-        </div>
-
-        <div class="card">
-            <div class="balance-label">WALLET BALANCE</div>
-            <div class="balance-amount">KES {{ "{:,.2f}".format(balance) }}</div>
-            
-            <button id="checkout-button" class="btn">
-                DEPOSIT KES 10.00
+        {% if user.role == 'admin' %}
+            <button class="btn-card admin-theme">
+                ADMIN PANEL
+                <span class="status-pill">Full Access</span>
             </button>
-        </div>
+            <button class="btn-card admin-theme">
+                SYSTEM LOGS
+                <span class="status-pill">View Only</span>
+            </button>
+        {% endif %}
 
-        <div class="card" style="text-align: left;">
-            <h3 style="margin-top: 0;">User Profile</h3>
-            <p><strong>Username:</strong> {{ user }}</p>
-            <p><strong>Account Type:</strong> {{ role }}</p>
-        </div>
+        <button onclick="payTen()" class="btn-card payment-theme">
+            UPGRADE NOW
+            <span class="status-pill">Pay 10 KES</span>
+        </button>
+
+        <button class="btn-card employee-theme">
+            EMPLOYEE TOOLS
+            <span class="status-pill">Standard Access</span>
+        </button>
     </div>
 
     <script>
-        // Use the public key passed from app.py
-        const PUBLIC_KEY = "{{ is_key }}";
-
-        // Initialize IntaSend
-        const intasend = new window.IntaSend({
-            publicAPIKey: PUBLIC_KEY,
-            live: false 
-        });
-
-        // This is the code you asked about - placed inside the script tag
-        document.getElementById("checkout-button").addEventListener("click", () => {
-            console.log("Triggering IntaSend...");
-            
-            intasend.run({
-                amount: 10,
-                currency: "KES",
-                label: "Deposit",
-                comment: "Test Topup", 
-                phone_number: "254700000000", 
-                email: "{{ session['email'] }}",
-                first_name: "{{ user }}"
+        function payTen() {
+            alert("Sending request to your phone...");
+            fetch('/pay', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                alert("Please check your phone for the M-Pesa PIN prompt!");
             })
-            .catch((err) => {
-                console.error("SDK Error:", err);
-                alert("Technical Error. Check browser console.");
-            });
-        });
-
-        // Listen for successful payment to update the database
-        intasend.on("COMPLETE", (results) => {
-            fetch("/payment_success", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    amount: results.net_amount,
-                    tracking_id: results.tracking_id 
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    alert("Deposit Successful!");
-                    location.reload(); 
-                }
-            });
-        })
-        .on("FAILED", (results) => {
-            alert("Payment failed or was cancelled.");
-        });
+            .catch(err => alert("Error: " + err));
+        }
     </script>
-
 </body>
 </html>
