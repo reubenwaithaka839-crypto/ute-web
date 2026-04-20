@@ -5,50 +5,42 @@ from intasend import APIService
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
+# IMPORTANT: These MUST match your Render Environment Keys exactly
 API_PUBLISHABLE_KEY = os.environ.get('INTASEND_PUBLISHABLE_KEY')
 API_TOKEN = os.environ.get('INTASEND_API_TOKEN')
 
-# Initialize IntaSend Service
-# Set test=True for Sandbox, test=False for Live
+# Initialize Service
 service = APIService(token=API_TOKEN, publishable_key=API_PUBLISHABLE_KEY, test=True)
 
 @app.route('/')
 def index():
-    """Main Dashboard View"""
-    # Dynamic Role Logic: Change 'admin' to 'employee' to see the difference
-    user_data = {
-        'role': 'admin', 
-        'name': 'Developer'
-    }
+    user_data = {'role': 'admin', 'name': 'Developer'}
     return render_template('dashboard.html', user=user_data)
 
 @app.route('/pay', methods=['POST'])
 def initiate_payment():
-    """Initiates the 10 KES STK Push"""
     try:
-        # IMPORTANT: Use a real phone number in 254... format here
+        # LOGGING: This will show up in your Render Logs tab
+        print(f"--- Attempting Payment with Key: {API_PUBLISHABLE_KEY[:10]}... ---")
+        
         response = service.collect.mpesa_stk_push(
-            phone_number="254700000000", 
-            email="user@example.com",
+            phone_number="254722000000", # <--- CHANGE THIS TO YOUR REAL NUMBER
+            email="test@example.com",
             amount=10,
-            narrative="Dashboard Service Upgrade"
+            narrative="Dashboard Service"
         )
+        print(f"IntaSend Response: {response}")
         return jsonify(response)
     except Exception as e:
-        print(f"Payment Error: {e}")
+        # This will tell us the EXACT error (e.g., 'Unauthorized' or 'Invalid Number')
+        print(f"!!! CRITICAL ERROR: {str(e)}") 
         return jsonify({"error": str(e)}), 400
 
 @app.route('/intasend-webhook', methods=['POST'])
 def webhook():
-    """Handles the payment confirmation from IntaSend"""
     data = request.json
-    state = data.get('invoice', {}).get('state')
-    
-    if state == 'COMPLETED':
-        print("✅ SUCCESS: Payment verified via Webhook!")
-        return jsonify({"status": "success"}), 200
-    
-    return jsonify({"status": "processing"}), 200
+    print(f"Webhook Received: {data}")
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
