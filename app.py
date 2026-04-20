@@ -5,8 +5,36 @@ app = Flask(__name__)
 app.secret_key = "UTE_SECRET_KEY_2026"
 DB = "ute.db"
 
-# YOUR PUBLIC KEY PLUGGED IN
+# YOUR PUBLIC KEY
 INTASEND_PUBLIC_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
+
+# --- DATABASE FIX START ---
+def create_tables():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    # Create Users Table
+    c.execute("""CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        username TEXT UNIQUE, email TEXT UNIQUE, phone TEXT UNIQUE,
+        national_id TEXT UNIQUE, password TEXT, role TEXT, 
+        location TEXT, bio_or_company TEXT
+    )""")
+    # Create Jobs Table
+    c.execute("""CREATE TABLE IF NOT EXISTS jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, employer TEXT, 
+        title TEXT, description TEXT, salary REAL, status TEXT DEFAULT 'open'
+    )""")
+    # Create Wallet Table
+    c.execute("""CREATE TABLE IF NOT EXISTS wallet (
+        username TEXT UNIQUE, balance REAL DEFAULT 0
+    )""")
+    conn.commit()
+    conn.close()
+    print("Database tables verified/created.")
+
+# Run the table creator immediately
+create_tables()
+# --- DATABASE FIX END ---
 
 def get_db():
     conn = sqlite3.connect(DB, timeout=10)
@@ -48,7 +76,6 @@ def dashboard():
     res = conn.execute("SELECT balance FROM wallet WHERE username=?", (session["user"],)).fetchone()
     balance = res[0] if res else 0
     
-    # Simple check for jobs
     jobs = conn.execute("SELECT * FROM jobs LIMIT 10").fetchall()
     conn.close()
     
