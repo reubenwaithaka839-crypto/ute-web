@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join UTE_WEB | Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen flex items-center justify-center p-6">
+
+    <div class="glass w-full max-w-lg p-10 rounded-[2rem] shadow-2xl">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 mb-2">UTE_WEB</h1>
+            <p class="text-slate-400 text-lg">Create your professional account</p>
+        </div>
+
+        <form action="/register" method="POST" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <input type="text" name="username" placeholder="Username" required 
+                    class="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                <input type="email" name="email" placeholder="Email Address" required 
+                    class="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            </div>
+
+            <input type="text" name="phone" placeholder="Phone (e.g., 2547...)" required 
+                class="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+
+            <input type="password" name="password" placeholder="Secure Password" required 
+                class="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition">
+
+            <div class="flex space-x-4">
+                <label class="flex-1">
+                    <input type="radio" name="role" value="employee" class="hidden peer" checked>
+                    <div class="p-4 text-center rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer peer-checked:bg-indigo-600 peer-checked:border-indigo-400 transition">
+                        I'm an Employee
+                    </div>
+                </label>
+                <label class="flex-1">
+                    <input type="radio" name="role" value="employer" class="hidden peer">
+                    <div class="p-4 text-center rounded-2xl border border-slate-700 bg-slate-800/50 cursor-pointer peer-checked:bg-indigo-600 peer-checked:border-indigo-400 transition">
+                        I'm an Employer
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" class="w-full btn-gradient py-5 rounded-2xl font-black text-xl text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+                CREATE ACCOUNT
+            </button>
+        </form>
+
+        <p class="text-center mt-8 text-slate-500">
+            Already have an account? <a href="#" class="text-indigo-400 font-bold hover:underline">Login</a>
+        </p>
+    </div>
+
+</body>
+</html>
