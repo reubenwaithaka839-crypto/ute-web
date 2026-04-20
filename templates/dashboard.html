@@ -1,8 +1,128 @@
-<section class="glass p-8 rounded-[2.5rem] mt-10">
-    <h3 class="text-xl font-black mb-6 uppercase italic text-blue-400">Withdrawal Portal</h3>
-    <form action="/withdraw" method="POST" class="flex gap-4">
-        <input type="number" name="amount" placeholder="Amount to Bank" class="flex-1 bg-white/5 p-4 rounded-2xl border border-white/10">
-        <button class="bg-emerald-600 text-white px-8 rounded-2xl font-black text-xs hover:bg-emerald-500">REQUEST PAYOUT</button>
-    </form>
-    <p class="text-[10px] text-slate-500 mt-4 uppercase">Funds will be sent to: <span class="text-white">{{ user.bank_name }} - {{ user.bank_account }}</span></p>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE_WEB | Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #020617; }
+        
+        /* THE SUPERMAX BUTTON */
+        .btn-supermax {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 900;
+        }
+        .btn-supermax:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px -5px rgba(37, 99, 235, 0.6);
+            filter: brightness(1.1);
+        }
+        .btn-supermax:active { transform: scale(0.95); }
+
+        /* THE WITHDRAW BUTTON (EMERALD GLOW) */
+        .btn-withdraw {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 15px 30px -5px rgba(5, 150, 105, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2.5rem;
+        }
+    </style>
+</head>
+<body class="text-slate-300">
+
+    <div class="max-w-7xl mx-auto p-6 lg:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
+            <div class="text-center md:text-left">
+                <h1 class="text-5xl font-black text-white italic tracking-tighter">UTE_WEB</h1>
+                <p class="text-blue-500 font-bold tracking-widest text-xs mt-2">ACCOUNT: {{ user.username.upper() }}</p>
+            </div>
+            
+            <div class="glass-card px-10 py-6 flex items-center space-x-8">
+                <div>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Available Funds</p>
+                    <p class="text-4xl font-black text-white">KES {{ "{:,.2f}".format(balance) }}</p>
+                </div>
+                <div class="w-16 h-16 bg-blue-600/20 rounded-3xl flex items-center justify-center border border-blue-500/30">
+                    <i class="fa fa-wallet text-2xl text-blue-400"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            
+            <section class="space-y-8">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-2xl font-black text-white italic">PAYROLL CORE</h3>
+                    <span class="text-xs font-bold text-slate-600 uppercase">{{ contracts|length }} Active</span>
+                </div>
+
+                {% for c in contracts %}
+                <div class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center space-x-6">
+                        <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-2xl font-black text-blue-500">
+                            {{ (c.employee if user.role != 'employee' else c.employer)[0].upper() }}
+                        </div>
+                        <div>
+                            <p class="text-xl font-black text-white">{{ c.employee if user.role != 'employee' else c.employer }}</p>
+                            <p class="text-sm font-bold text-slate-500 tracking-wide">Monthly Salary: KES {{ "{:,.2f}".format(c.salary) }}</p>
+                        </div>
+                    </div>
+
+                    {% if user.role != 'employee' %}
+                    <button onclick="payStaff({{ c.id }})" class="btn-supermax text-white py-5 px-10 rounded-2xl text-lg w-full md:w-auto">
+                        EXECUTE PAY
+                    </button>
+                    {% else %}
+                    <div class="text-center md:text-right">
+                        <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Status</p>
+                        <p class="text-lg font-black text-blue-400 italic">ACTIVE</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="space-y-8">
+                <h3 class="text-2xl font-black text-white italic">BANK SETTLEMENT</h3>
+                <div class="glass-card p-10 bg-gradient-to-br from-white/[0.02] to-transparent">
+                    <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-6">Request Payout to Bank</p>
+                    
+                    <form action="/withdraw" method="POST" class="space-y-6">
+                        <div class="relative">
+                            <span class="absolute left-6 top-1/2 -translate-y-1/2 font-black text-slate-600 text-xl">KES</span>
+                            <input type="number" name="amount" placeholder="0.00" 
+                                class="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-3xl text-3xl font-black text-white focus:border-emerald-500 outline-none transition">
+                        </div>
+                        
+                        <button class="btn-supermax btn-withdraw w-full py-8 rounded-[2rem] text-2xl">
+                            WITHDRAW TO BANK
+                        </button>
+                    </form>
+                    
+                    <div class="mt-8 pt-8 border-t border-white/5 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa fa-university text-slate-600"></i>
+                            <p class="text-sm font-bold text-slate-500">{{ user.bank_name }} • {{ user.bank_account }}</p>
+                        </div>
+                        <a href="/profile" class="text-[10px] font-black text-blue-500 hover:underline tracking-widest">EDIT DETAILS</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="mt-20 flex justify-center space-x-6">
+            <a href="/admin_room" class="glass-card px-8 py-4 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition">Admin Panel</a>
+            <a href="/logout" class="glass
