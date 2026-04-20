@@ -1,14 +1,28 @@
-<body class="bg-[#020617] flex items-center justify-center min-h-screen text-slate-300">
-    <form action="/register" method="POST" class="w-full max-w-sm glass p-10 rounded-[2.5rem]">
-        <h2 class="text-2xl font-black mb-6 text-white uppercase italic">Join UTE</h2>
-        <input name="username" placeholder="Username" class="w-full bg-white/5 p-4 rounded-xl mb-4" required>
-        <input name="email" placeholder="Email" class="w-full bg-white/5 p-4 rounded-xl mb-4" required>
-        <input name="phone" placeholder="Phone (254...)" class="w-full bg-white/5 p-4 rounded-xl mb-4" required>
-        <input name="password" type="password" placeholder="Password" class="w-full bg-white/5 p-4 rounded-xl mb-4" required>
-        <select name="role" class="w-full bg-slate-800 p-4 rounded-xl mb-6">
-            <option value="employee">Employee (Work & Get Paid)</option>
-            <option value="employer">Employer (Hire & Pay)</option>
+<body class="bg-[#020617] flex items-center justify-center min-h-screen text-slate-300 p-6">
+    <form action="/register" method="POST" class="w-full max-w-lg glass p-10 rounded-[2.5rem]">
+        <h2 class="text-3xl font-black mb-8 text-white uppercase italic tracking-tighter">Join UTE_WEB</h2>
+        
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <input name="username" placeholder="Username" class="bg-white/5 p-4 rounded-xl border border-white/10" required>
+            <input name="phone" placeholder="Phone (254...)" class="bg-white/5 p-4 rounded-xl border border-white/10" required>
+        </div>
+        
+        <input name="email" type="email" placeholder="Email Address" class="w-full bg-white/5 p-4 rounded-xl mb-4 border border-white/10" required>
+        <input name="password" type="password" placeholder="Secure Password" class="w-full bg-white/5 p-4 rounded-xl mb-6 border border-white/10" required>
+        
+        <div class="p-6 bg-blue-600/5 rounded-2xl mb-6 border border-blue-600/20">
+            <p class="text-[10px] font-black text-blue-400 uppercase mb-4 tracking-widest text-center">Settlement Details (Bank Account)</p>
+            <div class="grid grid-cols-2 gap-4">
+                <input name="bank_name" placeholder="Bank Name" class="bg-white/5 p-4 rounded-xl border border-white/10 text-xs">
+                <input name="bank_account" placeholder="Account Number" class="bg-white/5 p-4 rounded-xl border border-white/10 text-xs">
+            </div>
+        </div>
+
+        <select name="role" class="w-full bg-slate-800 p-4 rounded-xl mb-8 border border-white/10">
+            <option value="employee">I am an Employee</option>
+            <option value="employer">I am an Employer</option>
         </select>
-        <button class="w-full bg-blue-600 p-4 rounded-xl font-black">CREATE ACCOUNT</button>
+        
+        <button class="w-full bg-blue-600 py-5 rounded-2xl font-black text-white hover:scale-105 transition shadow-lg shadow-blue-600/20">CREATE ACCOUNT</button>
     </form>
 </body>
