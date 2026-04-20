@@ -2,81 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Dashboard</title>
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; background: #f1f5f9; color: #0f172a; }
-        .navbar { background: #1e293b; color: white; padding: 20px; text-align: center; font-size: 1.5rem; font-weight: bold; }
-        .container { max-width: 1100px; margin: 50px auto; display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; }
-
-        /* THE MILLION DOLLAR BUTTONS */
-        .big-button {
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; text-align: center; }
+        .header { background: #1e293b; padding: 30px; border-bottom: 3px solid #38bdf8; margin-bottom: 40px; }
+        .container { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; padding: 20px; }
+        
+        .btn-large {
             width: 320px; height: 200px; border: none; border-radius: 25px;
-            cursor: pointer; transition: all 0.3s ease; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: white; font-size: 1.4rem; font-weight: 700;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            font-size: 1.4rem; font-weight: 800; cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s; color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .big-button:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); opacity: 0.9; }
+        .btn-large:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
         
-        .admin-bg { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
-        .pay-bg { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
-        .emp-bg { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
+        .admin-btn { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .pay-btn { background: linear-gradient(135deg, #0ea5e9 0%, #22c55e 100%); }
+        .emp-btn { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
         
-        .sub-text { font-size: 0.9rem; font-weight: 300; margin-top: 10px; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+        .small-text { font-size: 0.8rem; font-weight: normal; margin-top: 10px; opacity: 0.7; }
     </style>
 </head>
 <body>
-
-    <div class="navbar">PREMIUM CONTROL SYSTEM</div>
+    <div class="header"><h1>PREMIUM CONTROL SYSTEM</h1></div>
 
     <div class="container">
         {% if user.role == 'admin' %}
-            <button class="big-button admin-bg" onclick="alert('Opening Admin Panel...')">
-                ADMIN PANEL
-                <span class="sub-text">Full Control Access</span>
-            </button>
-            <button class="big-button admin-bg" onclick="alert('Viewing System Logs...')">
-                SYSTEM LOGS
-                <span class="sub-text">Security Overview</span>
-            </button>
+            <button class="btn-large admin-btn">ADMIN PANEL<span class="small-text">Master Controls</span></button>
+            <button class="btn-large admin-btn">SYSTEM LOGS<span class="small-text">Security Feed</span></button>
         {% endif %}
 
-        <button id="payBtn" class="big-button pay-bg" onclick="triggerPayment()">
+        <button id="payBtn" onclick="runPayment()" class="btn-large pay-btn">
             UPGRADE NOW
-            <span class="sub-text">Pay 10 KES via M-Pesa</span>
+            <span class="small-text">Pay 10 KES to 254750289733</span>
         </button>
 
-        <button class="big-button emp-bg" onclick="alert('Opening Staff Tools...')">
-            EMPLOYEE TOOLS
-            <span class="sub-text">Standard Workspace</span>
-        </button>
+        <button class="btn-large emp-btn">EMPLOYEE TOOLS<span class="small-text">Standard Access</span></button>
     </div>
 
     <script>
-        function triggerPayment() {
+        function runPayment() {
             const btn = document.getElementById('payBtn');
-            btn.innerHTML = "PROCESSING...";
+            btn.innerHTML = "SENDING PROMPT...";
             btn.style.opacity = "0.5";
 
             fetch('/pay', { method: 'POST' })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                if (data.id) {
-                    alert("SUCCESS: Check your phone for the M-Pesa PIN prompt!");
-                    btn.innerHTML = "PENDING PIN...";
+                if(data.id) {
+                    alert("STK PUSH SENT! Please check your phone for the M-Pesa PIN prompt.");
                 } else {
-                    alert("ERROR: " + (data.error || "Could not start payment"));
-                    btn.innerHTML = "UPGRADE NOW";
-                    btn.style.opacity = "1";
+                    alert("Error: " + (data.error || "Authentication failed. Check your keys."));
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("NETWORK ERROR: Connection failed.");
-                btn.innerHTML = "UPGRADE NOW";
+                btn.innerHTML = "UPGRADE NOW<span class='small-text'>Pay 10 KES</span>";
                 btn.style.opacity = "1";
-            });
+            })
+            .catch(err => alert("Connection Error. Is the server Live?"));
         }
     </script>
 </body>
