@@ -1,239 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE_WEB | Supermax Console</title>
+    <meta charset="UTF-8"><title>UTE Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .stat-card { background: linear-gradient(145deg, #1e293b 0%, #020617 100%); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .btn-glow:hover { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-300 min-h-screen">
+<body class="bg-[#020617] text-slate-300 min-h-screen flex">
+    <aside class="w-64 glass p-8 hidden lg:flex flex-col border-r border-white/5">
+        <h1 class="text-2xl font-black text-white italic mb-12">UTE_WEB</h1>
+        <nav class="flex-1 space-y-4">
+            <a href="/" class="flex items-center space-x-3 text-blue-400 font-bold p-3 bg-blue-500/10 rounded-xl"><i class="fa fa-th-large"></i> <span>Console</span></a>
+            <a href="/admin_room" class="flex items-center space-x-3 p-3 hover:bg-white/5 rounded-xl"><i class="fa fa-lock"></i> <span>Admin</span></a>
+            <a href="/logout" class="flex items-center space-x-3 p-3 text-red-500 hover:bg-red-500/10 rounded-xl"><i class="fa fa-power-off"></i> <span>Sign Out</span></a>
+        </nav>
+    </aside>
 
-    <div class="flex">
-        <aside class="w-72 min-h-screen glass p-8 hidden lg:flex flex-col border-r border-white/5 sticky top-0">
-            <div class="flex items-center space-x-3 mb-12">
-                <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <i class="fa fa-bolt text-white"></i>
-                </div>
-                <h1 class="text-2xl font-black text-white tracking-tighter">UTE_WEB</h1>
+    <main class="flex-1 p-8 lg:p-12">
+        <header class="flex justify-between items-center mb-12">
+            <h2 class="text-3xl font-black text-white uppercase">{{ user.username }}</h2>
+            <div class="glass p-6 rounded-3xl text-right">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Balance</p>
+                <p class="text-3xl font-black text-green-400">KES {{ "{:,.2f}".format(balance) }}</p>
             </div>
-            
-            <nav class="flex-1 space-y-6">
-                <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Navigation</p>
-                    <a href="/" class="flex items-center space-x-4 text-blue-400 p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                        <i class="fa fa-th-large"></i> <span class="font-bold">Console</span>
-                    </a>
-                    <a href="/history" class="flex items-center space-x-4 p-3 hover:bg-white/5 rounded-xl transition mt-2">
-                        <i class="fa fa-receipt"></i> <span>Audit Trail</span>
-                    </a>
-                </div>
+        </header>
 
-                <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Account</p>
-                    <a href="/profile" class="flex items-center space-x-4 p-3 hover:bg-white/5 rounded-xl transition">
-                        <i class="fa fa-user-gear"></i> <span>Settings</span>
-                    </a>
-                </div>
-            </nav>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div class="glass p-8 rounded-3xl"><p class="text-slate-500 text-xs font-bold uppercase">Users</p><p class="text-3xl font-bold">{{ stats.total_users }}</p></div>
+            <div class="glass p-8 rounded-3xl border-r-4 border-blue-600"><p class="text-blue-500 text-xs font-bold uppercase">Jobs</p><p class="text-3xl font-bold">{{ stats.active_jobs }}</p></div>
+        </div>
 
-            <div class="pt-6 border-t border-white/5">
-                <a href="/logout" class="flex items-center space-x-4 p-3 text-red-500 hover:bg-red-500/10 rounded-xl transition">
-                    <i class="fa fa-power-off"></i> <span class="font-bold">Secure Sign Out</span>
-                </a>
-            </div>
-        </aside>
-
-        <main class="flex-1 p-6 lg:p-12 max-w-7xl mx-auto w-full">
-            
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
-                <div>
-                    <h2 class="text-4xl font-black text-white tracking-tight uppercase">Welcome, {{ user.username }}</h2>
-                    <div class="flex items-center space-x-2 mt-2">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <p class="text-xs font-bold text-slate-500 tracking-widest uppercase">Network Status: Online</p>
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <section class="glass p-8 rounded-[2.5rem]">
+                <h3 class="text-xl font-black mb-6 uppercase italic">Payrolls</h3>
+                {% for c in contracts %}
+                <div class="bg-white/5 p-5 rounded-2xl flex justify-between items-center mb-4">
+                    <div><p class="font-bold text-white">{{ c.employee if user.role != 'employee' else c.employer }}</p><p class="text-xs text-slate-500">KES {{ "{:,.2f}".format(c.salary) }}</p></div>
+                    {% if user.role != 'employee' %}<button onclick="payStaff({{ c.id }})" class="bg-blue-600 px-6 py-2 rounded-xl text-xs font-black">PAY</button>{% endif %}
                 </div>
-
-                <div class="glass p-6 rounded-[2rem] flex items-center space-x-8 min-w-[300px]">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Liquidity</p>
-                        <p class="text-3xl font-black text-white mt-1">KES {{ "{:,.2f}".format(balance) }}</p>
-                    </div>
-                    <div class="w-14 h-14 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-500/20">
-                        <i class="fa fa-wallet text-xl"></i>
-                    </div>
+                {% endfor %}
+            </section>
+            <section class="glass p-8 rounded-[2.5rem]">
+                <h3 class="text-xl font-black mb-6 uppercase italic">Jobs</h3>
+                {% for job in jobs %}
+                <div class="flex items-center justify-between p-4 hover:bg-white/5 rounded-2xl">
+                    <div><p class="font-bold text-white text-sm">{{ job.title }}</p><p class="text-xs text-slate-500">{{ job.employer }}</p></div>
+                    {% if user.role == 'employee' %}<form action="/apply/{{ job.id }}" method="POST"><button class="text-xs font-bold text-blue-400 border border-blue-400/20 px-4 py-2 rounded-lg">APPLY</button></form>{% endif %}
                 </div>
-            </header>
+                {% endfor %}
+                {% if user.role != 'employee' %}
+                <button onclick="showJobModal()" class="w-full mt-6 p-4 border-2 border-dashed border-white/10 rounded-2xl hover:bg-white/5 transition font-bold">+ Post New Job</button>
+                {% endif %}
+            </section>
+        </div>
+    </main>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="stat-card p-8 rounded-[2rem]">
-                    <i class="fa fa-users text-blue-500 mb-4"></i>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Network Reach</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ stats.total_users }} <span class="text-xs text-slate-600 font-normal italic">Users</span></p>
-                </div>
-                <div class="stat-card p-8 rounded-[2rem]">
-                    <i class="fa fa-briefcase text-purple-500 mb-4"></i>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Live Listings</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ stats.active_jobs }} <span class="text-xs text-slate-600 font-normal italic">Active</span></p>
-                </div>
-                <div class="stat-card p-8 rounded-[2rem] border-r-4 border-blue-600">
-                    <i class="fa fa-shield-halved text-blue-600 mb-4"></i>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">System Tier</p>
-                    <p class="text-3xl font-bold text-blue-400 mt-2">SUPERMAX</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                
-                <section class="space-y-6">
-                    <div class="flex justify-between items-center px-2">
-                        <h3 class="text-xl font-black text-white uppercase tracking-tighter italic">Active Payrolls</h3>
-                        <i class="fa fa-fingerprint text-slate-700"></i>
-                    </div>
-                    <div class="space-y-4">
-                        {% for c in contracts %}
-                        <div class="glass p-6 rounded-3xl flex justify-between items-center border border-white/5 hover:border-blue-500/30 transition">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center font-black text-blue-500">
-                                    {{ c.employee[0].upper() if user.role != 'employee' else c.employer[0].upper() }}
-                                </div>
-                                <div>
-                                    <p class="font-bold text-white">{{ c.employee if user.role != 'employee' else c.employer }}</p>
-                                    <p class="text-xs text-slate-500 font-semibold tracking-wide">Monthly Salary: KES {{ "{:,.2f}".format(c.salary) }}</p>
-                                </div>
-                            </div>
-                            {% if user.role != 'employee' %}
-                            <button onclick="payStaff({{ c.id }})" class="bg-blue-600 btn-glow hover:bg-blue-500 text-white px-6 py-3 rounded-xl text-xs font-black transition-all">EXECUTE</button>
-                            {% else %}
-                            <div class="text-right">
-                                <p class="text-[10px] text-slate-500 font-bold uppercase">Paid Months</p>
-                                <p class="text-lg font-black text-blue-500">{{ c.total_months_paid }}</p>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-
-                <section class="space-y-6">
-                    <div class="flex justify-between items-center px-2">
-                        <h3 class="text-xl font-black text-white uppercase tracking-tighter italic">Opportunities</h3>
-                        {% if user.role != 'employee' %}
-                        <button onclick="showJobModal()" class="text-xs font-black text-blue-500 hover:text-blue-400">+ POST VACANCY</button>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="relative group">
-                        <i class="fa fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-500 transition"></i>
-                        <input type="text" id="marketSearch" onkeyup="filterJobs()" placeholder="Search position or employer..." 
-                            class="w-full bg-white/5 border border-white/5 p-4 pl-14 rounded-2xl focus:outline-none focus:border-blue-500 transition text-sm">
-                    </div>
-
-                    <div id="jobList" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                        {% for job in jobs %}
-                        <div class="job-item flex items-center justify-between p-5 glass rounded-3xl hover:bg-white/5 transition group">
-                            <div class="flex items-center space-x-5">
-                                <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-                                    <i class="fa fa-briefcase text-xs text-slate-500"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-white text-sm job-title">{{ job.title }}</p>
-                                    <p class="text-xs text-slate-500 job-employer">{{ job.employer }}</p>
-                                </div>
-                            </div>
-                            {% if user.role == 'employee' %}
-                            <form action="/apply/{{ job.id }}" method="POST">
-                                <button class="text-[10px] font-black text-blue-400 border-2 border-blue-400/20 px-5 py-2 rounded-xl hover:bg-blue-400 hover:text-white transition">APPLY</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <div id="jobModal" class="fixed inset-0 bg-[#020617]/95 hidden items-center justify-center p-6 z-50 backdrop-blur-xl">
-        <div class="glass w-full max-w-lg p-10 rounded-[3rem] border-white/10">
-            <h3 class="text-3xl font-black text-white mb-8 tracking-tighter">NEW VACANCY</h3>
-            <div class="space-y-5">
-                <input id="jTitle" type="text" placeholder="Position Title" class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl focus:border-blue-500 outline-none text-white">
-                <textarea id="jDesc" placeholder="Brief job scope..." class="w-full bg-white/5 border border-white/10 p-5 rounded-2xl focus:border-blue-500 outline-none text-white h-32"></textarea>
-                <div class="relative">
-                    <span class="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-sm">KES</span>
-                    <input id="jSalary" type="number" placeholder="Monthly Salary" class="w-full bg-white/5 border border-white/10 p-5 pl-16 rounded-2xl focus:border-blue-500 outline-none text-white">
-                </div>
-                <div class="flex space-x-4 pt-4">
-                    <button onclick="submitJob()" class="flex-1 bg-blue-600 text-white p-5 rounded-2xl font-black tracking-widest uppercase text-xs btn-glow">Publish</button>
-                    <button onclick="hideJobModal()" class="px-8 text-slate-500 font-bold text-xs uppercase">Cancel</button>
-                </div>
-            </div>
+    <div id="jobModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center p-6 z-50">
+        <div class="glass w-full max-w-md p-10 rounded-[3rem]">
+            <h3 class="text-2xl font-black mb-6">NEW JOB</h3>
+            <input id="jTitle" type="text" placeholder="Title" class="w-full bg-white/5 p-4 rounded-xl mb-4">
+            <textarea id="jDesc" placeholder="Description" class="w-full bg-white/5 p-4 rounded-xl mb-4"></textarea>
+            <input id="jSalary" type="number" placeholder="Salary" class="w-full bg-white/5 p-4 rounded-xl mb-4">
+            <button onclick="submitJob()" class="w-full bg-blue-600 p-4 rounded-xl font-black">PUBLISH</button>
+            <button onclick="document.getElementById('jobModal').classList.add('hidden')" class="w-full mt-4 text-slate-500">Cancel</button>
         </div>
     </div>
 
     <script>
-        function showJobModal() { 
-            const modal = document.getElementById('jobModal');
-            modal.classList.remove('hidden'); 
-            modal.classList.add('flex'); 
-        }
-        function hideJobModal() { 
-            document.getElementById('jobModal').classList.add('hidden'); 
-        }
-
+        function showJobModal() { document.getElementById('jobModal').classList.remove('hidden'); document.getElementById('jobModal').classList.add('flex'); }
         function submitJob() {
-            const data = {
-                title: document.getElementById('jTitle').value,
-                description: document.getElementById('jDesc').value,
-                salary: document.getElementById('jSalary').value
-            };
-            fetch('/post_job', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            }).then(() => location.reload());
+            const data = { title: document.getElementById('jTitle').value, description: document.getElementById('jDesc').value, salary: document.getElementById('jSalary').value };
+            fetch('/post_job', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).then(() => location.reload());
         }
-
-        function filterJobs() {
-            let input = document.getElementById('marketSearch').value.toLowerCase();
-            let items = document.getElementsByClassName('job-item');
-            for (let item of items) {
-                let title = item.querySelector('.job-title').innerText.toLowerCase();
-                let employer = item.querySelector('.job-employer').innerText.toLowerCase();
-                item.style.display = (title.includes(input) || employer.includes(input)) ? "flex" : "none";
-            }
-        }
-
         function payStaff(id) {
-            if(confirm("Authorize M-Pesa STK Push for this salary payment?")) {
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerHTML = "<i class='fa fa-spinner fa-spin'></i>";
-                btn.disabled = true;
-
-                fetch(`/pay_contract/${id}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.error) alert(data.error);
-                    else alert("STK Dispatch Successful. Awaiting PIN verification.");
-                    location.reload();
-                })
-                .catch(() => {
-                    alert("Network Error");
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                });
+            if(confirm("Authorize M-Pesa STK?")) {
+                fetch(`/pay_contract/${id}`, { method: 'POST' }).then(() => location.reload());
             }
         }
     </script>
