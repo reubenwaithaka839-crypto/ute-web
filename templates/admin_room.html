@@ -4,54 +4,52 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; color: #cbd5e1; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 2rem; }
-        
-        .btn-supermax {
-            display: inline-flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white; padding: 1.5rem 2.5rem; border-radius: 1.5rem;
-            font-size: 1.1rem; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 0.1em; transition: all 0.3s;
-            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3); border: none; cursor: pointer;
-        }
-        .btn-supermax:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(37, 99, 235, 0.5); filter: brightness(1.2); }
-        
-        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3); }
-        .btn-approve:hover { box-shadow: 0 25px 50px rgba(16, 185, 129, 0.5); }
-
-        .supermax-label { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: #64748b; margin-bottom: 0.5rem; display: block; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2.5rem; padding: 2.5rem; }
+        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; color: white; width: 100%; font-weight: 900; outline: none; margin-bottom: 1rem; }
+        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1.25rem 2rem; border-radius: 1.5rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-supermax:hover { transform: translateY(-3px); filter: brightness(1.2); }
+        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
     </style>
 </head>
 <body class="p-10">
     <div class="max-w-6xl mx-auto">
-        <header class="mb-12 flex justify-between items-center">
-            <h1 class="text-5xl font-black text-white italic tracking-tighter">ADMIN_CONSOLE</h1>
-            <a href="/" class="text-blue-500 font-black tracking-widest text-sm hover:underline">BACK TO DASHBOARD</a>
-        </header>
+        <div class="flex justify-between items-center mb-12">
+            <h1 class="text-5xl font-black italic">ADMIN_PANEL</h1>
+            <a href="/" class="text-blue-500 font-black uppercase tracking-widest text-xs">Exit Console</a>
+        </div>
 
-        <div class="grid grid-cols-1 gap-10">
-            <section>
-                <h2 class="text-2xl font-black text-white italic mb-8">PENDING WITHDRAWALS</h2>
-                {% for w in withdrawals %}
-                <div class="glass-card p-10 mb-6 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div class="flex-1">
-                        <span class="supermax-label">Initiator</span>
-                        <p class="text-3xl font-black text-white">{{ w.sender }}</p>
-                    </div>
-                    <div class="flex-1">
-                        <span class="supermax-label">Amount</span>
-                        <p class="text-4xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.amount) }}</p>
-                    </div>
-                    <form action="/approve_withdrawal/{{ w.id }}" method="POST">
-                        <button class="btn-supermax btn-approve">
-                            <i class="fa fa-check-circle mr-3 text-2xl"></i> RELEASE FUNDS
-                        </button>
-                    </form>
+        <div class="glass-card mb-12">
+            <h2 class="text-2xl font-black mb-6 text-blue-400">POST NEW JOB</h2>
+            <form action="/post_job" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="title" placeholder="JOB TITLE" class="supermax-input" required>
+                <input type="text" name="employer" placeholder="COMPANY NAME" class="supermax-input" required>
+                <input type="number" name="salary" placeholder="SALARY (KES)" class="supermax-input" required>
+                <input type="text" name="description" placeholder="JOB DESCRIPTION" class="supermax-input" required>
+                <button type="submit" class="btn-supermax col-span-full">PUBLISH LISTING</button>
+            </form>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="text-2xl font-black mb-8 text-emerald-400">PENDING WITHDRAWALS</h2>
+            {% for w in withdrawals %}
+            <div class="flex justify-between items-center border-b border-white/10 pb-6 mb-6 last:border-0">
+                <div>
+                    <p class="text-xs font-black text-slate-500 uppercase">User</p>
+                    <p class="text-xl font-black">{{ w.sender }}</p>
                 </div>
-                {% endfor %}
-            </section>
+                <div>
+                    <p class="text-xs font-black text-slate-500 uppercase">Amount</p>
+                    <p class="text-xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.amount) }}</p>
+                </div>
+                <form action="/approve_withdrawal/{{ w.id }}" method="POST">
+                    <button class="btn-supermax btn-approve">APPROVE</button>
+                </form>
+            </div>
+            {% else %}
+            <p class="text-slate-500 font-black italic">Queue is currently empty.</p>
+            {% endfor %}
         </div>
     </div>
 </body>
