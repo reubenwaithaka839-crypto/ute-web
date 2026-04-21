@@ -6,7 +6,6 @@
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 2rem; }
         .rw-logo { width: 60px; height: 60px; border: 3px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.3); }
-        .btn-red { background: #dc2626; padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 800; font-size: 0.7rem; }
     </style>
 </head>
 <body class="p-8">
@@ -14,33 +13,30 @@
         <header class="flex justify-between items-center mb-10">
             <div class="flex items-center gap-6">
                 <div class="rw-logo text-2xl">RW</div>
-                <div>
-                    <h1 class="text-3xl font-black italic tracking-tighter">UTE CONTROL PANEL</h1>
-                    <p class="text-blue-500 font-bold text-xs uppercase tracking-widest">Master: {{ session['username'] }}</p>
-                </div>
+                <h1 class="text-3xl font-black italic">UTE COMMAND CENTER</h1>
             </div>
-            <a href="/logout" class="bg-white/10 px-6 py-2 rounded-full text-xs font-bold hover:bg-red-600 transition">SHUTDOWN SESSION</a>
+            <a href="/logout" class="bg-red-600/20 text-red-500 px-6 py-2 rounded-full text-xs font-bold hover:bg-red-600 hover:text-white transition">SHUTDOWN</a>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="space-y-6">
                 <div class="glass">
-                    <h2 class="text-xs font-black text-slate-500 uppercase mb-4">Master Treasury (Bank)</h2>
+                    <h2 class="text-xs font-black text-blue-500 uppercase mb-4 tracking-widest">Master Treasury</h2>
                     <form action="/update_treasury" method="POST" class="space-y-3">
                         <input type="text" name="bank_name" value="{{ session['bank_name'] }}" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
                         <input type="text" name="bank_account" value="{{ session['bank_account'] }}" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
-                        <button class="w-full bg-blue-600 py-3 rounded-lg font-black text-xs uppercase">Update Bank Details</button>
+                        <button class="w-full bg-blue-600 py-3 rounded-lg font-black text-xs uppercase">Save Bank Details</button>
                     </form>
                 </div>
 
-                <div class="glass border-blue-500/20">
-                    <h2 class="text-xs font-black text-blue-500 uppercase mb-4">Register New Admin</h2>
+                <div class="glass border-white/10">
+                    <h2 class="text-xs font-black text-white/50 uppercase mb-4">Appoint Admin</h2>
                     <form action="/register" method="POST" class="space-y-3">
                         <input type="hidden" name="role" value="admin">
-                        <input type="text" name="username" placeholder="Admin Username" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
-                        <input type="email" name="email" placeholder="Admin Email" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
-                        <input type="password" name="password" placeholder="Set Password" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
-                        <button class="w-full bg-white text-black py-3 rounded-lg font-black text-xs uppercase">Appoint Admin</button>
+                        <input type="text" name="username" placeholder="Username" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
+                        <input type="email" name="email" placeholder="Email" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
+                        <input type="password" name="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 p-3 rounded-lg text-sm">
+                        <button class="w-full bg-white text-black py-3 rounded-lg font-black text-xs uppercase">Appoint Now</button>
                     </form>
                 </div>
             </div>
@@ -53,26 +49,19 @@
                             <tr class="text-slate-500 text-[10px] uppercase">
                                 <th class="pb-4">User</th>
                                 <th class="pb-4">Role</th>
-                                <th class="pb-4">Bank Info</th>
-                                <th class="pb-4 text-right">Control</th>
+                                <th class="pb-4 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm">
                             {% for u in all_users %}
                             <tr class="border-t border-white/5">
                                 <td class="py-4 font-bold">{{ u.username }}</td>
-                                <td class="py-4">
-                                    <span class="px-2 py-1 rounded text-[9px] font-black uppercase 
-                                    {% if u.role == 'admin' %}bg-red-500/20 text-red-500{% else %}bg-green-500/20 text-green-500{% endif %}">
-                                        {{ u.role }}
-                                    </span>
-                                </td>
-                                <td class="py-4 text-xs text-slate-400">{{ u.bank_name }}<br>{{ u.bank_account }}</td>
+                                <td class="py-4 uppercase text-[10px] font-black text-blue-400">{{ u.role }}</td>
                                 <td class="py-4 text-right">
                                     {% if u.username.upper() != 'REUBEN' %}
-                                    <a href="/admin/delete_user/{{ u.id }}" onclick="return confirm('Erase this user permanently?')" class="btn-red">DELETE</a>
+                                    <a href="/admin/delete_user/{{ u.id }}" class="bg-red-600 px-3 py-1 rounded text-[10px] font-black">DELETE</a>
                                     {% else %}
-                                    <span class="text-[9px] font-black text-blue-500 uppercase">Master</span>
+                                    <span class="text-[10px] font-black text-blue-500">MASTER</span>
                                     {% endif %}
                                 </td>
                             </tr>
