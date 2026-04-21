@@ -1,18 +1,58 @@
-<h3 class="text-xl font-black text-white mb-6 uppercase italic">Pending Bank Payouts</h3>
-<div class="glass rounded-3xl overflow-hidden mb-12">
-    <table class="w-full text-left">
-        <thead class="bg-white/5 text-[10px] uppercase text-slate-500">
-            <tr><th class="p-4">User</th><th class="p-4">Amount</th><th class="p-4">Bank Details</th><th class="p-4">Action</th></tr>
-        </thead>
-        <tbody>
-            {% for w in withdrawals %}
-            <tr class="border-b border-white/5">
-                <td class="p-4 font-bold">{{ w.sender }}</td>
-                <td class="p-4 text-emerald-400 font-black">KES {{ w.amount }}</td>
-                <td class="p-4 text-xs">Processing to Bank...</td>
-                <td class="p-4"><button class="bg-blue-600 text-white px-4 py-1 rounded-lg text-[10px]">MARK AS SENT</button></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #020617; color: #cbd5e1; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 2rem; }
+        
+        .btn-supermax {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white; padding: 1.5rem 2.5rem; border-radius: 1.5rem;
+            font-size: 1.1rem; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 0.1em; transition: all 0.3s;
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3); border: none; cursor: pointer;
+        }
+        .btn-supermax:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(37, 99, 235, 0.5); filter: brightness(1.2); }
+        
+        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3); }
+        .btn-approve:hover { box-shadow: 0 25px 50px rgba(16, 185, 129, 0.5); }
+
+        .supermax-label { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: #64748b; margin-bottom: 0.5rem; display: block; }
+    </style>
+</head>
+<body class="p-10">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-12 flex justify-between items-center">
+            <h1 class="text-5xl font-black text-white italic tracking-tighter">ADMIN_CONSOLE</h1>
+            <a href="/" class="text-blue-500 font-black tracking-widest text-sm hover:underline">BACK TO DASHBOARD</a>
+        </header>
+
+        <div class="grid grid-cols-1 gap-10">
+            <section>
+                <h2 class="text-2xl font-black text-white italic mb-8">PENDING WITHDRAWALS</h2>
+                {% for w in withdrawals %}
+                <div class="glass-card p-10 mb-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div class="flex-1">
+                        <span class="supermax-label">Initiator</span>
+                        <p class="text-3xl font-black text-white">{{ w.sender }}</p>
+                    </div>
+                    <div class="flex-1">
+                        <span class="supermax-label">Amount</span>
+                        <p class="text-4xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.amount) }}</p>
+                    </div>
+                    <form action="/approve_withdrawal/{{ w.id }}" method="POST">
+                        <button class="btn-supermax btn-approve">
+                            <i class="fa fa-check-circle mr-3 text-2xl"></i> RELEASE FUNDS
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </section>
+        </div>
+    </div>
+</body>
+</html>
