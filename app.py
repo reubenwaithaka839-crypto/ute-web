@@ -7,19 +7,20 @@ from ute import get_ute_math
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie_ultimate_vault_2026_v4')
 
-# New Database for a clean start
-DB = "ute_supermax_FINAL_BOSS_V4.db"
+# Using V5 to ensure a fresh, bug-free start
+DB = "ute_supermax_FINAL_BOSS_V5.db"
 
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
+    # Create Tables
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         username TEXT UNIQUE, email TEXT, password TEXT, role TEXT, 
         bank_name TEXT, bank_account TEXT, status TEXT DEFAULT 'active'
     )""")
-    cur.execute("CREATE TABLE IF NOT EXISTS transactions (
+    cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         sender TEXT, amount REAL, deduction REAL, 
         net_amount REAL, status TEXT DEFAULT 'pending'
@@ -34,6 +35,7 @@ def query_db(query, args=(), one=False, commit=False):
 def index():
     if 'username' not in session: return render_template('landing.html')
     user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
+    # If it's you (Reuben/Admin), go straight to the command center
     if user and user['role'] == 'admin': return redirect(url_for('admin_room'))
     return render_template('dashboard.html', user=user)
 
@@ -42,10 +44,15 @@ def register():
     if request.method == 'POST':
         u, e, p, r = request.form.get('username'), request.form.get('email'), request.form.get('password'), request.form.get('role')
         bn, ba = request.form.get('bank_name'), request.form.get('bank_account')
-        if r == 'admin' and u.upper() != 'REUBEN': return "<h1>Denied</h1><p>Only Reuben can appoint Admins.</p>"
+        
+        # Hard Lock: Only Reuben can be the first Admin
+        if r == 'admin' and u.upper() != 'REUBEN': 
+            return "<h1>Denied</h1><p>Only Reuben can appoint Admins.</p>"
+            
         hashed = bcrypt.hashpw(p.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         try:
-            query_db("INSERT INTO users (username, email, password, role, bank_name, bank_account) VALUES (?, ?, ?, ?, ?, ?)", (u, e, hashed, r, bn, ba), commit=True)
+            query_db("INSERT INTO users (username, email, password, role, bank_name, bank_account) VALUES (?, ?, ?, ?, ?, ?)", 
+                     (u, e, hashed, r, bn, ba), commit=True)
             return redirect(url_for('login'))
         except: return "Username Taken"
     return render_template('register.html')
