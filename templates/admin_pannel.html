@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Admin Chamber | Prestige</title>
+</head>
+<body class="bg-slate-950 text-white min-h-screen p-10 font-sans">
+    
+    <div class="flex flex-col items-center justify-center mb-16">
+        <div class="w-48 h-48 rounded-full border-4 border-blue-600 bg-slate-900 flex items-center justify-center shadow-[0_0_80px_rgba(37,99,235,0.4)] mb-8 transform hover:rotate-12 transition-all duration-700">
+            <span class="text-8xl font-black italic text-white tracking-tighter">RW</span>
+        </div>
+        <h1 class="text-4xl font-black uppercase italic tracking-[0.2em] text-center">Master Admin Chamber</h1>
+        <div class="h-1 w-24 bg-blue-600 mt-4 rounded-full animate-pulse"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto flex justify-center gap-6 mb-12">
+        <a href="/" class="bg-slate-800 px-12 py-5 rounded-2xl font-black uppercase text-[10px] border border-white/10 hover:bg-slate-700 transition-all shadow-xl">Dashboard</a>
+        <button class="bg-red-600/20 text-red-500 border border-red-500/50 px-12 py-5 rounded-2xl font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-500/10">Lock System</button>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="bg-slate-900 p-10 rounded-[3.5rem] border border-white/5 text-center shadow-2xl">
+            <p class="text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Citizens</p>
+            <p class="text-6xl font-black italic">{{ all_users|length }}</p>
+        </div>
+        <div class="bg-slate-900 p-10 rounded-[3.5rem] border border-white/5 text-center shadow-2xl">
+            <p class="text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Live Jobs</p>
+            <p class="text-6xl font-black italic text-blue-500">{{ all_jobs|length }}</p>
+        </div>
+        <div class="bg-slate-900 p-10 rounded-[3.5rem] border border-white/5 text-center shadow-2xl">
+            <p class="text-slate-500 font-black text-[10px] uppercase tracking-widest mb-2">Apps</p>
+            <p class="text-6xl font-black italic text-green-500">{{ all_apps|length }}</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto bg-slate-900 rounded-[3.5rem] border border-white/5 overflow-hidden shadow-2xl">
+        <table class="w-full text-left">
+            <thead class="bg-slate-800/40 text-slate-500 text-[10px] font-black uppercase">
+                <tr>
+                    <th class="p-8">Identity</th>
+                    <th class="p-8">Role</th>
+                    <th class="p-8 text-right">Protocol</th>
+                </tr>
+            </thead>
+            <tbody class="font-bold text-sm">
+                {% for u in all_users %}
+                <tr class="border-t border-white/5 hover:bg-white/5">
+                    <td class="p-8 italic">{{ u.username }}</td>
+                    <td class="p-8 uppercase text-blue-400 text-[10px] font-black">{{ u.role }}</td>
+                    <td class="p-8 text-right">
+                        {% if u.username.upper() != 'REUBEN' %}
+                        <button class="text-red-500 bg-red-500/10 px-6 py-2 rounded-xl text-[9px] uppercase font-black hover:bg-red-500 hover:text-white transition-all">Terminate</button>
+                        {% else %}
+                        <span class="text-yellow-500 text-[9px] uppercase font-black tracking-widest">Immortal</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
