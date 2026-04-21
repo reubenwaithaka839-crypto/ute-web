@@ -2,24 +2,34 @@
 <html>
 <head><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-[#020617] text-white p-6">
-    <form action="/submit_application" method="POST" class="max-w-xl mx-auto bg-white/5 p-10 rounded-3xl border border-white/10">
-        <h2 class="text-2xl font-black mb-8 text-blue-500 uppercase italic">Employee Dossier</h2>
+    <form action="/submit_application" method="POST" class="max-w-xl mx-auto bg-white/5 p-12 rounded-[3rem] border border-white/10 shadow-2xl">
+        <h2 class="text-3xl font-black mb-2 text-blue-500 uppercase tracking-tighter italic">Employee Dossier</h2>
+        <p class="text-[10px] font-bold text-slate-500 mb-10 uppercase">Applying for: {{ job.title }}</p>
+        
         <input type="hidden" name="job_id" value="{{ job.id }}">
         
-        <div class="space-y-4">
-            <input type="text" name="full_name" placeholder="Full Legal Name" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-sm" required>
-            <input type="text" name="id_number" placeholder="National ID Number" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-sm" required>
-            <input type="url" name="photo_url" placeholder="Profile Photo Link (Visible headshot)" class="w-full bg-blue-600/10 p-4 rounded-xl border border-blue-500/30 text-sm" required>
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" name="phone" placeholder="Phone (M-Pesa)" class="bg-white/5 p-4 rounded-xl border border-white/10 text-sm" required>
-                <input type="email" name="email" placeholder="Email Address" class="bg-white/5 p-4 rounded-xl border border-white/10 text-sm" required>
+        <div class="space-y-5">
+            <div>
+                <label class="text-[9px] font-black text-blue-500 uppercase ml-2">Full Legal Name</label>
+                <input type="text" name="full_name" class="w-full bg-white/5 p-4 rounded-2xl border border-white/10 text-sm" required>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <select name="gender" class="bg-white/5 p-4 rounded-xl border border-white/10 text-sm"><option>Male</option><option>Female</option></select>
-                <input type="number" name="age" placeholder="Age" class="bg-white/5 p-4 rounded-xl border border-white/10 text-sm" required>
+                <div>
+                    <label class="text-[9px] font-black text-blue-500 uppercase ml-2">National ID</label>
+                    <input type="text" name="id_number" class="w-full bg-white/5 p-4 rounded-2xl border border-white/10 text-sm" required>
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-blue-500 uppercase ml-2">Photo URL</label>
+                    <input type="url" name="photo_url" placeholder="Direct Image Link" class="w-full bg-blue-600/10 p-4 rounded-2xl border border-blue-500/30 text-sm" required>
+                </div>
             </div>
-            <textarea name="skills" placeholder="List your professional skills..." class="w-full bg-white/5 p-4 rounded-xl border border-white/10 text-sm" rows="3"></textarea>
-            <button class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs">Verify & Submit Application</button>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="phone" placeholder="M-Pesa Phone" class="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm" required>
+                <input type="text" name="location" placeholder="Home City" class="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm" required>
+            </div>
+            <textarea name="skills" placeholder="List your professional expertise..." class="w-full bg-white/5 p-4 rounded-2xl border border-white/10 text-sm" rows="3"></textarea>
+            
+            <button class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-blue-500/20 mt-4">Secure Submit</button>
         </div>
     </form>
 </body>
