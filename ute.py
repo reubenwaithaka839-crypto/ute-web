@@ -3,17 +3,11 @@
 def get_ute_math(amount):
     """
     Calculates platform deductions and net settlement amounts.
-    This ensures the system always takes its cut before paying out.
     """
     try:
-        # Convert to float to handle decimals
         gross = float(amount)
-        
-        # DEDUCTION LOGIC
-        # Example: 10% Platform Fee (0.10)
-        # You can change this 0.10 to 0.05 for 5%, etc.
+        # 10% Platform Fee
         rate = 0.10 
-        
         deduction = gross * rate
         net_to_bank = gross - deduction
         
@@ -24,5 +18,4 @@ def get_ute_math(amount):
             'percent': int(rate * 100)
         }
     except (ValueError, TypeError):
-        # Return zeros if the input is not a number
         return {'gross': 0, 'deduction': 0, 'net': 0, 'percent': 0}
