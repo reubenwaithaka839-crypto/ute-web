@@ -3,7 +3,7 @@ import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie_v16_logo_empire')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie_v16_final_empire')
 
 DB = "ute_final_empire.db"
 
@@ -11,7 +11,6 @@ def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    # PRESTIGE DATABASE SCHEMA
     cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, role TEXT, is_verified INTEGER DEFAULT 0)")
     cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, location TEXT, salary REAL, posted_by TEXT, fee_paid INTEGER DEFAULT 0)")
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
@@ -39,7 +38,6 @@ def index():
 def login():
     if request.method == 'POST':
         u = request.form.get('username').strip()
-        # REUBEN GHOST PROTOCOL
         role = 'admin' if u.upper() == 'REUBEN' else request.form.get('role')
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
         if not user:
@@ -51,7 +49,6 @@ def login():
 
 @app.route('/post_job', methods=['POST'])
 def post_job():
-    if session.get('role') not in ['employer', 'admin']: return "Unauthorized", 403
     t, l, s = request.form.get('title'), request.form.get('location'), request.form.get('salary')
     query_db("INSERT INTO jobs (title, location, salary, posted_by, fee_paid) VALUES (?, ?, ?, ?, 0)", (t, l, s, session['username']), commit=True)
     job = query_db("SELECT id FROM jobs ORDER BY id DESC LIMIT 1", one=True)
@@ -76,13 +73,6 @@ def submit_application():
     data = (request.form.get('job_id'), session['username'], request.form.get('full_name'), request.form.get('id_number'), request.form.get('phone'), request.form.get('email'), request.form.get('gender'), request.form.get('age'), request.form.get('location'), request.form.get('skills'), request.form.get('photo_url'))
     query_db("INSERT INTO applications (job_id, applicant_username, full_name, id_number, phone, email, gender, age, location, skills, photo_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)", data, commit=True)
     return redirect(url_for('index'))
-
-@app.route('/view_applicants/<int:job_id>')
-def view_applicants(job_id):
-    job = query_db("SELECT * FROM jobs WHERE id = ?", (job_id,), one=True)
-    if job['posted_by'] != session['username'] and session.get('role') != 'admin': return "Unauthorized", 403
-    applicants = query_db("SELECT * FROM applications WHERE job_id = ?", (job_id,))
-    return render_template('view_applicants.html', job=job, applicants=applicants)
 
 @app.route('/logout')
 def logout():
