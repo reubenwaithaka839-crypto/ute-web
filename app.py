@@ -5,9 +5,8 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from ute import get_ute_math
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie@janny112008_vault')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie@janny112008_vault_777')
 
-# Brand new DB name for a fresh, clean start
 DB = "ute_supermax_FINAL_BOSS.db"
 
 def query_db(query, args=(), one=False, commit=False):
@@ -58,7 +57,6 @@ def register():
         u, e, ph, p, r = request.form.get('username'), request.form.get('email'), request.form.get('phone'), request.form.get('password'), request.form.get('role')
         bn, ba = request.form.get('bank_name'), request.form.get('bank_account')
         
-        # ROOT BOSS SECURITY: REUBEN is always active. Others must be approved.
         if u.upper() == 'REUBEN':
             status = 'active'
         else:
@@ -88,14 +86,17 @@ def login():
 @app.route('/admin_room')
 def admin_room():
     if session.get('role') != 'admin': return "Unauthorized", 403
+    stats = query_db("SELECT SUM(deduction) as rev, COUNT(id) as tx FROM transactions WHERE status = 'completed'", one=True)
     withdrawals = query_db("""SELECT transactions.*, users.bank_name, users.bank_account 
                               FROM transactions JOIN users ON transactions.sender = users.username 
                               WHERE transactions.status = 'pending'""")
+    all_users = query_db("SELECT * FROM users ORDER BY id DESC")
+    all_jobs = query_db("SELECT * FROM jobs ORDER BY id DESC")
     pending_admins = []
-    # ONLY REUBEN (The Master) can see the approval list
     if session.get('username').upper() == 'REUBEN':
         pending_admins = query_db("SELECT * FROM users WHERE role = 'admin' AND status = 'pending_approval'")
-    return render_template('admin_room.html', withdrawals=withdrawals, pending_admins=pending_admins)
+    
+    return render_template('admin_room.html', withdrawals=withdrawals, pending_admins=pending_admins, all_users=all_users, all_jobs=all_jobs, stats=stats)
 
 @app.route('/approve_admin/<int:id>')
 def approve_admin(id):
