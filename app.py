@@ -11,6 +11,7 @@ def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
+    # PRESTIGE DATABASE ARCHITECTURE
     cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, passcode TEXT, email TEXT, phone TEXT, role TEXT, photo_url TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, location TEXT, salary REAL, posted_by TEXT, skills_required TEXT)")
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
@@ -41,15 +42,19 @@ def index():
 
 @app.route('/admin_panel')
 def admin_panel():
-    # STRICT SECURITY: Only REUBEN enters the Chamber
+    # STRICT SECURITY FIREWALL
     if 'username' not in session or session['username'].upper() != 'REUBEN':
         return "ACCESS DENIED: Master Admin Clearance Required", 403
     
-    all_users = query_db("SELECT * FROM users")
-    all_jobs = query_db("SELECT * FROM jobs")
-    all_apps = query_db("SELECT a.*, j.title as job_title FROM applications a JOIN jobs j ON a.job_id = j.id")
-    
-    return render_template('admin_panel.html', all_users=all_users, all_jobs=all_jobs, all_apps=all_apps)
+    try:
+        all_users = query_db("SELECT * FROM users")
+        all_jobs = query_db("SELECT * FROM jobs")
+        all_apps = query_db("SELECT a.*, j.title as job_title FROM applications a JOIN jobs j ON a.job_id = j.id")
+        
+        # This looks specifically for admin_pannel.html (Two 'n's)
+        return render_template('admin_pannel.html', all_users=all_users, all_jobs=all_jobs, all_apps=all_apps)
+    except Exception as e:
+        return f"System Error in Admin Chamber: {str(e)}", 500
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
