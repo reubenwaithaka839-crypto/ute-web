@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environments
+venv/
+env/
+
+# Databases (If you want to keep your local DB off GitHub)
+*.db
+
+# OS files
+.DS_Store
