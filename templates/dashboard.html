@@ -3,60 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>UTE MASTER | PRESTIGE HUB</title>
-    <style>
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-    </style>
+    <title>UTE MASTER V17</title>
 </head>
-<body class="bg-[#020617] text-white min-h-screen p-8">
-    <div class="max-w-7xl mx-auto">
+<body class="bg-[#020617] text-white min-h-screen p-10">
+    <div class="max-w-6xl mx-auto">
         
-        <header class="flex justify-between items-center mb-16 border-b border-white/5 pb-10">
-            <div class="flex items-center gap-5">
-                <div class="w-16 h-16 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-[1.5rem] flex items-center justify-center font-black text-2xl italic shadow-2xl shadow-blue-500/40">
+        <header class="flex justify-between items-center mb-20 border-b border-white/10 pb-10">
+            <div class="flex items-center gap-6">
+                <div class="w-20 h-20 bg-[#22c55e] rounded-[2rem] flex items-center justify-center font-black text-3xl italic shadow-[0_0_30px_rgba(34,197,94,0.4)] text-black">
                     UTE
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black tracking-tighter italic">UTE_MASTER</h1>
-                    <p class="text-[9px] font-bold text-blue-500 uppercase tracking-[0.4em]">Private Employment Ecosystem</p>
+                    <h1 class="text-4xl font-black tracking-tighter italic text-white">UTE_MASTER</h1>
+                    <p class="text-xs font-bold text-[#22c55e] uppercase tracking-[0.5em]">System Version 17.0</p>
                 </div>
             </div>
-            <div class="text-right">
-                <p class="text-sm font-black text-white">{{ user.username.upper() }}</p>
-                <a href="/logout" class="text-[10px] font-bold text-red-500 uppercase">Terminate Session</a>
+            <div class="bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
+                <p class="text-xs font-black text-blue-400">{{ user.username.upper() }}</p>
+                <a href="/logout" class="text-[10px] font-bold text-red-500 uppercase">Exit System</a>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div class="lg:col-span-4 space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div class="lg:col-span-4">
                 {% if user.role in ['employer', 'admin'] %}
-                <section class="glass p-8 rounded-[2.5rem]">
-                    <h2 class="text-[10px] font-black text-blue-500 uppercase mb-6 tracking-widest">New Deployment</h2>
+                <div class="bg-white/5 p-8 rounded-[3rem] border border-white/10 shadow-2xl">
+                    <h2 class="text-xs font-black text-[#22c55e] uppercase mb-6">New Task Entry</h2>
                     <form action="/post_job" method="POST" class="space-y-4">
-                        <input type="text" name="title" placeholder="Job Title" class="w-full bg-white/5 p-4 rounded-xl text-xs border border-white/10 outline-none">
-                        <input type="number" name="salary" placeholder="Salary (KES)" class="w-full bg-white/5 p-4 rounded-xl text-xs border border-white/10 outline-none">
-                        <button class="w-full bg-blue-600 py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/20">Launch Job</button>
+                        <input type="text" name="title" placeholder="Job Title" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none focus:border-[#22c55e]">
+                        <input type="text" name="location" placeholder="Location" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none">
+                        <input type="number" name="salary" placeholder="Salary (KES)" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none">
+                        <button class="w-full bg-[#22c55e] text-black py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-lg hover:brightness-110 transition">Launch Listing</button>
                     </form>
-                </section>
+                </div>
                 {% endif %}
             </div>
 
             <div class="lg:col-span-8 space-y-6">
                 {% for job in jobs %}
-                <div class="glass p-10 rounded-[3rem] flex justify-between items-center group hover:border-blue-500/40 transition">
+                <div class="bg-white/5 p-10 rounded-[3rem] border border-white/5 flex justify-between items-center group hover:bg-white/[0.08] transition">
                     <div>
-                        <h3 class="text-2xl font-black mb-1 tracking-tighter">{{ job.title }}</h3>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase">{{ job.location }} • SECURED</p>
+                        <h3 class="text-2xl font-black mb-1 tracking-tight">{{ job.title }}</h3>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{{ job.location }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-black text-blue-400 mb-4 italic">KES {{ job.salary }}</p>
-                        {% if job.id in applied_ids %}
-                            <span class="text-[10px] font-black text-green-500 uppercase">✓ Dossier Locked</span>
-                        {% else %}
-                            <a href="/apply_form/{{ job.id }}" class="bg-white text-black px-10 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition">Apply</a>
-                        {% endif %}
+                        <p class="text-3xl font-black text-white mb-4 italic">KES {{ "{:,.0f}".format(job.salary) }}</p>
+                        <a href="/apply_form/{{ job.id }}" class="bg-white text-black px-12 py-4 rounded-2xl text-[11px] font-black uppercase hover:bg-[#22c55e] transition shadow-xl">Apply</a>
                     </div>
                 </div>
+                {% else %}
+                <div class="text-center py-20 opacity-30 italic">No tasks active. Post one to see it here.</div>
                 {% endfor %}
             </div>
         </div>
