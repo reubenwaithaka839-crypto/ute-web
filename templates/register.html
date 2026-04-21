@@ -2,39 +2,121 @@
 <html lang="en">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
         body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
-        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1.2rem; padding: 1.2rem; color: white; width: 100%; font-weight: 900; margin-bottom: 1rem; outline: none; }
-        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1.5rem; border-radius: 1.5rem; font-weight: 900; text-transform: uppercase; width: 100%; border: none; cursor: pointer; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3); }
-        .section-label { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 15px; display: block; }
+        
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 3rem; 
+            padding: 3.5rem; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .supermax-input { 
+            background: rgba(255,255,255,0.05); 
+            border: 2px solid rgba(255,255,255,0.1); 
+            border-radius: 1.2rem; 
+            padding: 1.2rem; 
+            color: white; 
+            width: 100%; 
+            font-weight: 900; 
+            margin-bottom: 1.2rem; 
+            outline: none; 
+            transition: 0.3s;
+        }
+
+        .supermax-input:focus { border-color: #3b82f6; background: rgba(255,255,255,0.08); }
+
+        /* ROLE SELECTOR COLORS */
+        .role-select {
+            appearance: none;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        /* Individual Option Styling */
+        .opt-employee { background-color: #059669 !important; color: white; font-weight: 900; } /* Emerald Green */
+        .opt-employer { background-color: #2563eb !important; color: white; font-weight: 900; } /* Blue */
+        .opt-admin    { background-color: #dc2626 !important; color: white; font-weight: 900; } /* Red */
+
+        .btn-supermax { 
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%); 
+            color: #020617; 
+            padding: 1.5rem; 
+            border-radius: 1.5rem; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            width: 100%; 
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            transition: 0.3s;
+        }
+
+        .btn-supermax:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2); }
+
+        .section-label { 
+            font-size: 11px; 
+            font-weight: 900; 
+            color: #64748b; 
+            letter-spacing: 0.25em; 
+            margin-bottom: 1rem; 
+            display: block; 
+            text-transform: uppercase;
+        }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen py-20">
-    <div class="bg-white/5 backdrop-blur-xl border border-white/10 p-12 rounded-[3rem] w-full max-w-2xl">
-        <h1 class="text-5xl font-black italic mb-10 text-center">JOIN UTE_WEB</h1>
-        <form action="/register" method="POST">
-            <span class="section-label">PERSONAL IDENTITY</span>
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" name="username" placeholder="USERNAME" class="supermax-input" required>
-                <input type="email" name="email" placeholder="EMAIL" class="supermax-input" required>
-            </div>
-            <input type="password" name="password" placeholder="PASSWORD" class="supermax-input" required>
-            
-            <span class="section-label mt-6">SETTLEMENT DETAILS (BANK LINK)</span>
-            <input type="text" name="bank_name" placeholder="BANK NAME (e.g. Equity, KCB, Absa)" class="supermax-input" required>
-            <input type="text" name="bank_account" placeholder="ACCOUNT NUMBER" class="supermax-input" required>
-            <input type="text" name="phone" placeholder="MPESA / PHONE NUMBER" class="supermax-input" required>
+<body class="flex items-center justify-center min-h-screen py-12 px-4">
+    <div class="glass-card w-full max-w-2xl">
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-black italic tracking-tighter mb-2">UTE_WEB</h1>
+            <p class="text-slate-500 font-bold uppercase text-xs tracking-[0.3em]">Secure Ecosystem Initialization</p>
+        </div>
 
-            <span class="section-label mt-6">SYSTEM ROLE</span>
-            <select name="role" class="supermax-input">
-                <option value="employee">I AM AN EMPLOYEE</option>
-                <option value="employer">I AM AN EMPLOYER</option>
-                <option value="admin">SYSTEM ADMINISTRATOR</option>
+        <form action="/register" method="POST">
+            <span class="section-label">Identity Core</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="username" placeholder="USERNAME" class="supermax-input" required>
+                <input type="email" name="email" placeholder="EMAIL ADDRESS" class="supermax-input" required>
+            </div>
+            <input type="password" name="password" placeholder="SECURE PASSWORD" class="supermax-input" required>
+            
+            <span class="section-label mt-4">Financial Gateway</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="bank_name" placeholder="BANK NAME" class="supermax-input" required>
+                <input type="text" name="bank_account" placeholder="ACCOUNT NUMBER" class="supermax-input" required>
+            </div>
+            <input type="text" name="phone" placeholder="MPESA / PHONE" class="supermax-input" required>
+
+            <span class="section-label mt-4">Permission Level</span>
+            <select name="role" id="role-selector" class="supermax-input role-select" onchange="updateColors(this)">
+                <option value="employee" class="opt-employee">🟢 ACCESS AS EMPLOYEE</option>
+                <option value="employer" class="opt-employer">🔵 ACCESS AS EMPLOYER</option>
+                <option value="admin" class="opt-admin">🔴 ACCESS AS SYSTEM ADMIN</option>
             </select>
 
-            <button type="submit" class="btn-supermax mt-8">INITIALIZE ACCOUNT</button>
+            <button type="submit" class="btn-supermax mt-8">Register to Network</button>
+            
+            <div class="text-center mt-8">
+                <a href="/login" class="text-slate-500 hover:text-white transition font-black text-xs uppercase tracking-widest">Already have an account? Login</a>
+            </div>
         </form>
     </div>
+
+    <script>
+        // This script changes the select box border color based on the choice
+        function updateColors(select) {
+            const role = select.value;
+            if(role === 'employee') select.style.borderColor = '#059669';
+            if(role === 'employer') select.style.borderColor = '#2563eb';
+            if(role === 'admin') select.style.borderColor = '#dc2626';
+        }
+        // Run once on load
+        updateColors(document.getElementById('role-selector'));
+    </script>
 </body>
 </html>
