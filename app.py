@@ -14,13 +14,11 @@ def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    # Ensure tables exist
     cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT, phone TEXT, password TEXT, role TEXT, bank_name TEXT, bank_account TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS wallet (username TEXT PRIMARY KEY, balance REAL DEFAULT 0.0)")
     cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, amount REAL, type TEXT, status TEXT DEFAULT 'completed', timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)")
     cur.execute("CREATE TABLE IF NOT EXISTS contracts (id INTEGER PRIMARY KEY AUTOINCREMENT, employer TEXT, employee TEXT, salary REAL, total_months_paid INTEGER DEFAULT 0)")
     cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, employer TEXT, title TEXT, description TEXT, salary REAL, status TEXT DEFAULT 'open')")
-    
     cur.execute(query, args)
     rv = cur.fetchall()
     if commit: conn.commit()
@@ -29,17 +27,31 @@ def query_db(query, args=(), one=False, commit=False):
 
 @app.route('/')
 def index():
-    if 'username' not in session:
-        # If not logged in, show landing page with the BIG "ENTER CONSOLE" button
-        return render_template('landing.html')
-    
-    # If logged in, load the Million-Dollar Dashboard
-    user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
-    wallet = query_db("SELECT balance FROM wallet WHERE username = ?", (session['username'],), one=True)
-    balance = wallet['balance'] if wallet else 0.0
-    contracts = query_db("SELECT * FROM contracts WHERE employee = ? OR employer = ?", (session['username'], session['username']))
-    
-    return render_template('dashboard.html', user=user, balance=balance, contracts=contracts)
+    if 'username' in session:
+        user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
+        wallet = query_db("SELECT balance FROM wallet WHERE username = ?", (session['username'],), one=True)
+        balance = wallet['balance'] if wallet else 0.0
+        contracts = query_db("SELECT * FROM contracts WHERE employee = ? OR employer = ?", (session['username'], session['username']))
+        return render_template('dashboard.html', user=user, balance=balance, contracts=contracts)
+    return render_template('landing.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        u = request.form.get('username')
+        e = request.form.get('email')
+        ph = request.form.get('phone')
+        p = request.form.get('password')
+        r = request.form.get('role')
+        hashed = bcrypt.hashpw(p.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        try:
+            query_db("INSERT INTO users (username, email, phone, password, role) VALUES (?, ?, ?, ?, ?)", 
+                     (u, e, ph, hashed, r), commit=True)
+            query_db("INSERT INTO wallet (username, balance) VALUES (?, 0.0)", (u,), commit=True)
+            return redirect(url_for('login'))
+        except:
+            return "User already exists!"
+    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -47,14 +59,11 @@ def login():
         u = request.form.get('username')
         p = request.form.get('password')
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
-        
         if user and bcrypt.checkpw(p.encode('utf-8'), user['password'].encode('utf-8')):
             session['username'] = user['username']
             session['role'] = user['role']
             return redirect(url_for('index'))
-        else:
-            return "Login Failed: Check Username/Password"
-            
+        return "Invalid Credentials"
     return render_template('login.html')
 
 @app.route('/logout')
