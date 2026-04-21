@@ -5,9 +5,9 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from ute import get_ute_math
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie@janny112008_vault_777')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie_ultimate_vault_2026')
 
-DB = "ute_supermax_FINAL_BOSS.db"
+DB = "ute_supermax_FINAL_BOSS_V3.db"
 
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
@@ -22,17 +22,12 @@ def query_db(query, args=(), one=False, commit=False):
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         sender TEXT, receiver TEXT, amount REAL, deduction REAL, 
-        net_amount REAL, type TEXT, status TEXT DEFAULT 'completed', 
+        net_amount REAL, status TEXT DEFAULT 'pending', 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )""")
-    cur.execute("""CREATE TABLE IF NOT EXISTS jobs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        employer TEXT, title TEXT, description TEXT, 
-        salary REAL, location TEXT, skills TEXT, status TEXT DEFAULT 'open'
-    )""")
     cur.execute(query, args)
-    rv = cur.fetchall()
     if commit: conn.commit()
+    rv = cur.fetchall()
     conn.close()
     return (rv[0] if rv else None) if one else rv
 
@@ -40,35 +35,26 @@ def query_db(query, args=(), one=False, commit=False):
 def index():
     if 'username' not in session: return render_template('landing.html')
     user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
-    wallet = query_db("SELECT balance FROM wallet WHERE username = ?", (session['username'],), one=True)
-    balance = wallet['balance'] if wallet else 0.0
-    
-    if user['role'] == 'employer':
-        my_jobs = query_db("SELECT * FROM jobs WHERE employer = ? ORDER BY id DESC", (user['username'],))
-        return render_template('dashboard.html', user=user, balance=balance, my_jobs=my_jobs)
-    else:
-        search = request.args.get('search', '')
-        available_jobs = query_db("SELECT * FROM jobs WHERE status = 'open' AND (title LIKE ? OR location LIKE ?)", ('%'+search+'%', '%'+search+'%'))
-        return render_template('dashboard.html', user=user, balance=balance, available_jobs=available_jobs)
+    if user['role'] == 'admin': return redirect(url_for('admin_room'))
+    return render_template('dashboard.html', user=user, balance=0.0)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        u, e, ph, p, r = request.form.get('username'), request.form.get('email'), request.form.get('phone'), request.form.get('password'), request.form.get('role')
+        u, e, p, r = request.form.get('username'), request.form.get('email'), request.form.get('password'), request.form.get('role')
         bn, ba = request.form.get('bank_name'), request.form.get('bank_account')
         
-        if u.upper() == 'REUBEN':
-            status = 'active'
-        else:
-            status = 'pending_approval' if r == 'admin' else 'active'
+        # SECURITY: Nobody can register as Admin from the public page anymore
+        if r == 'admin' and u.upper() != 'REUBEN':
+            return "<h1>Access Denied</h1><p>Only Reuben can appoint Admins.</p>"
         
+        status = 'active'
         hashed = bcrypt.hashpw(p.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         try:
-            query_db("""INSERT INTO users (username, email, phone, password, role, bank_name, bank_account, status) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", (u, e, ph, hashed, r, bn, ba, status), commit=True)
-            query_db("INSERT INTO wallet (username, balance) VALUES (?, 0.0)", (u,), commit=True)
+            query_db("""INSERT INTO users (username, email, password, role, bank_name, bank_account, status) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)""", (u, e, hashed, r, bn, ba, status), commit=True)
             return redirect(url_for('login'))
-        except: return "Error: Username Taken"
+        except: return "Username Taken"
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -77,31 +63,30 @@ def login():
         u, p = request.form.get('username'), request.form.get('password')
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
         if user and bcrypt.checkpw(p.encode('utf-8'), user['password'].encode('utf-8')):
-            if u.upper() != 'REUBEN' and user['status'] == 'pending_approval':
-                return "<h1>Access Pending</h1><p>Wait for REUBEN to approve your access.</p>"
-            session['username'], session['role'], session['user_id'] = user['username'], user['role'], user['id']
+            session['username'], session['role'] = user['username'], user['role']
+            session['bank_name'], session['bank_account'] = user['bank_name'], user['bank_account']
             return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/admin_room')
 def admin_room():
     if session.get('role') != 'admin': return "Unauthorized", 403
-    stats = query_db("SELECT SUM(deduction) as rev, COUNT(id) as tx FROM transactions WHERE status = 'completed'", one=True)
-    withdrawals = query_db("""SELECT transactions.*, users.bank_name, users.bank_account 
-                              FROM transactions JOIN users ON transactions.sender = users.username 
-                              WHERE transactions.status = 'pending'""")
     all_users = query_db("SELECT * FROM users ORDER BY id DESC")
-    all_jobs = query_db("SELECT * FROM jobs ORDER BY id DESC")
-    pending_admins = []
-    if session.get('username').upper() == 'REUBEN':
-        pending_admins = query_db("SELECT * FROM users WHERE role = 'admin' AND status = 'pending_approval'")
-    
-    return render_template('admin_room.html', withdrawals=withdrawals, pending_admins=pending_admins, all_users=all_users, all_jobs=all_jobs, stats=stats)
+    withdrawals = query_db("SELECT * FROM transactions WHERE status = 'pending'")
+    return render_template('admin_room.html', all_users=all_users, withdrawals=withdrawals)
 
-@app.route('/approve_admin/<int:id>')
-def approve_admin(id):
+@app.route('/admin/delete_user/<int:id>')
+def delete_user(id):
     if session.get('username').upper() != 'REUBEN': return "Denied", 403
-    query_db("UPDATE users SET status = 'active' WHERE id = ?", (id,), commit=True)
+    query_db("DELETE FROM users WHERE id = ?", (id,), commit=True)
+    return redirect(url_for('admin_room'))
+
+@app.route('/update_treasury', methods=['POST'])
+def update_treasury():
+    if session.get('username').upper() != 'REUBEN': return "Denied", 403
+    bn, ba = request.form.get('bank_name'), request.form.get('bank_account')
+    query_db("UPDATE users SET bank_name = ?, bank_account = ? WHERE username = ?", (bn, ba, session['username']), commit=True)
+    session['bank_name'], session['bank_account'] = bn, ba
     return redirect(url_for('admin_room'))
 
 @app.route('/logout')
@@ -110,5 +95,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
