@@ -3,55 +3,79 @@
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; padding: 2rem; margin-bottom: 2rem; }
-        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1rem 2rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
-        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 1.5rem; }
+        .rw-mini {
+            width: 50px; height: 50px; border: 3px solid #3b82f6;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 1.2rem; font-weight: 900;
+            color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
     </style>
 </head>
-<body class="p-10">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-5xl font-black italic mb-12">SYSTEM_CONTROL</h1>
-
-        {% if pending_admins %}
-        <section class="mb-12">
-            <h2 class="text-2xl font-black text-blue-400 mb-6">ADMIN REGISTRATION REQUESTS</h2>
-            {% for a in pending_admins %}
-            <div class="glass-card flex justify-between items-center border-l-8 border-blue-600">
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-4">
+                <div class="rw-mini">RW</div>
                 <div>
-                    <p class="text-xl font-black">{{ a.username }}</p>
-                    <p class="text-xs text-slate-500 uppercase">{{ a.email }}</p>
+                    <h1 class="text-3xl font-black italic">UTE COMMAND</h1>
+                    <p class="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Master: {{ session['username'] }}</p>
                 </div>
-                <a href="/approve_admin/{{ a.id }}" class="btn-supermax">AUTHORIZE ADMIN</a>
             </div>
-            {% endfor %}
-        </section>
-        {% endif %}
+            <a href="/" class="bg-white/10 px-6 py-2 rounded-full text-xs font-bold">EXIT</a>
+        </header>
 
-        <section>
-            <h2 class="text-2xl font-black text-emerald-400 mb-6">PENDING BANK SETTLEMENTS</h2>
-            {% for w in withdrawals %}
-            <div class="glass-card flex flex-col md:flex-row justify-between items-center border-l-8 border-emerald-500">
-                <div>
-                    <p class="text-2xl font-black">{{ w.sender }}</p>
-                    <p class="text-xs text-blue-400 font-bold uppercase">{{ w.bank_name }} | {{ w.bank_account }}</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-3xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.net_amount) }}</p>
-                    <p class="text-[10px] text-slate-500 uppercase">Gross: KES {{ w.amount }} (Tax: {{ w.deduction }})</p>
-                </div>
-                <form action="/approve_transfer/{{ w.id }}" method="POST">
-                    <button class="btn-supermax btn-approve">COMPLETE TRANSFER</button>
-                </form>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 text-center">
+            <div class="glass-card border-green-500/30">
+                <p class="text-[10px] font-bold text-slate-500 uppercase">UTE Revenue</p>
+                <p class="text-3xl font-black text-green-500">KES {{ stats.rev if stats.rev else '0.0' }}</p>
             </div>
-            {% else %}
-            <p class="text-slate-600 font-black italic">No pending settlements in the queue.</p>
-            {% endfor %}
-        </section>
-        
-        <div class="mt-10 text-center">
-            <a href="/" class="text-slate-500 font-black uppercase text-xs">Return to Dashboard</a>
+            <div class="glass-card">
+                <p class="text-[10px] font-bold text-slate-500 uppercase">Total Users</p>
+                <p class="text-3xl font-black text-blue-500">{{ all_users|length }}</p>
+            </div>
+            <div class="glass-card">
+                <p class="text-[10px] font-bold text-slate-500 uppercase">Open Jobs</p>
+                <p class="text-3xl font-black text-purple-500">{{ all_jobs|length }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass-card">
+                    <h3 class="font-black text-xs uppercase mb-6 text-blue-400">Withdrawals</h3>
+                    {% for w in withdrawals %}
+                    <div class="flex justify-between p-4 bg-white/5 rounded-xl border border-white/5 mb-2">
+                        <div>
+                            <p class="font-black text-sm">{{ w.sender }}</p>
+                            <p class="text-[10px] text-slate-500">{{ w.bank_name }} | {{ w.bank_account }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-green-400 font-black">Pay KES {{ w.net_amount }}</p>
+                            <form action="/approve_transfer/{{ w.id }}" method="POST">
+                                <button class="text-[10px] bg-blue-600 px-2 py-1 rounded font-bold uppercase">Paid</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 class="font-black text-xs uppercase mb-6 text-slate-400">Network Directory</h3>
+                <div class="space-y-4">
+                    {% for u in all_users %}
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <div>
+                            <p class="text-xs font-bold">{{ u.username }}</p>
+                            <p class="text-[9px] text-slate-500 italic uppercase">{{ u.role }}</p>
+                        </div>
+                        <div class="w-2 h-2 rounded-full {% if u.role == 'admin' %}bg-red-500{% elif u.role == 'employer' %}bg-blue-500{% else %}bg-green-500{% endif %}"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </body>
