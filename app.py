@@ -14,7 +14,11 @@ def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT, phone TEXT, password TEXT, role TEXT, bank_name TEXT, bank_account TEXT)")
+    cur.execute("""CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        username TEXT UNIQUE, email TEXT, phone TEXT, password TEXT, role TEXT, 
+        bank_name TEXT, bank_account TEXT
+    )""")
     cur.execute("CREATE TABLE IF NOT EXISTS wallet (username TEXT PRIMARY KEY, balance REAL DEFAULT 0.0)")
     cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, amount REAL, type TEXT, status TEXT DEFAULT 'completed', timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)")
     cur.execute("CREATE TABLE IF NOT EXISTS contracts (id INTEGER PRIMARY KEY AUTOINCREMENT, employer TEXT, employee TEXT, salary REAL, total_months_paid INTEGER DEFAULT 0)")
@@ -50,7 +54,7 @@ def register():
             query_db("INSERT INTO wallet (username, balance) VALUES (?, 0.0)", (u,), commit=True)
             return redirect(url_for('login'))
         except:
-            return "User already exists!"
+            return "Registration Error: User already exists."
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
