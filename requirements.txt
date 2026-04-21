@@ -1,6 +1,7 @@
-flask
+Flask
 gunicorn
 requests
 bcrypt
+flask-bcrypt
 python-dotenv
 intasend-python
