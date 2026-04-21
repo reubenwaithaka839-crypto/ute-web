@@ -2,63 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Job Application | Prestige Network</title>
+    <title>Submit Dossier | Prestige</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-2xl w-full bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-black italic mb-2 text-green-500">APPLY FOR ROLE</h1>
-            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Position: {{ job.title }}</p>
-        </div>
-        
+    <div class="max-w-xl w-full bg-slate-900 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl">
+        <h1 class="text-3xl font-black italic text-green-500 mb-2">CANDIDATE DOSSIER</h1>
+        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mb-10">Role: {{ job.title }}</p>
+
         <form action="/submit_application" method="POST" class="space-y-5">
             <input type="hidden" name="job_id" value="{{ job.id }}">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">FULL LEGAL NAME</label>
-                    <input type="text" name="full_name" placeholder="John Doe" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500" required>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">ID NUMBER</label>
-                    <input type="text" name="id_number" placeholder="12345678" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500" required>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">M-PESA PHONE</label>
-                    <input type="text" name="phone" placeholder="0712345678" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500" required>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">EMAIL ADDRESS</label>
-                    <input type="email" name="email" placeholder="john@example.com" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500" required>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">AGE</label>
-                    <input type="number" name="age" placeholder="25" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500" required>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 ml-2">GENDER</label>
-                    <select name="gender" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500">
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 ml-2">PROFILE PHOTO URL (Hosted link)</label>
-                <input type="text" name="photo_url" placeholder="https://image.com/my-photo.jpg" class="w-full bg-slate-800 p-4 rounded-2xl outline-none focus:ring-2 ring-green-500">
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-500 ml-2">SKILLS & EXPERIENCE</label>
-                <textarea name="skills" placeholder="List your professional skills..." class="w-full bg-slate-800 p-4 rounded-2xl outline-none h-32 focus:ring-2 ring-green-500"></textarea>
-            </div>
+            <input type="text" name="full_name" placeholder="Full Legal Name" class="w-full bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5 focus:border-green-500" required>
             
-            <button class="w-full bg-green-600 hover:bg-green-500 py-5 rounded-3xl font-black uppercase tracking-widest mt-4 transition-all transform hover:scale-105 shadow-xl shadow-green-500/20">
-                Submit Dossier to Employer
-            </button>
+            <div class="flex gap-4">
+                <input type="number" name="age" placeholder="Age" class="w-1/3 bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5" required>
+                <select name="gender" class="w-2/3 bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5 text-slate-400">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+
+            <input type="text" name="phone" placeholder="M-Pesa Number" class="w-full bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5" required>
+            <input type="email" name="email" placeholder="Email Address" class="w-full bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5" required>
+            <input type="text" name="photo_url" placeholder="Profile Photo Link (URL)" class="w-full bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none border border-white/5">
+            
+            <textarea name="skills" placeholder="Professional Skills & Bio..." class="w-full bg-slate-800 p-5 rounded-2xl font-bold text-sm outline-none h-32 border border-white/5"></textarea>
+
+            <button type="submit" class="w-full bg-green-600 py-5 rounded-[2rem] font-black uppercase text-sm shadow-xl shadow-green-500/20 hover:scale-[1.02] transition-transform">Submit to Network</button>
         </form>
     </div>
 </body>
