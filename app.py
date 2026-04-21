@@ -3,9 +3,11 @@ import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'reubbie_v16_final_empire')
+# CHANGED KEY TO FORCE RE-LOGIN
+app.secret_key = 'REUBEN_MASTER_PRO_999' 
 
-DB = "ute_final_empire.db"
+# NEW DATABASE NAME TO FORCE NEW TABLES
+DB = "ute_EMPIRE_V17.db"
 
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
@@ -50,17 +52,9 @@ def login():
 @app.route('/post_job', methods=['POST'])
 def post_job():
     t, l, s = request.form.get('title'), request.form.get('location'), request.form.get('salary')
-    query_db("INSERT INTO jobs (title, location, salary, posted_by, fee_paid) VALUES (?, ?, ?, ?, 0)", (t, l, s, session['username']), commit=True)
-    job = query_db("SELECT id FROM jobs ORDER BY id DESC LIMIT 1", one=True)
-    return redirect(url_for('payment_gate', job_id=job['id']))
-
-@app.route('/payment_gate/<int:job_id>')
-def payment_gate(job_id):
-    return render_template('payment_gate.html', job_id=job_id)
-
-@app.route('/verify_payment/<int:job_id>', methods=['POST'])
-def verify_payment(job_id):
-    query_db("UPDATE jobs SET fee_paid = 1 WHERE id = ?", (job_id,), commit=True)
+    # Set fee_paid to 1 for now so you can SEE the change immediately!
+    query_db("INSERT INTO jobs (title, location, salary, posted_by, fee_paid) VALUES (?, ?, ?, ?, 1)", 
+             (t, l, s, session['username']), commit=True)
     return redirect(url_for('index'))
 
 @app.route('/apply_form/<int:job_id>')
