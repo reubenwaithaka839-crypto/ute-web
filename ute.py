@@ -1,4 +1,5 @@
 # ute.py - The Financial Logic Engine for UTE_WEB
+DB = "rw_final_prestige.db"
 
 def get_ute_math(amount):
     """
