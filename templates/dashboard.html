@@ -1,59 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>UTE MASTER V17</title>
+    <style>
+        .role-admin { border-top: 8px solid #ef4444; } /* Red for Admin */
+        .role-employer { border-top: 8px solid #3b82f6; } /* Blue for Employer */
+        .role-employee { border-top: 8px solid #22c55e; } /* Green for Employee */
+    </style>
 </head>
-<body class="bg-[#020617] text-white min-h-screen p-10">
-    <div class="max-w-6xl mx-auto">
+<body class="bg-slate-950 text-white min-h-screen p-6 font-sans">
+    
+    <header class="flex justify-between items-center mb-12 bg-slate-900/50 p-6 rounded-3xl border border-white/5">
+        <div class="flex items-center gap-6">
+            <div class="w-20 h-20 rounded-full border-4 border-blue-500 flex items-center justify-center text-3xl font-black italic shadow-[0_0_20px_rgba(59,130,246,0.5)]">RW</div>
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter">PRESTIGE NETWORK</h1>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Master Admin: Reuben</p>
+            </div>
+        </div>
         
-        <header class="flex justify-between items-center mb-20 border-b border-white/10 pb-10">
-            <div class="flex items-center gap-6">
-                <div class="w-20 h-20 bg-[#22c55e] rounded-[2rem] flex items-center justify-center font-black text-3xl italic shadow-[0_0_30px_rgba(34,197,94,0.4)] text-black">
-                    UTE
-                </div>
-                <div>
-                    <h1 class="text-4xl font-black tracking-tighter italic text-white">UTE_MASTER</h1>
-                    <p class="text-xs font-bold text-[#22c55e] uppercase tracking-[0.5em]">System Version 17.0</p>
-                </div>
-            </div>
-            <div class="bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
-                <p class="text-xs font-black text-blue-400">{{ user.username.upper() }}</p>
-                <a href="/logout" class="text-[10px] font-bold text-red-500 uppercase">Exit System</a>
-            </div>
-        </header>
+        <div class="hidden md:block w-1/3">
+            <input type="text" placeholder="Search tasks, locations, or skills..." class="w-full bg-slate-800 border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-blue-500">
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div class="lg:col-span-4">
-                {% if user.role in ['employer', 'admin'] %}
-                <div class="bg-white/5 p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-                    <h2 class="text-xs font-black text-[#22c55e] uppercase mb-6">New Task Entry</h2>
-                    <form action="/post_job" method="POST" class="space-y-4">
-                        <input type="text" name="title" placeholder="Job Title" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none focus:border-[#22c55e]">
-                        <input type="text" name="location" placeholder="Location" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none">
-                        <input type="number" name="salary" placeholder="Salary (KES)" class="w-full bg-black/40 p-4 rounded-2xl border border-white/10 text-xs outline-none">
-                        <button class="w-full bg-[#22c55e] text-black py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest shadow-lg hover:brightness-110 transition">Launch Listing</button>
-                    </form>
-                </div>
-                {% endif %}
-            </div>
+        <div class="text-right">
+            <p class="text-xs font-black">{{ user.username }} | <span class="text-blue-400">{{ user.role.upper() }}</span></p>
+            <a href="/logout" class="text-[10px] text-red-500 font-black uppercase">Terminate Session</a>
+        </div>
+    </header>
 
-            <div class="lg:col-span-8 space-y-6">
-                {% for job in jobs %}
-                <div class="bg-white/5 p-10 rounded-[3rem] border border-white/5 flex justify-between items-center group hover:bg-white/[0.08] transition">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        
+        {% if user.role == 'admin' %}
+        <div class="lg:col-span-12 role-admin bg-slate-900 p-8 rounded-[2rem] mb-10 shadow-2xl">
+            <h2 class="text-xl font-black mb-6 flex justify-between">
+                ADMIN CONTROL CENTER
+                <span class="text-red-500 text-xs">REUBEN MODE ACTIVE</span>
+            </h2>
+            <div class="grid grid-cols-4 gap-4">
+                {% for u in all_users %}
+                <div class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                    <p class="text-xs font-bold">{{ u.username }} ({{ u.role }})</p>
+                    {% if u.username.upper() != 'REUBEN' %}
+                    <a href="/terminate_admin/{{ u.id }}" class="bg-red-600 px-3 py-1 rounded text-[10px] font-black uppercase">Terminate</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.role in ['employer', 'admin'] %}
+        <div class="lg:col-span-4 role-employer bg-slate-900 p-8 rounded-[3rem] shadow-2xl">
+            <h2 class="text-lg font-black mb-6 text-blue-400 italic">EMPLOYER'S CHAMBER</h2>
+            <form action="/post_job" method="POST" class="space-y-4">
+                <input type="text" name="title" placeholder="Job Title" class="w-full bg-slate-800 p-4 rounded-xl text-xs" required>
+                <input type="text" name="location" placeholder="Location" class="w-full bg-slate-800 p-4 rounded-xl text-xs" required>
+                <input type="number" name="salary" placeholder="Salary (KES)" class="w-full bg-slate-800 p-4 rounded-xl text-xs" required>
+                <textarea name="skills" placeholder="Skills Required" class="w-full bg-slate-800 p-4 rounded-xl text-xs" rows="2"></textarea>
+                <button class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs">Launch Listing</button>
+            </form>
+
+            <h3 class="text-xs font-black mt-10 mb-4 text-slate-500">INCOMING DOSSIERS</h3>
+            {% for app in incoming_apps %}
+            <div class="bg-slate-800 p-4 rounded-2xl mb-4 border border-white/5">
+                <div class="flex items-center gap-4 mb-3">
+                    <img src="{{ app.photo_url }}" class="w-12 h-12 rounded-full border-2 border-blue-500">
                     <div>
-                        <h3 class="text-2xl font-black mb-1 tracking-tight">{{ job.title }}</h3>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{{ job.location }}</p>
+                        <p class="text-xs font-black">{{ app.full_name }}</p>
+                        <p class="text-[9px] text-blue-400">{{ app.job_title }}</p>
+                    </div>
+                </div>
+                <div class="text-[9px] space-y-1 text-slate-400 border-t border-white/5 pt-2">
+                    <p><b>ID:</b> {{ app.id_number }} | <b>Age:</b> {{ app.age }}</p>
+                    <p><b>Contact:</b> {{ app.phone }} | {{ app.email }}</p>
+                    <p><b>Skills:</b> {{ app.skills }}</p>
+                </div>
+                <button class="w-full bg-green-600 py-2 rounded-xl text-[9px] font-black uppercase mt-3">Accept & Open Chat</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="lg:col-span-{% if user.role in ['employer', 'admin'] %}8{% else %}12{% endif %} role-employee bg-slate-900 p-8 rounded-[3rem] shadow-2xl">
+            <h2 class="text-lg font-black mb-8 text-green-500 italic">AVAILABLE OPPORTUNITIES</h2>
+            <div class="space-y-6">
+                {% for job in jobs %}
+                <div class="bg-slate-800 p-8 rounded-[2.5rem] flex justify-between items-center border border-white/5 hover:border-green-500/30 transition">
+                    <div>
+                        <h4 class="text-2xl font-black">{{ job.title }}</h4>
+                        <p class="text-xs text-slate-500">{{ job.location }} • Posted by {{ job.posted_by }}</p>
+                        <p class="text-[10px] text-blue-400 font-bold mt-2 uppercase tracking-widest">Skills: {{ job.skills_required }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-3xl font-black text-white mb-4 italic">KES {{ "{:,.0f}".format(job.salary) }}</p>
-                        <a href="/apply_form/{{ job.id }}" class="bg-white text-black px-12 py-4 rounded-2xl text-[11px] font-black uppercase hover:bg-[#22c55e] transition shadow-xl">Apply</a>
+                        <p class="text-3xl font-black text-green-500 mb-4">KES {{ "{:,.0f}".format(job.salary) }}</p>
+                        <a href="/apply_form/{{ job.id }}" class="bg-white text-black px-10 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-green-500 hover:text-white transition shadow-xl">Secure Apply</a>
                     </div>
                 </div>
-                {% else %}
-                <div class="text-center py-20 opacity-30 italic">No tasks active. Post one to see it here.</div>
                 {% endfor %}
+            </div>
+            <div class="mt-20 border-t border-white/5 pt-10 text-center">
+                <p class="text-[9px] text-slate-600 uppercase font-black">Terms & Conditions of UTE Prestige Network Apply</p>
             </div>
         </div>
     </div>
