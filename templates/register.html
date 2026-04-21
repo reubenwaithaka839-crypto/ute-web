@@ -1,107 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTE_WEB | Join the Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: #020617; 
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* THE SUPERMAX INPUTS */
-        .supermax-input { 
-            background: rgba(255,255,255,0.05) !important; 
-            border: 2px solid rgba(255,255,255,0.1) !important; 
-            border-radius: 1.5rem !important; 
-            padding: 1.5rem !important; 
-            color: white !important; 
-            width: 100% !important; 
-            font-size: 1.2rem !important; 
-            font-weight: 900 !important; 
-            outline: none !important; 
-            transition: 0.3s !important;
-            margin-bottom: 1rem;
-        }
-        .supermax-input:focus { 
-            border-color: #2563eb !important; 
-            background: rgba(255,255,255,0.08) !important; 
-        }
-
-        /* THE HUGE ATTRACTIVE BUTTON */
-        .btn-supermax { 
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important; 
-            color: white !important; 
-            width: 100% !important; 
-            padding: 2.5rem !important; 
-            border-radius: 2.5rem !important; 
-            font-size: 1.8rem !important; 
-            font-weight: 900 !important; 
-            text-transform: uppercase !important; 
-            letter-spacing: 0.1em !important;
-            border: none !important; 
-            cursor: pointer !important; 
-            box-shadow: 0 25px 50px rgba(37, 99, 235, 0.4) !important; 
-            transition: 0.4s !important;
-            margin-top: 2rem;
-        }
-        .btn-supermax:hover { 
-            transform: translateY(-8px) !important; 
-            box-shadow: 0 35px 70px rgba(37, 99, 235, 0.6) !important; 
-            filter: brightness(1.2) !important;
-        }
-
-        .glass-container {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 4rem;
-            padding: 4rem;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
-        }
+        body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
+        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1.2rem; padding: 1.2rem; color: white; width: 100%; font-weight: 900; margin-bottom: 1rem; outline: none; }
+        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1.5rem; border-radius: 1.5rem; font-weight: 900; text-transform: uppercase; width: 100%; border: none; cursor: pointer; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3); }
+        .section-label { font-size: 10px; font-weight: 900; color: #3b82f6; letter-spacing: 0.2em; margin-bottom: 15px; display: block; }
     </style>
 </head>
-<body>
-
-    <div class="glass-container">
-        <h1 class="text-6xl font-black italic mb-2 text-center tracking-tighter">JOIN UTE_WEB</h1>
-        <p class="text-blue-500 font-bold text-center mb-12 tracking-[0.3em] text-xs uppercase">Account Initialization</p>
-        
+<body class="flex items-center justify-center min-h-screen py-20">
+    <div class="bg-white/5 backdrop-blur-xl border border-white/10 p-12 rounded-[3rem] w-full max-w-2xl">
+        <h1 class="text-5xl font-black italic mb-10 text-center">JOIN UTE_WEB</h1>
         <form action="/register" method="POST">
-            <div class="space-y-4">
-                <input type="text" name="username" placeholder="CHOOSE USERNAME" class="supermax-input" required>
-                <input type="email" name="email" placeholder="EMAIL ADDRESS" class="supermax-input" required>
-                <input type="text" name="phone" placeholder="MPESA PHONE (254...)" class="supermax-input" required>
-                <input type="password" name="password" placeholder="SECURE PASSWORD" class="supermax-input" required>
-                
-                <p class="text-slate-500 font-black text-[10px] uppercase tracking-widest ml-4 mt-6">Select Your Role</p>
-                <select name="role" class="supermax-input">
-                    <option value="employee">I AM AN EMPLOYEE</option>
-                    <option value="employer">I AM AN EMPLOYER</option>
-                    <option value="admin">SYSTEM ADMINISTRATOR</option>
-                </select>
+            <span class="section-label">PERSONAL IDENTITY</span>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="username" placeholder="USERNAME" class="supermax-input" required>
+                <input type="email" name="email" placeholder="EMAIL" class="supermax-input" required>
             </div>
+            <input type="password" name="password" placeholder="PASSWORD" class="supermax-input" required>
+            
+            <span class="section-label mt-6">SETTLEMENT DETAILS (BANK LINK)</span>
+            <input type="text" name="bank_name" placeholder="BANK NAME (e.g. Equity, KCB, Absa)" class="supermax-input" required>
+            <input type="text" name="bank_account" placeholder="ACCOUNT NUMBER" class="supermax-input" required>
+            <input type="text" name="phone" placeholder="MPESA / PHONE NUMBER" class="supermax-input" required>
 
-            <button type="submit" class="btn-supermax">
-                CREATE ACCOUNT
-            </button>
+            <span class="section-label mt-6">SYSTEM ROLE</span>
+            <select name="role" class="supermax-input">
+                <option value="employee">I AM AN EMPLOYEE</option>
+                <option value="employer">I AM AN EMPLOYER</option>
+                <option value="admin">SYSTEM ADMINISTRATOR</option>
+            </select>
+
+            <button type="submit" class="btn-supermax mt-8">INITIALIZE ACCOUNT</button>
         </form>
-
-        <div class="mt-10 text-center">
-            <a href="/login" class="text-slate-500 font-bold hover:text-white transition tracking-widest text-xs uppercase">Already have access? Login</a>
-        </div>
     </div>
-
 </body>
 </html>
