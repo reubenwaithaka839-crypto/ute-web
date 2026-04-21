@@ -1,29 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 3rem; }
-        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 1.5rem; color: white; width: 100%; font-size: 1.25rem; font-weight: 900; outline: none; transition: 0.3s; }
-        .supermax-input:focus { border-color: #2563eb; background: rgba(255,255,255,0.08); }
-        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; width: 100%; padding: 2rem; border-radius: 2rem; font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; border: none; cursor: pointer; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.4); transition: 0.3s; }
-        .btn-supermax:hover { transform: translateY(-5px); box-shadow: 0 30px 60px rgba(37, 99, 235, 0.6); filter: brightness(1.1); }
-    </style>
-</head>
-<body class="flex items-center justify-center min-h-screen p-6">
-    <div class="glass-card p-12 w-full max-w-xl">
-        <h1 class="text-5xl font-black text-white italic text-center mb-12 tracking-tighter">UTE_AUTH</h1>
-        <form action="/login" method="POST" class="space-y-8">
-            <div>
-                <input type="text" name="username" placeholder="USERNAME" class="supermax-input">
-            </div>
-            <div>
-                <input type="password" name="password" placeholder="PASSWORD" class="supermax-input">
-            </div>
-            <button class="btn-supermax">INITIALIZE LOGIN</button>
-        </form>
-    </div>
+<html>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6">
+    <form action="/login" method="POST" class="max-w-md w-full bg-slate-900 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+        <div class="flex justify-center mb-8">
+            <div class="w-20 h-20 rounded-full border-4 border-blue-500 flex items-center justify-center text-3xl font-black italic shadow-[0_0_20px_rgba(59,130,246,0.3)]">RW</div>
+        </div>
+        <h2 class="text-2xl font-black text-center mb-8 italic">INITIALIZE ACCESS</h2>
+        
+        <div class="space-y-4">
+            <input type="text" name="username" placeholder="Full Name" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5 outline-none focus:border-blue-500" required>
+            <input type="password" name="passcode" placeholder="Secure Passcode" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5 outline-none focus:border-blue-500" required>
+            <input type="email" name="email" placeholder="Email Address" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5 outline-none" required>
+            <input type="text" name="phone" placeholder="Phone Number" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5 outline-none" required>
+            
+            <select name="role" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5 outline-none font-bold text-xs uppercase tracking-widest">
+                <option value="employee" class="text-green-500">Employee (Green Tier)</option>
+                <option value="employer" class="text-blue-500">Employer (Blue Tier)</option>
+            </select>
+
+            <button class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-4 shadow-lg shadow-blue-500/20">Enter Network</button>
+        </div>
+    </form>
 </body>
 </html>
