@@ -1,96 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <title>Dashboard | Prestige Network</title>
     <style>
         .role-admin { border-top: 8px solid #ef4444; }
         .role-employer { border-top: 8px solid #3b82f6; }
         .role-employee { border-top: 8px solid #22c55e; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); }
     </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-6 font-sans">
-    <header class="flex justify-between items-center mb-12 bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
+<body class="bg-slate-950 text-white min-h-screen p-4 md:p-8 font-sans">
+
+    <header class="flex flex-col md:flex-row justify-between items-center mb-12 bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-2xl gap-6">
         <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-3xl font-black italic shadow-lg shadow-blue-500/20">RW</div>
+            <div class="w-20 h-20 rounded-[2rem] bg-blue-600 flex items-center justify-center text-4xl font-black italic shadow-lg shadow-blue-500/40">RW</div>
             <div>
                 <h1 class="text-3xl font-black tracking-tighter italic">PRESTIGE NETWORK</h1>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Master Admin: Reuben</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Financial Logic Engine</p>
             </div>
         </div>
-        <div class="text-right">
-            <p class="text-xs font-black uppercase text-blue-400">{{ user.username }} • {{ user.role }}</p>
-            <a href="/logout" class="text-[10px] text-red-500 font-black uppercase hover:underline">Terminate Session</a>
+        
+        <div class="flex flex-wrap justify-center items-center gap-4">
+            {% if user.username.upper() == 'REUBEN' %}
+            <a href="/admin_panel" class="bg-gradient-to-r from-blue-700 to-blue-500 px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-xl shadow-blue-500/20 hover:scale-105 transition-all border border-blue-400/30">
+                Enter Admin Chamber
+            </a>
+            {% endif %}
+
+            <div class="text-right bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest">{{ user.role }}</p>
+                <p class="text-sm font-bold italic">{{ user.username }}</p>
+                <a href="/logout" class="text-[9px] text-red-500 font-black uppercase hover:text-red-400 transition-colors">Terminate Session</a>
+            </div>
         </div>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        
-        {% if user.role == 'admin' %}
-        <div class="lg:col-span-12 role-admin bg-slate-900 p-8 rounded-[3rem] mb-6">
-            <h2 class="text-xl font-black mb-6 italic text-red-500">GOD MODE CONTROL</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {% for u in all_users %}
-                <div class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-white/5">
-                    <span class="text-xs font-bold">{{ u.username }} [{{ u.role[:1].upper() }}]</span>
-                    {% if u.username.upper() != 'REUBEN' %}<button class="bg-red-600/20 text-red-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase">Purge</button>{% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
 
         {% if user.role in ['employer', 'admin'] %}
-        <div class="lg:col-span-5 role-employer bg-slate-900 p-8 rounded-[3rem] shadow-2xl border border-white/5">
-            <h2 class="text-xl font-black mb-8 italic text-blue-400">EMPLOYER'S CHAMBER</h2>
+        <div class="lg:col-span-5 role-employer bg-slate-900 p-8 rounded-[3.5rem] shadow-2xl border border-white/5">
+            <h2 class="text-2xl font-black mb-8 italic text-blue-400 uppercase tracking-tighter">Employer's Chamber</h2>
             
-            <form action="/post_job" method="POST" class="space-y-4 mb-12 bg-slate-950/50 p-6 rounded-[2rem] border border-white/5">
-                <input type="text" name="title" placeholder="Position Title" class="w-full bg-slate-800 p-4 rounded-2xl text-xs font-bold outline-none border border-white/5 focus:border-blue-500" required>
+            <form action="/post_job" method="POST" class="space-y-4 mb-12 bg-slate-950 p-6 rounded-[2.5rem] border border-white/10">
+                <p class="text-[10px] font-black text-slate-500 uppercase mb-2 ml-2">Broadcast New Opportunity</p>
+                <input type="text" name="title" placeholder="Position Title" class="w-full bg-slate-800 p-5 rounded-2xl text-sm font-bold outline-none border border-white/5 focus:border-blue-500 transition-all" required>
                 <div class="flex gap-4">
-                    <input type="text" name="location" placeholder="City" class="w-1/2 bg-slate-800 p-4 rounded-2xl text-xs font-bold outline-none border border-white/5">
-                    <input type="number" name="salary" placeholder="Salary (KES)" class="w-1/2 bg-slate-800 p-4 rounded-2xl text-xs font-bold outline-none border border-white/5">
+                    <input type="text" name="location" placeholder="Location" class="w-1/2 bg-slate-800 p-5 rounded-2xl text-sm font-bold outline-none border border-white/5">
+                    <input type="number" name="salary" placeholder="Salary (KES)" class="w-1/2 bg-slate-800 p-5 rounded-2xl text-sm font-bold outline-none border border-white/5">
                 </div>
-                <button class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-transform">Launch Opportunity</button>
+                <button class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase text-xs shadow-lg shadow-blue-500/30 hover:bg-blue-500 transition-all">Launch Listing</button>
             </form>
 
-            <h3 class="text-xs font-black mb-6 text-slate-500 uppercase tracking-widest">Incoming Dossiers</h3>
-            <div class="space-y-6">
+            <h3 class="text-xs font-black mb-6 text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                Candidate Dossiers
+            </h3>
+            <div class="space-y-6 max-h-[600px] overflow-y-auto pr-2">
                 {% for app in incoming_apps %}
-                <div class="bg-slate-800 p-6 rounded-[2rem] border border-white/5 shadow-xl relative overflow-hidden">
-                    <div class="flex items-center gap-4 mb-4">
-                        <img src="{{ app.photo_url }}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500">
+                <div class="bg-slate-800 p-6 rounded-[2.5rem] border border-white/5 shadow-xl hover:border-blue-500/50 transition-all group">
+                    <div class="flex items-center gap-5 mb-6">
+                        <img src="{{ app.photo_url }}" class="w-20 h-20 rounded-2xl object-cover border-2 border-blue-500 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                         <div>
-                            <h4 class="font-black text-lg italic leading-none">{{ app.full_name }}</h4>
-                            <p class="text-[9px] text-blue-400 font-bold uppercase mt-1">{{ app.job_title }}</p>
+                            <h4 class="font-black text-xl italic leading-none mb-1">{{ app.full_name }}</h4>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-tighter">{{ app.job_title }}</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 text-[10px] font-bold mb-4">
-                        <div class="bg-slate-950/50 p-2 rounded-xl">AGE: <span class="text-white">{{ app.age }}</span></div>
-                        <div class="bg-slate-950/50 p-2 rounded-xl text-center">{{ app.gender.upper() }}</div>
-                        <div class="bg-slate-950/50 p-2 rounded-xl col-span-2 text-blue-400">{{ app.phone }}</div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-slate-950 p-3 rounded-xl border border-white/5 text-center">
+                            <span class="text-[8px] text-slate-500 block uppercase font-black">Age/Sex</span>
+                            <span class="text-xs font-bold">{{ app.age }} / {{ app.gender[:1] }}</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-white/5 text-center">
+                            <span class="text-[8px] text-slate-500 block uppercase font-black">Contact</span>
+                            <span class="text-xs font-bold truncate">{{ app.phone }}</span>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-slate-400 italic mb-4">"{{ app.skills }}"</p>
-                    <button class="w-full bg-green-600 py-3 rounded-xl font-black uppercase text-[10px]">Approve & Pay</button>
+
+                    <div class="bg-slate-900 p-4 rounded-2xl mb-6 border-l-4 border-blue-500">
+                        <p class="text-[11px] text-slate-300 italic">"{{ app.skills }}"</p>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <a href="tel:{{ app.phone }}" class="flex-1 bg-white text-black py-4 rounded-xl font-black text-[10px] uppercase text-center hover:bg-slate-200">Call</a>
+                        <button class="flex-1 bg-blue-600 py-4 rounded-xl font-black text-[10px] uppercase hover:bg-blue-500 shadow-lg shadow-blue-600/20">Pay via M-Pesa</button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-10 bg-slate-950/50 rounded-[2rem] border border-dashed border-white/10">
+                    <p class="text-[10px] text-slate-600 font-black uppercase">No active dossiers found</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
 
-        <div class="lg:col-span-{% if user.role in ['employer', 'admin'] %}7{% else %}12{% endif %} role-employee bg-slate-900 p-8 rounded-[3rem] shadow-2xl border border-white/5">
-            <h2 class="text-xl font-black mb-8 italic text-green-500 uppercase">Live Opportunities</h2>
+        <div class="lg:col-span-{% if user.role in ['employer', 'admin'] %}7{% else %}12{% endif %} role-employee bg-slate-900 p-8 rounded-[3.5rem] shadow-2xl border border-white/5">
+            <h2 class="text-2xl font-black mb-8 italic text-green-500 uppercase tracking-tighter">Marketplace Opportunities</h2>
+            
             <div class="space-y-6">
                 {% for job in jobs %}
-                <div class="bg-slate-800 p-8 rounded-[2.5rem] flex justify-between items-center border border-white/5 hover:border-green-500/30 transition-all">
+                <div class="bg-slate-800 p-8 rounded-[3rem] flex flex-col md:flex-row justify-between items-center gap-6 border border-white/5 hover:border-green-500/30 transition-all group">
                     <div>
-                        <h4 class="text-2xl font-black italic">{{ job.title }}</h4>
-                        <p class="text-xs text-slate-500 font-bold uppercase">{{ job.location }} • KES {{ job.salary }}</p>
+                        <h4 class="text-3xl font-black italic group-hover:text-green-400 transition-colors">{{ job.title }}</h4>
+                        <div class="flex items-center gap-4 mt-2">
+                            <span class="text-[10px] bg-slate-950 px-3 py-1 rounded-full text-slate-400 font-bold uppercase">{{ job.location }}</span>
+                            <span class="text-lg font-black text-green-500">KES {{ "{:,.0f}".format(job.salary) }}</span>
+                        </div>
                     </div>
-                    <a href="/apply_form/{{ job.id }}" class="bg-white text-black px-10 py-4 rounded-2xl text-[10px] font-black uppercase hover:bg-green-500 hover:text-white transition-all shadow-xl">Apply</a>
+                    <a href="/apply_form/{{ job.id }}" class="w-full md:w-auto bg-white text-black px-12 py-5 rounded-2xl text-xs font-black uppercase hover:bg-green-600 hover:text-white transition-all shadow-xl shadow-black/40">
+                        Apply Now
+                    </a>
                 </div>
                 {% endfor %}
             </div>
+
+            <footer class="mt-20 pt-10 border-t border-white/5 text-center">
+                <p class="text-[9px] text-slate-600 font-black uppercase tracking-[0.3em]">UTE Prestige Network • Proprietary Financial Protocol 2026</p>
+            </footer>
         </div>
 
     </div>
