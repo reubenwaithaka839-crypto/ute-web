@@ -5,34 +5,53 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
         body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; padding: 2rem; }
-        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 2rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; padding: 2rem; margin-bottom: 2rem; }
+        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1rem 2rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
     </style>
 </head>
 <body class="p-10">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-5xl font-black italic mb-12">SETTLEMENT_CONTROL</h1>
-        
-        <div class="space-y-6">
-            {% for w in withdrawals %}
-            <div class="glass-card flex flex-col md:flex-row justify-between items-center gap-8 border-l-8 border-emerald-500">
+        <h1 class="text-5xl font-black italic mb-12">SYSTEM_CONTROL</h1>
+
+        {% if pending_admins %}
+        <section class="mb-12">
+            <h2 class="text-2xl font-black text-blue-400 mb-6">ADMIN REGISTRATION REQUESTS</h2>
+            {% for a in pending_admins %}
+            <div class="glass-card flex justify-between items-center border-l-8 border-blue-600">
                 <div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase">Beneficiary</p>
+                    <p class="text-xl font-black">{{ a.username }}</p>
+                    <p class="text-xs text-slate-500 uppercase">{{ a.email }}</p>
+                </div>
+                <a href="/approve_admin/{{ a.id }}" class="btn-supermax">AUTHORIZE ADMIN</a>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <section>
+            <h2 class="text-2xl font-black text-emerald-400 mb-6">PENDING BANK SETTLEMENTS</h2>
+            {% for w in withdrawals %}
+            <div class="glass-card flex flex-col md:flex-row justify-between items-center border-l-8 border-emerald-500">
+                <div>
                     <p class="text-2xl font-black">{{ w.sender }}</p>
                     <p class="text-xs text-blue-400 font-bold uppercase">{{ w.bank_name }} | {{ w.bank_account }}</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-[10px] font-black text-slate-500 uppercase">Net Transfer</p>
                     <p class="text-3xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.net_amount) }}</p>
-                    <p class="text-[10px] text-red-500 font-bold">UTE FEE: KES {{ w.deduction }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase">Gross: KES {{ w.amount }} (Tax: {{ w.deduction }})</p>
                 </div>
                 <form action="/approve_transfer/{{ w.id }}" method="POST">
-                    <button class="btn-approve">COMPLETE TRANSFER</button>
+                    <button class="btn-supermax btn-approve">COMPLETE TRANSFER</button>
                 </form>
             </div>
             {% else %}
-            <p class="text-slate-600 font-black italic">No pending settlements.</p>
+            <p class="text-slate-600 font-black italic">No pending settlements in the queue.</p>
             {% endfor %}
+        </section>
+        
+        <div class="mt-10 text-center">
+            <a href="/" class="text-slate-500 font-black uppercase text-xs">Return to Dashboard</a>
         </div>
     </div>
 </body>
