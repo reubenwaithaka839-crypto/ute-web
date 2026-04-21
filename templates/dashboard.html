@@ -1,91 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2.5rem; padding: 2.5rem; }
-        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; color: white; width: 100%; font-weight: 900; margin-bottom: 1rem; outline: none; }
-        .supermax-input:focus { border-color: #3b82f6; }
-        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1.5rem 3rem; border-radius: 2rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
-        .skill-tag { background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 4px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; margin-right: 5px; }
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .million-glow { box-shadow: 0 0 50px rgba(59, 130, 246, 0.1); border: 1px solid rgba(255,255,255,0.05); }
+        .glass-card { background: rgba(255,255,255,0.02); backdrop-filter: blur(12px); border-radius: 2rem; border: 1px solid rgba(255,255,255,0.08); }
+        .rw-logo-sm { width: 45px; height: 45px; border: 2px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #3b82f6; box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+        .btn-luxe { background: linear-gradient(to right, #3b82f6, #2563eb); transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-luxe:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(59,130,246,0.4); }
     </style>
 </head>
-<body class="p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-16">
-            <h1 class="text-6xl font-black italic tracking-tighter">UTE_WEB</h1>
-            <div class="flex gap-4">
-                <a href="/logout" class="text-slate-500 font-black uppercase text-xs self-center">Logout ({{ user.username }})</a>
+<body class="p-4 md:p-10">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
+            <div class="flex items-center gap-4">
+                <div class="rw-logo-sm">RW</div>
+                <h1 class="text-2xl font-black italic tracking-tighter">UTE_WEB</h1>
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-blue-500 uppercase">{{ user.username }}</p>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{{ user.role }} Account</p>
+                </div>
+                <a href="/logout" class="bg-red-600/10 text-red-500 px-4 py-2 rounded-full text-[10px] font-black hover:bg-red-600 hover:text-white transition">LOGOUT</a>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <div class="glass-card h-fit">
-                <p class="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-2">Available Balance</p>
-                <h2 class="text-5xl font-black text-emerald-400 mb-8">KES {{ "{:,.2f}".format(balance) }}</h2>
-                <form action="/withdraw" method="POST" class="space-y-4">
-                    <input type="number" name="amount" placeholder="WITHDRAWAL AMOUNT" class="supermax-input" required>
-                    <button type="submit" class="btn-supermax w-full">INITIATE BANK TRANSFER</button>
-                </form>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-card p-8 million-glow">
+                    <p class="text-[10px] font-black text-slate-500 uppercase mb-2">Available Assets</p>
+                    <h2 class="text-5xl font-black mb-8">KES 0.00</h2>
+                    <button class="w-full btn-luxe py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Withdraw Funds</button>
+                </div>
 
-            <div class="lg:col-span-2">
                 {% if user.role == 'employer' %}
-                    <div class="glass-card mb-8">
-                        <h2 class="text-3xl font-black mb-6 text-blue-400 italic">POST NEW OPPORTUNITY</h2>
-                        <form action="/employer_post_job" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" name="title" placeholder="JOB TITLE (e.g. Senior Accountant)" class="supermax-input" required>
-                            <input type="number" name="salary" placeholder="SALARY (KES)" class="supermax-input" required>
-                            <input type="text" name="location" placeholder="LOCATION (e.g. Nairobi, Remote)" class="supermax-input" required>
-                            <input type="text" name="skills" placeholder="SKILLS (e.g. Python, Excel, Sales)" class="supermax-input" required>
-                            <textarea name="description" placeholder="JOB DESCRIPTION" class="supermax-input md:col-span-2" rows="3" required></textarea>
-                            <button type="submit" class="btn-supermax md:col-span-2">PUBLISH TO NETWORK</button>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="mb-10">
-                        <form action="/" method="GET" class="flex gap-4">
-                            <input type="text" name="search" placeholder="SEARCH BY JOB, SKILL, OR LOCATION..." class="supermax-input mb-0 py-5 px-8 text-xl" value="{{ request.args.get('search', '') }}">
-                            <button type="submit" class="btn-supermax px-10"><i class="fa fa-search"></i></button>
-                        </form>
-                    </div>
-
-                    <h2 class="text-4xl font-black mb-8 italic uppercase tracking-tighter">Verified Opportunities</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {% for job in available_jobs %}
-                        <div class="glass-card border-l-8 border-blue-600 transition hover:scale-[1.02]">
-                            <div class="flex justify-between items-start mb-4">
-                                <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest">{{ job.employer }}</span>
-                                <span class="text-[10px] font-black text-slate-500 italic"><i class="fa fa-map-marker-alt mr-1"></i>{{ job.location }}</span>
-                            </div>
-                            <h3 class="text-2xl font-black mb-3">{{ job.title }}</h3>
-                            
-                            <div class="mb-6 flex flex-wrap gap-y-2">
-                                {% for skill in job.skills.split(',') %}
-                                    <span class="skill-tag">{{ skill.strip() }}</span>
-                                {% endfor %}
-                            </div>
-
-                            <div class="flex justify-between items-end mt-4">
-                                <div>
-                                    <p class="text-[10px] font-black text-slate-500 uppercase">Monthly Salary</p>
-                                    <p class="text-2xl font-black text-emerald-400">KES {{ "{:,.2f}".format(job.salary) }}</p>
-                                </div>
-                                <button class="btn-supermax py-3 px-8 text-xs">APPLY</button>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="glass-card col-span-2 text-center py-20">
-                            <i class="fa fa-search text-5xl text-slate-800 mb-4"></i>
-                            <p class="text-slate-600 font-black italic">NO MATCHING JOBS FOUND.</p>
-                        </div>
-                        {% endfor %}
-                    </div>
+                <div class="glass-card p-8 border-blue-500/20">
+                    <h3 class="text-xs font-black text-blue-500 uppercase mb-4">Post New Opportunity</h3>
+                    <form action="/post_job" method="POST" class="space-y-4">
+                        <input type="text" name="title" placeholder="Job Title" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required>
+                        <input type="text" name="location" placeholder="Location (e.g. Nairobi)" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required>
+                        <input type="number" name="salary" placeholder="Budget (KES)" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required>
+                        <button class="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase">Release Task</button>
+                    </form>
+                </div>
                 {% endif %}
             </div>
+
+            <div class="lg:col-span-2 glass-card p-8">
+                <h3 class="text-xs font-black text-slate-500 uppercase mb-8 tracking-widest">Verified Opportunities Market</h3>
+                
+                <div class="space-y-4">
+                    {% for job in jobs %}
+                    <div class="p-6 bg-white/5 border border-white/5 rounded-2xl flex justify-between items-center hover:border-blue-500/30 transition group">
+                        <div>
+                            <h4 class="font-black text-lg group-hover:text-blue-400 transition">{{ job.title }}</h4>
+                            <p class="text-xs text-slate-500">{{ job.location }} • Posted by {{ job.posted_by }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-blue-400 font-black text-xl">KES {{ "{:,.0f}".format(job.salary) }}</p>
+                            <button class="text-[9px] font-black uppercase text-white/40 group-hover:text-white transition">Apply Now →</button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-20">
+                        <p class="text-slate-600 italic">Scanning network for opportunities...</p>
+                        <p class="text-[10px] font-bold text-blue-500 uppercase mt-2">No active tasks found</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
         </div>
     </div>
 </body>
