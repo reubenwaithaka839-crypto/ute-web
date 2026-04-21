@@ -4,15 +4,15 @@ from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = 'RW_ULTIMATE_GOD_KEY_2026'
-DB = "rw_master_system_v18.db"
+DB = "rw_final_prestige.db"
 
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    # CORE INFRASTRUCTURE
-    cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, passcode TEXT, email TEXT, phone TEXT, role TEXT, is_verified INTEGER DEFAULT 0, photo_url TEXT)")
-    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, location TEXT, salary REAL, posted_by TEXT, skills_required TEXT, description TEXT)")
+    # PRESTIGE ARCHITECTURE
+    cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, passcode TEXT, email TEXT, phone TEXT, role TEXT, photo_url TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, location TEXT, salary REAL, posted_by TEXT, skills_required TEXT)")
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, applicant_username TEXT,
         full_name TEXT, id_number TEXT, phone TEXT, email TEXT, gender TEXT, 
@@ -31,19 +31,13 @@ def index():
     jobs = query_db("SELECT * FROM jobs ORDER BY id DESC")
     all_users = query_db("SELECT * FROM users") if user['role'] == 'admin' else []
     my_jobs = query_db("SELECT * FROM jobs WHERE posted_by = ?", (session['username'],))
-    
-    # Get applications for Employer's jobs
-    incoming_apps = []
-    if user['role'] == 'employer' or user['role'] == 'admin':
-        incoming_apps = query_db("SELECT a.*, j.title as job_title FROM applications a JOIN jobs j ON a.job_id = j.id WHERE j.posted_by = ?", (session['username'],))
-
+    incoming_apps = query_db("SELECT a.*, j.title as job_title FROM applications a JOIN jobs j ON a.job_id = j.id WHERE j.posted_by = ?", (session['username'],))
     return render_template('dashboard.html', user=user, jobs=jobs, all_users=all_users, my_jobs=my_jobs, incoming_apps=incoming_apps)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         u, p, e, ph, r = request.form.get('username'), request.form.get('passcode'), request.form.get('email'), request.form.get('phone'), request.form.get('role')
-        # REUBEN PROTECTION
         role = 'admin' if u.upper() == 'REUBEN' else r
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
         if not user:
@@ -55,8 +49,7 @@ def login():
 @app.route('/terminate_admin/<int:uid>')
 def terminate_admin(uid):
     target = query_db("SELECT * FROM users WHERE id = ?", (uid,), one=True)
-    if target and target['username'].upper() == 'REUBEN':
-        return "ERROR: GOD CANNOT BE TERMINATED", 403
+    if target and target['username'].upper() == 'REUBEN': return "GOD CANNOT BE TERMINATED", 403
     query_db("DELETE FROM users WHERE id = ?", (uid,), commit=True)
     return redirect(url_for('index'))
 
@@ -65,6 +58,11 @@ def post_job():
     data = (request.form.get('title'), request.form.get('location'), request.form.get('salary'), session['username'], request.form.get('skills'))
     query_db("INSERT INTO jobs (title, location, salary, posted_by, skills_required) VALUES (?, ?, ?, ?, ?)", data, commit=True)
     return redirect(url_for('index'))
+
+@app.route('/apply_form/<int:job_id>')
+def apply_form(job_id):
+    job = query_db("SELECT * FROM jobs WHERE id = ?", (job_id,), one=True)
+    return render_template('apply_form.html', job=job)
 
 @app.route('/submit_application', methods=['POST'])
 def submit_application():
