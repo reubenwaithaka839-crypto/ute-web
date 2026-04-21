@@ -2,53 +2,36 @@
 <html lang="en">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
         body { font-family: 'Inter', sans-serif; background: #020617; color: white; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2.5rem; padding: 2.5rem; }
-        .supermax-input { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 1rem; color: white; width: 100%; font-weight: 900; outline: none; margin-bottom: 1rem; }
-        .btn-supermax { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1.25rem 2rem; border-radius: 1.5rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; transition: 0.3s; }
-        .btn-supermax:hover { transform: translateY(-3px); filter: brightness(1.2); }
-        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 2rem; padding: 2rem; }
+        .btn-approve { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 2rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; }
     </style>
 </head>
 <body class="p-10">
     <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-12">
-            <h1 class="text-5xl font-black italic">ADMIN_PANEL</h1>
-            <a href="/" class="text-blue-500 font-black uppercase tracking-widest text-xs">Exit Console</a>
-        </div>
-
-        <div class="glass-card mb-12">
-            <h2 class="text-2xl font-black mb-6 text-blue-400">POST NEW JOB</h2>
-            <form action="/post_job" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" name="title" placeholder="JOB TITLE" class="supermax-input" required>
-                <input type="text" name="employer" placeholder="COMPANY NAME" class="supermax-input" required>
-                <input type="number" name="salary" placeholder="SALARY (KES)" class="supermax-input" required>
-                <input type="text" name="description" placeholder="JOB DESCRIPTION" class="supermax-input" required>
-                <button type="submit" class="btn-supermax col-span-full">PUBLISH LISTING</button>
-            </form>
-        </div>
-
-        <div class="glass-card">
-            <h2 class="text-2xl font-black mb-8 text-emerald-400">PENDING WITHDRAWALS</h2>
+        <h1 class="text-5xl font-black italic mb-12">SETTLEMENT_CONTROL</h1>
+        
+        <div class="space-y-6">
             {% for w in withdrawals %}
-            <div class="flex justify-between items-center border-b border-white/10 pb-6 mb-6 last:border-0">
+            <div class="glass-card flex flex-col md:flex-row justify-between items-center gap-8 border-l-8 border-emerald-500">
                 <div>
-                    <p class="text-xs font-black text-slate-500 uppercase">User</p>
-                    <p class="text-xl font-black">{{ w.sender }}</p>
+                    <p class="text-[10px] font-black text-slate-500 uppercase">Beneficiary</p>
+                    <p class="text-2xl font-black">{{ w.sender }}</p>
+                    <p class="text-xs text-blue-400 font-bold uppercase">{{ w.bank_name }} | {{ w.bank_account }}</p>
                 </div>
-                <div>
-                    <p class="text-xs font-black text-slate-500 uppercase">Amount</p>
-                    <p class="text-xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.amount) }}</p>
+                <div class="text-center">
+                    <p class="text-[10px] font-black text-slate-500 uppercase">Net Transfer</p>
+                    <p class="text-3xl font-black text-emerald-400">KES {{ "{:,.2f}".format(w.net_amount) }}</p>
+                    <p class="text-[10px] text-red-500 font-bold">UTE FEE: KES {{ w.deduction }}</p>
                 </div>
-                <form action="/approve_withdrawal/{{ w.id }}" method="POST">
-                    <button class="btn-supermax btn-approve">APPROVE</button>
+                <form action="/approve_transfer/{{ w.id }}" method="POST">
+                    <button class="btn-approve">COMPLETE TRANSFER</button>
                 </form>
             </div>
             {% else %}
-            <p class="text-slate-500 font-black italic">Queue is currently empty.</p>
+            <p class="text-slate-600 font-black italic">No pending settlements.</p>
             {% endfor %}
         </div>
     </div>
