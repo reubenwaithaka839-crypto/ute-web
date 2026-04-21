@@ -12,7 +12,6 @@ def get_ute_math(amount):
         
         # --- UTE DEDUCTION LOGIC ---
         # Current Rate: 10% (0.10)
-        # To change the platform fee, simply update this decimal.
         rate = 0.10 
         
         # Calculate the "Cut" the platform keeps
@@ -37,5 +36,3 @@ def get_ute_math(amount):
             'net': 0.0,
             'percent_rate': 0
         }
-
-# Logic for future features (e.g., verifying skills or locations) can be added here.
