@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-[#020617] text-white flex items-center justify-center min-h-screen p-6">
+    <div class="max-w-md bg-white/5 p-10 rounded-[3rem] border border-blue-500/30 text-center shadow-2xl">
+        <h1 class="text-2xl font-black mb-4 italic text-blue-500">Security Verification</h1>
+        <p class="text-slate-400 text-xs mb-8 uppercase tracking-widest leading-loose">To prevent system pollution, UTE requires a 100 KES listing fee. Your task goes live instantly after verification.</p>
+        
+        <div class="bg-blue-600 p-8 rounded-3xl mb-8 shadow-inner">
+            <p class="text-[10px] uppercase font-black text-blue-200 mb-2">Payment Target (Paybill/Till)</p>
+            <p class="text-3xl font-black tracking-tighter">012 345 678</p>
+            <p class="text-[10px] font-bold mt-2">REUBEN MASTER ACCT</p>
+        </div>
+
+        <form action="/verify_payment/{{ job_id }}" method="POST" class="space-y-4">
+            <input type="text" name="ref" placeholder="Enter M-Pesa Ref Number" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-center font-mono" required>
+            <button class="w-full bg-white text-black py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-blue-500 hover:text-white transition">Unlock My Listing</button>
+        </form>
+    </div>
+</body>
+</html>
