@@ -2,46 +2,19 @@
 <html>
 <head><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-slate-950 text-white p-6">
-    <form action="/submit_application" method="POST" class="max-w-2xl mx-auto bg-slate-900 p-12 rounded-[3.5rem] border border-green-500/20 shadow-2xl mt-10">
-        <h2 class="text-3xl font-black mb-8 text-green-500 italic">EMPLOYEE DOSSIER SUBMISSION</h2>
+    <form action="/submit_application" method="POST" class="max-w-2xl mx-auto bg-slate-900 p-12 rounded-[3.5rem] mt-10">
+        <h2 class="text-2xl font-black mb-8 text-green-500">SUBMIT DOSSIER</h2>
         <input type="hidden" name="job_id" value="{{ job.id }}">
-        
-        <div class="grid grid-cols-2 gap-6">
-            <div class="col-span-2">
-                <label class="text-[10px] font-black text-slate-500 uppercase ml-2">Full Legal Name</label>
-                <input type="text" name="full_name" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5" required>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase ml-2">National ID</label>
-                <input type="text" name="id_number" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5" required>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase ml-2">Photo URL (Link)</label>
-                <input type="text" name="photo_url" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5" required>
-            </div>
-            <div>
-                <input type="text" name="phone" placeholder="Phone" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5">
-            </div>
-            <div>
-                <input type="email" name="email" placeholder="Email" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5">
-            </div>
-            <div>
-                <select name="gender" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5">
-                    <option>Male</option>
-                    <option>Female</option>
-                </select>
-            </div>
-            <div>
-                <input type="number" name="age" placeholder="Age" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5">
-            </div>
-            <div class="col-span-2">
-                <input type="text" name="location" placeholder="Country / City" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5">
-            </div>
-            <div class="col-span-2">
-                <textarea name="skills" placeholder="Detailed Professional Skills" class="w-full bg-slate-800 p-4 rounded-2xl border border-white/5" rows="4"></textarea>
-            </div>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+            <input type="text" name="full_name" placeholder="Legal Name" class="col-span-2 bg-slate-800 p-4 rounded-xl" required>
+            <input type="text" name="id_number" placeholder="National ID Number" class="bg-slate-800 p-4 rounded-xl" required>
+            <input type="text" name="photo_url" placeholder="Photo URL" class="bg-slate-800 p-4 rounded-xl" required>
+            <input type="text" name="phone" placeholder="Contact Phone" class="bg-slate-800 p-4 rounded-xl">
+            <input type="email" name="email" placeholder="Contact Email" class="bg-slate-800 p-4 rounded-xl">
+            <input type="text" name="location" placeholder="City/Country" class="col-span-2 bg-slate-800 p-4 rounded-xl">
+            <textarea name="skills" placeholder="Professional Skills" class="col-span-2 bg-slate-800 p-4 rounded-xl" rows="4"></textarea>
         </div>
-        <button class="w-full bg-green-600 py-5 rounded-2xl font-black uppercase text-xs tracking-widest mt-8">Submit Dossier to Employer</button>
+        <button class="w-full bg-green-600 py-5 rounded-2xl font-black uppercase text-xs mt-6 shadow-xl">Send Information</button>
     </form>
 </body>
 </html>
