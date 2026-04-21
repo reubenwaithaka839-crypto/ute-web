@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-[#020617] text-white p-10">
+    <h1 class="text-2xl font-black mb-10">Applicants for: <span class="text-blue-500">{{ job.title }}</span></h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for app in applicants %}
+        <div class="bg-white/5 border border-white/10 rounded-3xl p-6 text-center">
+            <img src="{{ app.photo_url }}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-blue-500 object-cover shadow-lg shadow-blue-500/20">
+            <h2 class="text-xl font-black">{{ app.full_name }}</h2>
+            <p class="text-[10px] text-blue-400 font-bold mb-4">{{ app.location }}</p>
+            <div class="text-left text-[11px] space-y-1 text-slate-400 border-t border-white/5 pt-4">
+                <p><b>ID:</b> {{ app.id_number }}</p>
+                <p><b>PH:</b> {{ app.phone }}</p>
+                <p><b>Skills:</b> {{ app.skills }}</p>
+            </div>
+            <a href="tel:{{ app.phone }}" class="block mt-6 bg-white text-black py-3 rounded-xl font-black text-[10px] uppercase">Hire Immediately</a>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
