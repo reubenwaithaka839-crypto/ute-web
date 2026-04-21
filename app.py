@@ -1,16 +1,17 @@
 import os
 import sqlite3
+import ute
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = 'RW_ULTIMATE_GOD_KEY_2026'
-DB = "rw_final_prestige.db"
+DB = ute.DB
 
 def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    # PRESTIGE ARCHITECTURE
+    # DATABASE ARCHITECTURE
     cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, passcode TEXT, email TEXT, phone TEXT, role TEXT, photo_url TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, location TEXT, salary REAL, posted_by TEXT, skills_required TEXT)")
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
@@ -28,6 +29,10 @@ def query_db(query, args=(), one=False, commit=False):
 def index():
     if 'username' not in session: return redirect(url_for('login'))
     user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
+    if not user:
+        session.clear()
+        return redirect(url_for('login'))
+        
     jobs = query_db("SELECT * FROM jobs ORDER BY id DESC")
     all_users = query_db("SELECT * FROM users") if user['role'] == 'admin' else []
     my_jobs = query_db("SELECT * FROM jobs WHERE posted_by = ?", (session['username'],))
@@ -37,17 +42,28 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        u, p, e, ph, r = request.form.get('username'), request.form.get('passcode'), request.form.get('email'), request.form.get('phone'), request.form.get('role')
+        u = request.form.get('username')
+        p = request.form.get('passcode')
+        e = request.form.get('email')
+        ph = request.form.get('phone')
+        r = request.form.get('role', 'employee')
+        
+        if not u or not p:
+            return redirect(url_for('login'))
+
         role = 'admin' if u.upper() == 'REUBEN' else r
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
+        
         if not user:
             query_db("INSERT INTO users (username, passcode, email, phone, role) VALUES (?, ?, ?, ?, ?)", (u, p, e, ph, role), commit=True)
+        
         session['username'] = u
         return redirect(url_for('index'))
     return render_template('login.html')
 
 @app.route('/terminate_admin/<int:uid>')
 def terminate_admin(uid):
+    if 'username' not in session: return redirect(url_for('login'))
     target = query_db("SELECT * FROM users WHERE id = ?", (uid,), one=True)
     if target and target['username'].upper() == 'REUBEN': return "GOD CANNOT BE TERMINATED", 403
     query_db("DELETE FROM users WHERE id = ?", (uid,), commit=True)
