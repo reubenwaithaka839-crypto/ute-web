@@ -1,47 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
-        .rw-logo {
-            width: 80px; height: 80px; border: 4px solid #3b82f6;
-            border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; font-size: 2rem; font-weight: 900;
-            margin: 0 auto 1.5rem auto; color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-        }
-        .supermax-input { 
-            background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); 
-            border-radius: 1rem; padding: 1rem; color: white; width: 100%; margin-bottom: 1rem; 
-        }
-        .opt-employee { background: #059669; color: white; font-weight: 900; }
-        .opt-employer { background: #2563eb; color: white; font-weight: 900; }
-        .opt-admin    { background: #dc2626; color: white; font-weight: 900; }
+        .rw-logo { width: 80px; height: 80px; border: 4px solid #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: #3b82f6; margin: 0 auto 1.5rem; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+        .input-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; padding: 1rem; width: 100%; margin-bottom: 1rem; color: white; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 w-full max-w-lg text-center">
+    <div class="bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] border border-white/10 w-full max-w-md text-center">
         <div class="rw-logo">RW</div>
-        
-        <h1 class="text-4xl font-black italic tracking-tighter mb-8">UTE_WEB</h1>
-
-        <form action="/register" method="POST" class="text-left">
-            <input type="text" name="username" placeholder="USERNAME" class="supermax-input" required>
-            <input type="email" name="email" placeholder="EMAIL" class="supermax-input" required>
-            <input type="password" name="password" placeholder="PASSWORD" class="supermax-input" required>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <input type="text" name="bank_name" placeholder="BANK" class="supermax-input" required>
-                <input type="text" name="bank_account" placeholder="ACCOUNT" class="supermax-input" required>
+        <h2 class="text-3xl font-black italic mb-6 tracking-tighter text-blue-500">UTE_WEB</h2>
+        <form action="/register" method="POST">
+            <input type="text" name="username" placeholder="USERNAME" class="input-box" required>
+            <input type="email" name="email" placeholder="EMAIL" class="input-box" required>
+            <input type="password" name="password" placeholder="PASSWORD" class="input-box" required>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" name="bank_name" placeholder="BANK" class="input-box" required>
+                <input type="text" name="bank_account" placeholder="ACCOUNT" class="input-box" required>
             </div>
-            <input type="text" name="phone" placeholder="PHONE/MPESA" class="supermax-input" required>
-            
-            <select name="role" class="supermax-input font-black" style="appearance: none;">
-                <option value="employee" class="opt-employee">🟢 BECOME EMPLOYEE</option>
-                <option value="employer" class="opt-employer">🔵 BECOME EMPLOYER</option>
-                <option value="admin" class="opt-admin">🔴 BECOME ADMIN</option>
+            <select name="role" class="input-box font-bold bg-slate-900">
+                <option value="employee">EMPLOYEE</option>
+                <option value="employer">EMPLOYER</option>
+                <option value="admin">ADMIN (MASTERS ONLY)</option>
             </select>
-
-            <button type="submit" class="w-full bg-white text-black font-black py-4 rounded-xl mt-4 hover:scale-105 transition">INITIALIZE ACCOUNT</button>
+            <button type="submit" class="w-full bg-blue-600 font-black py-4 rounded-xl mt-2 hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">INITIALIZE ACCOUNT</button>
         </form>
     </div>
 </body>
