@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RW PRESTIGE | SECURE CHECKOUT</title>
+    <style>
+        body { background: #0a0a0a; color: #00ff88; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .box { border: 2px solid #00ff88; padding: 40px; border-radius: 15px; background: rgba(0,255,136,0.05); width: 400px; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 10px 0; background: #111; border: 1px solid #333; color: white; border-radius: 5px; }
+        .btn { width: 100%; background: #00ff88; color: black; padding: 15px; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .loader { display: none; margin-top: 10px; color: yellow; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>M-PESA CHECKOUT</h2>
+        <p style="margin: 20px 0;">Job: {{ job.title }}<br>Application Fee: <strong>KSh {{ amount }}</strong></p>
+        
+        <form id="payForm">
+            <input type="hidden" name="job_id" value="{{ job.id }}">
+            <input type="tel" name="phone" placeholder="M-Pesa Phone (07XXXXXXXX)" required>
+            <input type="email" name="email" value="{{ user.email }}" required>
+            <button type="submit" class="btn">🚀 INITIATE PAYMENT</button>
+        </form>
+        <div id="msg" class="loader">Processing... check your phone!</div>
+    </div>
+
+    <script>
+        document.getElementById('payForm').onsubmit = async (e) => {
+            e.preventDefault();
+            document.getElementById('msg').style.display = 'block';
+            const res = await fetch('/process_payment', { method: 'POST', body: new FormData(e.target) });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('msg').innerHTML = "✅ STK PUSH SENT! Enter your PIN on your phone.";
+            } else {
+                document.getElementById('msg').innerHTML = "❌ Error: " + data.error;
+            }
+        }
+    </script>
+</body>
+</html>
