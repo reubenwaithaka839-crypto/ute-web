@@ -12,22 +12,19 @@ def query_db(query, args=(), one=False, commit=False):
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     
-    # MASTER ARCHITECTURE BOOTSTRAP
+    # SYSTEM TABLES INITIALIZATION
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        username TEXT UNIQUE, 
-        passcode TEXT, 
-        email TEXT, 
-        role TEXT
+        username TEXT UNIQUE, passcode TEXT, email TEXT, role TEXT,
+        bank_name TEXT, acc_number TEXT, holder_name TEXT
     )""")
     cur.execute("CREATE TABLE IF NOT EXISTS blacklist (username TEXT UNIQUE, email TEXT UNIQUE)")
-    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, posted_by TEXT)")
-    cur.execute("""CREATE TABLE IF NOT EXISTS treasury (
-        account_name TEXT, 
-        account_number TEXT, 
-        bank_name TEXT, 
-        branch_code TEXT
+    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, salary REAL, employer TEXT)")
+    cur.execute("""CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, applicant TEXT,
+        phone TEXT, email TEXT, age INTEGER, skills TEXT, gender TEXT, photo_url TEXT, status TEXT DEFAULT 'pending'
     )""")
+    cur.execute("CREATE TABLE IF NOT EXISTS treasury (account_name TEXT, account_number TEXT, bank_name TEXT, branch_code TEXT)")
     
     cur.execute(query, args)
     if commit: conn.commit()
@@ -35,102 +32,65 @@ def query_db(query, args=(), one=False, commit=False):
     conn.close()
     return (rv[0] if rv else None) if one else rv
 
-@app.route('/portal')
+@app.route('/')
 def portal():
     return render_template('portal.html')
-
-@app.route('/')
-def index():
-    if 'username' not in session: return redirect(url_for('portal'))
-    if not session.get('terms_accepted'): return redirect(url_for('terms'))
-    
-    user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
-    if not user: 
-        session.clear()
-        return redirect(url_for('portal'))
-        
-    if user['role'] == 'admin': return redirect(url_for('admin_panel'))
-    return render_template('dashboard.html', user=user)
-
-@app.route('/terms', methods=['GET', 'POST'])
-def terms():
-    if request.method == 'POST':
-        session['terms_accepted'] = True
-        return redirect(url_for('index'))
-    return render_template('terms.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        u = request.form.get('username')
-        p = request.form.get('passcode')
-        e = request.form.get('email')
-        r = request.form.get('role', 'employee')
+        u, p, e, r = request.form.get('username'), request.form.get('passcode'), request.form.get('email'), request.form.get('role')
+        # Bank details collected at registration for Employees
+        b_name, b_acc, b_holder = request.form.get('bank_name'), request.form.get('acc_num'), request.form.get('holder')
         
-        is_banned = query_db("SELECT * FROM blacklist WHERE username = ? OR email = ?", (u, e), one=True)
-        if is_banned: return "IDENTITY DISMANTLED: Access Denied Forever.", 403
+        is_banned = query_db("SELECT * FROM blacklist WHERE username = ?", (u,), one=True)
+        if is_banned: return "ACCESS DENIED: IDENTITY DISMANTLED", 403
         
-        # MASTER OVERRIDE FOR REUBEN
         role = 'admin' if u.upper() == 'REUBEN' else r
         
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
         if not user:
-            query_db("INSERT INTO users (username, passcode, email, role) VALUES (?, ?, ?, ?)", (u, p, e, role), commit=True)
+            query_db("""INSERT INTO users (username, passcode, email, role, bank_name, acc_number, holder_name) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)""", (u, p, e, role, b_name, b_acc, b_holder), commit=True)
         
         session['username'] = u
-        return redirect(url_for('index'))
+        session['role'] = role
+        return redirect(url_for('dashboard'))
     return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'username' not in session: return redirect(url_for('portal'))
+    user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
+    if user['role'] == 'admin': return redirect(url_for('admin_panel'))
+    
+    jobs = query_db("SELECT * FROM jobs")
+    return render_template('dashboard.html', user=user, jobs=jobs)
+
+@app.route('/apply/<int:job_id>', methods=['GET', 'POST'])
+def apply(job_id):
+    if 'username' not in session: return redirect(url_for('portal'))
+    job = query_db("SELECT * FROM jobs WHERE id = ?", (job_id,), one=True)
+    
+    if request.method == 'POST':
+        data = (
+            job_id, session['username'], request.form.get('phone'), request.form.get('email'),
+            request.form.get('age'), request.form.get('skills'), request.form.get('gender'),
+            request.form.get('photo')
+        )
+        query_db("""INSERT INTO applications (job_id, applicant, phone, email, age, skills, gender, photo_url) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", data, commit=True)
+        return redirect(url_for('dashboard'))
+        
+    return render_template('apply_job.html', job=job)
 
 @app.route('/admin_panel')
 def admin_panel():
-    if 'username' not in session or session['username'].upper() != 'REUBEN':
-        return "UNAUTHORIZED: Master Admin Only", 403
-        
-    all_users = query_db("SELECT * FROM users")
-    job_count = query_db("SELECT COUNT(*) as count FROM jobs", one=True)
+    if session.get('username', '').upper() != 'REUBEN': return "UNAUTHORIZED", 403
+    users = query_db("SELECT * FROM users")
+    jobs = query_db("COUNT(*) as count FROM jobs", one=True)
     treasury = query_db("SELECT * FROM treasury", one=True)
-    
-    return render_template('admin_pannel.html', 
-                           all_users=all_users, 
-                           job_count=job_count['count'] if job_count else 0, 
-                           treasury=treasury)
-
-@app.route('/update_treasury', methods=['POST'])
-def update_treasury():
-    if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
-    name = request.form.get('acc_name')
-    num = request.form.get('acc_num')
-    bank = request.form.get('bank')
-    branch = request.form.get('branch')
-    
-    query_db("DELETE FROM treasury", commit=True)
-    query_db("INSERT INTO treasury (account_name, account_number, bank_name, branch_code) VALUES (?, ?, ?, ?)", 
-             (name, num, bank, branch), commit=True)
-    return redirect(url_for('admin_panel'))
-
-@app.route('/register_admin', methods=['POST'])
-def register_admin():
-    if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
-    u = request.form.get('username')
-    p = request.form.get('passcode')
-    e = request.form.get('email')
-    
-    try:
-        query_db("INSERT INTO users (username, passcode, email, role) VALUES (?, ?, ?, 'admin')", (u, p, e), commit=True)
-    except:
-        pass # User likely already exists
-    return redirect(url_for('admin_panel'))
-
-@app.route('/dismantle_admin/<username>')
-def dismantle_admin(username):
-    if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
-    if username.upper() == 'REUBEN': return "CANNOT DISMANTLE MASTER", 403
-    
-    target = query_db("SELECT * FROM users WHERE username = ?", (username,), one=True)
-    if target:
-        query_db("INSERT INTO blacklist (username, email) VALUES (?, ?)", (target['username'], target['email']), commit=True)
-        query_db("DELETE FROM users WHERE username = ?", (username,), commit=True)
-    return redirect(url_for('admin_panel'))
+    return render_template('admin_pannel.html', all_users=users, job_count=jobs['count'], treasury=treasury)
 
 @app.route('/logout')
 def logout():
@@ -138,4 +98,4 @@ def logout():
     return redirect(url_for('portal'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=10000)
