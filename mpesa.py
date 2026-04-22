@@ -1,6 +1,7 @@
 import os
 from intasend import APIService
-import sqlite3, ute
+import sqlite3
+import ute
 from datetime import datetime
 
 # These pull from your Render "Environment Variables"
@@ -31,11 +32,11 @@ def trigger_settlement(contract_id):
     
     if contract:
         employer, employee, months, salary = contract
-        math = ute.get_ute_math(salary, months)
+        math = ute.get_ute_math(salary)
         
         # Split the money into virtual wallets
-        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['cashback'], employer))
-        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['net'], employee))
+        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['std_net'], employer))
+        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['placement_net'], employee))
         c.execute("UPDATE contracts SET total_months_paid = total_months_paid + 1 WHERE id = ?", (contract_id,))
         conn.commit()
     conn.close()
