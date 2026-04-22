@@ -1,19 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center">
-    <form action="/login" method="POST" class="bg-slate-900 p-12 rounded-[3rem] w-full max-w-md border border-white/5">
-        <div class="text-center mb-10"><div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-black italic mx-auto mb-4">RW</div><h2 class="text-xl font-black">CHAMBER REGISTRATION</h2></div>
-        <div class="space-y-4">
-            <input type="text" name="username" placeholder="USERNAME" required class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black uppercase">
-            <input type="email" name="email" placeholder="EMAIL" required class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
-            <input type="password" name="passcode" placeholder="PASSCODE" required class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
-            <select name="role" class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 text-xs font-black uppercase">
-                <option value="employee">Employee Chamber</option>
-                <option value="employer">Employer Chamber</option>
-            </select>
-            <button type="submit" class="w-full bg-blue-600 py-6 rounded-2xl font-black uppercase text-xs">Initialize Protocol</button>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>RW Prestige | Register</title>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-xl bg-slate-900 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl">
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-black italic mx-auto mb-4 shadow-lg shadow-blue-500/20">RW</div>
+            <h2 class="text-2xl font-black italic tracking-tighter">NETWORK ENROLLMENT</h2>
         </div>
-    </form>
+
+        <form action="/login" method="POST" class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="username" placeholder="USERNAME" required class="bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black uppercase">
+                <input type="email" name="email" placeholder="EMAIL" required class="bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
+            </div>
+            <input type="password" name="passcode" placeholder="SECURE PASSCODE" required class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
+            
+            <select name="role" id="roleSelect" class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 text-xs font-black uppercase" onchange="toggleBank()">
+                <option value="employee">Employee Chamber (Job Seeker)</option>
+                <option value="employer">Employer Chamber (Company)</option>
+            </select>
+
+            <div id="bankSection" class="p-6 bg-blue-600/5 border border-blue-500/20 rounded-[2rem] space-y-4">
+                <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Settlement Bank Connection</p>
+                <input type="text" name="bank_name" placeholder="BANK NAME" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black uppercase">
+                <input type="text" name="acc_num" placeholder="ACCOUNT NUMBER" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black">
+                <input type="text" name="holder" placeholder="ACCOUNT HOLDER NAME" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black uppercase">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 py-6 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all">
+                Initialize Prestige Protocol
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function toggleBank() {
+            const role = document.getElementById('roleSelect').value;
+            document.getElementById('bankSection').style.display = (role === 'employee') ? 'block' : 'none';
+        }
+    </script>
 </body>
 </html>
