@@ -11,8 +11,11 @@ def query_db(query, args=(), one=False, commit=False):
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
+    # ARCHITECTURE INITIALIZATION
     cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, passcode TEXT, email TEXT, role TEXT)")
     cur.execute("CREATE TABLE IF NOT EXISTS blacklist (username TEXT UNIQUE, email TEXT UNIQUE)")
+    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, posted_by TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS treasury (account_name TEXT, account_number TEXT, bank_name TEXT, branch_code TEXT)")
     cur.execute(query, args)
     if commit: conn.commit()
     rv = cur.fetchall()
@@ -27,12 +30,8 @@ def portal():
 def index():
     if 'username' not in session: return redirect(url_for('portal'))
     if not session.get('terms_accepted'): return redirect(url_for('terms'))
-    
     user = query_db("SELECT * FROM users WHERE username = ?", (session['username'],), one=True)
-    if not user:
-        session.clear()
-        return redirect(url_for('login'))
-        
+    if not user: return redirect(url_for('logout'))
     if user['role'] == 'admin': return redirect(url_for('admin_panel'))
     return render_template('dashboard.html', user=user)
 
@@ -47,15 +46,12 @@ def terms():
 def login():
     if request.method == 'POST':
         u, p, e, r = request.form.get('username'), request.form.get('passcode'), request.form.get('email'), request.form.get('role')
-        
         is_banned = query_db("SELECT * FROM blacklist WHERE username = ? OR email = ?", (u, e), one=True)
-        if is_banned: return "ACCESS DENIED: Identity Dismantled.", 403
-        
+        if is_banned: return "IDENTITY DISMANTLED: Access Denied Forever.", 403
         role = 'admin' if u.upper() == 'REUBEN' else r
         user = query_db("SELECT * FROM users WHERE username = ?", (u,), one=True)
         if not user:
             query_db("INSERT INTO users (username, passcode, email, role) VALUES (?, ?, ?, ?)", (u, p, e, role), commit=True)
-        
         session['username'] = u
         return redirect(url_for('index'))
     return render_template('login.html')
@@ -64,7 +60,24 @@ def login():
 def admin_panel():
     if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
     all_users = query_db("SELECT * FROM users")
-    return render_template('admin_pannel.html', all_users=all_users)
+    job_count = query_db("SELECT COUNT(*) as count FROM jobs", one=True)
+    treasury = query_db("SELECT * FROM treasury", one=True)
+    return render_template('admin_pannel.html', all_users=all_users, job_count=job_count['count'], treasury=treasury)
+
+@app.route('/update_treasury', methods=['POST'])
+def update_treasury():
+    if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
+    data = (request.form.get('acc_name'), request.form.get('acc_num'), request.form.get('bank'), request.form.get('branch'))
+    query_db("DELETE FROM treasury", commit=True)
+    query_db("INSERT INTO treasury VALUES (?, ?, ?, ?)", data, commit=True)
+    return redirect(url_for('admin_panel'))
+
+@app.route('/register_admin', methods=['POST'])
+def register_admin():
+    if 'username' not in session or session['username'].upper() != 'REUBEN': return "UNAUTHORIZED", 403
+    u, p, e = request.form.get('username'), request.form.get('passcode'), request.form.get('email')
+    query_db("INSERT INTO users (username, passcode, email, role) VALUES (?, ?, ?, 'admin')", (u, p, e), commit=True)
+    return redirect(url_for('admin_panel'))
 
 @app.route('/dismantle_admin/<username>')
 def dismantle_admin(username):
