@@ -1,41 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
-<head><script src="https://cdn.tailwindcss.com"></script><title>Admin | RW</title></head>
-<body class="bg-slate-950 text-white min-h-screen p-8 font-sans">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 text-center">
-            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Live Network Jobs</p>
-            <p class="text-6xl font-black italic text-blue-500">{{ job_count }}</p>
-        </div>
-        <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
-            <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Total Citizens</p>
-            <p class="text-6xl font-black italic text-white">{{ all_users|length }}</p>
-        </div>
-    </div>
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div class="lg:col-span-5 space-y-10">
-            <div class="bg-slate-900 p-10 rounded-[3rem] border border-yellow-500/20 shadow-2xl">
-                <h3 class="text-xs font-black uppercase text-yellow-500 mb-6">Treasury Settlement</h3>
-                <form action="/update_treasury" method="POST" class="space-y-4">
-                    <input type="text" name="acc_name" placeholder="ACC NAME" value="{{ treasury.account_name if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black uppercase">
-                    <input type="text" name="acc_num" placeholder="ACC NUMBER" value="{{ treasury.account_number if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
-                    <button class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase text-[10px]">Lock Treasury</button>
-                </form>
+<html>
+<head>
+    <title>RW Prestige Admin Dashboard</title>
+    <style>
+        * { font-family: 'Courier New', monospace; margin: 0; padding: 0; }
+        body { background: linear-gradient(45deg, #1a1a2e, #16213e); color: #00ff88; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+        .stat-card { 
+            background: rgba(0,255,136,0.1); 
+            border: 2px solid #00ff88; 
+            border-radius: 10px; 
+            padding: 25px; 
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { background: rgba(0,255,136,0.2); transform: scale(1.05); }
+        .stat-number { font-size: 3em; font-weight: bold; color: #00ff88; }
+        .stat-label { font-size: 1.1em; opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(255,255,255,0.05); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,255,136,0.3); }
+        th { background: rgba(0,255,136,0.2); }
+        .btn { 
+            background: #00ff88; color: #000; padding: 10px 20px; 
+            border: none; border-radius: 5px; cursor: pointer; 
+            text-decoration: none; display: inline-block; margin: 5px;
+        }
+        .btn:hover { background: #00cc6a; }
+        .secure-badge { position: fixed; top: 10px; right: 10px; background: #ff0040; color: white; padding: 5px 10px; font-size: 0.8em; border-radius: 20px; }
+    </style>
+</head>
+<body>
+    <div class="secure-badge">🔒 RW_PRESTIGE_v3 SECURE</div>
+    <div class="container">
+        <h1>🚀 RW PRESTIGE ADMIN PANEL</h1>
+        <p>Welcome, <strong>REUBEN</strong> | <a href="/logout" class="btn" style="background:#ff4444;color:white;">Logout</a></p>
+        
+        <!-- KEY STATS -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ live_jobs }}</div>
+                <div class="stat-label">Live Jobs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_applications }}</div>
+                <div class="stat-label">Applications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_employers }}</div>
+                <div class="stat-label">Employers</div>
             </div>
         </div>
-        <div class="lg:col-span-7 bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-slate-800/50 text-[10px] font-black uppercase"><tr><th class="p-8">Identity</th><th class="p-8 text-right">Protocol</th></tr></thead>
-                <tbody>
-                    {% for u in all_users %}
-                    <tr class="border-t border-white/5 hover:bg-white/5">
-                        <td class="p-8 italic font-bold uppercase text-xs">{{ u.username }}</td>
-                        <td class="p-8 text-right">{% if u.username.upper() != 'REUBEN' %}<span class="text-red-500 text-[10px] font-black">RW-LINK</span>{% else %}<span class="text-yellow-500 text-[10px] font-black uppercase">Immortal Master</span>{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</body>
-</html>
+        
+        <!-- QUICK ACTIONS
