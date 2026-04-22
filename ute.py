@@ -22,4 +22,4 @@ def get_ute_math(amount):
             'placement_fee': round(placement_deduction, 2)
         }
     except:
-        return {'gross': 0.0, 'std_fee': 0.0, 'placement_fee': 0.0}
+        return {'gross': 0.0, 'std_net': 0.0, 'placement_net': 0.0, 'std_fee': 0.0, 'placement_fee': 0.0}
