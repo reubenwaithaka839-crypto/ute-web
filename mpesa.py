@@ -1,42 +1,56 @@
 import os
-from intasend import APIService
 import sqlite3
 import ute
-from datetime import datetime
+from intasend import APIService, Environment
+import uuid
 
-# These pull from your Render "Environment Variables"
-TOKEN = os.environ.get("INTASEND_TOKEN")
-PUB_KEY = os.environ.get("INTASEND_PUBLISHABLE_KEY")
+# Load from Render/Environment
+INTASEND_TOKEN = os.environ.get("INTASEND_LIVE_TOKEN")
+INTASEND_PUBLIC_KEY = os.environ.get("INTASEND_LIVE_PUBLIC_KEY")
+DB = ute.DB
 
-def initiate_stk_push(phone, amount, email, contract_id):
-    if not TOKEN or not PUB_KEY:
-        print("Missing API Keys in Render Settings")
-        return None
-    
-    service = APIService(token=TOKEN, publishable_key=PUB_KEY, test_mode=True)
-    try:
-        return service.collect.mpesa_stk_push(
-            phone_number=phone,
-            email=email,
-            amount=amount,
-            narrative=f"UTE Payment {contract_id}"
-        )
-    except Exception as e:
-        print(f"M-Pesa Error: {e}")
-        return None
+class RWPrestigePayments:
+    def __init__(self):
+        if not all([INTASEND_TOKEN, INTASEND_PUBLIC_KEY]):
+            # If keys aren't set, we fall back to a dummy mode so the app doesn't crash
+            self.live = False
+        else:
+            self.service = APIService(
+                token=INTASEND_TOKEN,
+                publishable_key=INTASEND_PUBLIC_KEY,
+                environment=Environment.LIVE  # Change to Environment.SANDBOX for testing
+            )
+            self.live = True
 
-def trigger_settlement(contract_id):
-    conn = sqlite3.connect(ute.DB)
-    c = conn.cursor()
-    contract = c.execute("SELECT employer, employee, total_months_paid, salary FROM contracts WHERE id=?", (contract_id,)).fetchone()
-    
-    if contract:
-        employer, employee, months, salary = contract
-        math = ute.get_ute_math(salary)
+    def initiate_stk(self, phone, amount, email, job_id):
+        """Triggers the Real M-Pesa PIN prompt"""
+        if not self.live:
+            return {'success': False, 'error': 'System in Maintenance: API Keys Missing'}
         
-        # Split the money into virtual wallets
-        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['std_net'], employer))
-        c.execute("UPDATE wallet SET balance = balance + ? WHERE username = ?", (math['placement_net'], employee))
-        c.execute("UPDATE contracts SET total_months_paid = total_months_paid + 1 WHERE id = ?", (contract_id,))
+        try:
+            # Clean phone number for Kenya (254...)
+            phone = f"254{phone.lstrip('0')}" if phone.startswith('0') else phone
+            
+            checkout = self.service.collect.mpesa_stk_push(
+                phone_number=phone,
+                email=email,
+                amount=float(amount),
+                narrative=f"RW Prestige Application Fee - Job #{job_id}",
+                reference=f"RW_{uuid.uuid4().hex[:6]}",
+                account_reference="RW_PRESTIGE"
+            )
+            
+            self.log_txn(phone, amount, 'STK_PUSH', checkout['id'], 'pending')
+            return {'success': True, 'checkout_id': checkout['id'], 'phone': phone}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def log_txn(self, phone, amount, type_txn, ref, status):
+        conn = sqlite3.connect(DB)
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT, amount REAL, type TEXT, ref TEXT, status TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+        cur.execute("INSERT INTO transactions (phone, amount, type, ref, status) VALUES (?,?,?,?,?)", (phone, amount, type_txn, ref, status))
         conn.commit()
-    conn.close()
+        conn.close()
+
+payments = RWPrestigePayments()
