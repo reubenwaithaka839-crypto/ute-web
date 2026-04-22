@@ -1,35 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Prestige Dashboard</title>
-    <script>
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.onkeydown = e => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
-    </script>
+    <title>Employee Chamber | UTE_WEB</title>
 </head>
-<body class="bg-slate-950 text-white min-h-screen p-6 font-sans">
-    <header class="flex justify-between items-center mb-12 bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-        <div class="flex items-center gap-6">
-            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-3xl font-black italic">RW</div>
+<body class="bg-slate-950 text-white min-h-screen font-sans p-6">
+
+    <div class="max-w-7xl mx-auto flex justify-between items-center mb-10 bg-slate-900 p-6 rounded-[2.5rem] border border-white/5 shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-xl font-black italic shadow-lg shadow-blue-500/20">RW</div>
             <div>
-                <h1 class="text-2xl font-black italic tracking-tighter uppercase">Prestige Network</h1>
-                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Master: Reuben</p>
+                <h1 class="text-lg font-black uppercase italic tracking-tighter">Employee Chamber</h1>
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Active Identity: {{ user.username }}</p>
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            {% if user.username.upper() == 'REUBEN' %}
-            <a href="/admin_panel" class="bg-blue-600 px-8 py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/30">Enter Chamber</a>
-            {% endif %}
-            <a href="/logout" class="text-[10px] text-red-500 font-black uppercase">Logout</a>
+        
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-xl">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-[9px] font-black uppercase text-green-500 tracking-widest">Bank Linked</span>
+            </div>
+            <a href="/logout" class="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase transition-all duration-300">Log Out</a>
         </div>
-    </header>
-
-    <div class="max-w-6xl mx-auto flex flex-col items-center justify-center py-32 bg-slate-900 rounded-[4rem] border border-white/5 shadow-inner">
-        <div class="w-48 h-48 rounded-[3rem] bg-blue-600 flex items-center justify-center text-8xl font-black italic shadow-[0_0_120px_rgba(37,99,235,0.4)] mb-10 border-4 border-white/10">RW</div>
-        <h2 class="text-5xl font-black italic tracking-tighter mb-4 text-center">WELCOME TO UTE_WEB</h2>
-        <p class="text-blue-500 font-black uppercase tracking-[0.6em] text-[10px]">Secure Financial Interface Active</p>
     </div>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+        
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-slate-900 p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                <div class="w-24 h-24 bg-slate-800 rounded-3xl mb-6 mx-auto flex items-center justify-center text-4xl border border-white/10">👤</div>
+                <h2 class="text-center text-xl font-black uppercase mb-2">{{ user.username }}</h2>
+                <p class="text-center text-[10px] text-blue-500 font-black uppercase tracking-[0.2em] mb-8">Professional Member</p>
+                
+                <div class="space-y-4 border-t border-white/5 pt-6">
+                    <div class="flex justify-between">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">Bank</span>
+                        <span class="text-[10px] font-black uppercase">{{ user.bank_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">Account</span>
+                        <span class="text-[10px] font-black">****{{ user.acc_number[-4:] if user.acc_number else '0000' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-600 p-8 rounded-[3rem] shadow-xl shadow-blue-500/10 relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-lg font-black italic uppercase mb-2 leading-none">Prestige<br>Network</h3>
+                    <p class="text-[10px] font-bold opacity-80 leading-relaxed italic">Access premium roles with guaranteed secure bank settlements.</p>
+                </div>
+                <div class="absolute -bottom-4 -right-4 text-white/10 text-9xl font-black italic">RW</div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 space-y-6">
+            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-slate-500 mb-4 ml-4">Available Opportunities</h3>
+            
+            {% if jobs %}
+                {% for job in jobs %}
+                <div class="bg-slate-900 p-8 rounded-[3rem] border border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 hover:border-blue-600/30 transition-all duration-500 shadow-xl group">
+                    <div class="flex items-center gap-6">
+                        <div class="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-2xl group-hover:bg-blue-600 transition-colors">💼</div>
+                        <div>
+                            <h4 class="text-xl font-black italic uppercase tracking-tighter leading-none mb-1">{{ job.title }}</h4>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ job.employer }} • Remote / On-Site</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-8">
+                        <div class="text-right">
+                            <p class="text-[9px] font-black text-slate-500 uppercase">Monthly Salary</p>
+                            <p class="text-xl font-black text-white italic">Ksh {{ "{:,.0f}".format(job.salary) if job.salary else 'Negotiable' }}</p>
+                        </div>
+                        <a href="/apply/{{ job.id }}" class="bg-white text-black px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-600 hover:text-white transition-all shadow-lg hover:scale-105 active:scale-95">
+                            Apply
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-slate-900/50 p-20 rounded-[3rem] border-2 border-dashed border-white/5 text-center">
+                    <p class="text-slate-500 font-black uppercase text-xs tracking-widest">The Chamber is currently quiet.<br>New opportunities are arriving soon.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
 </body>
 </html>
