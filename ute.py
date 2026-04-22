@@ -1,22 +1,25 @@
-# ute.py - The Financial Logic Engine for UTE_WEB
-DB = "rw_final_prestige.db"
+# ute.py - The Financial Logic Engine
+DB = "rw_prestige_v3.db" 
 
 def get_ute_math(amount):
     """
-    Calculates platform deductions and net settlement amounts.
-    10% goes to the platform, 90% to the user.
+    Calculates platform deductions.
+    Standard: 10%
+    First Placement: 30%
     """
     try:
         gross = float(amount)
-        rate = 0.10 
-        deduction = gross * rate
-        net_to_bank = gross - deduction
+        # Standard rate
+        std_deduction = gross * 0.10
+        # First month rate
+        placement_deduction = gross * 0.30
         
         return {
             'gross': round(gross, 2),
-            'deduction': round(deduction, 2),
-            'net': round(net_to_bank, 2),
-            'percent_rate': 10
+            'std_net': round(gross - std_deduction, 2),
+            'placement_net': round(gross - placement_deduction, 2),
+            'std_fee': round(std_deduction, 2),
+            'placement_fee': round(placement_deduction, 2)
         }
-    except (ValueError, TypeError):
-        return {'gross': 0.0, 'deduction': 0.0, 'net': 0.0, 'percent_rate': 0}
+    except:
+        return {'gross': 0.0, 'std_fee': 0.0, 'placement_fee': 0.0}
