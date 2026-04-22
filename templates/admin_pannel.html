@@ -1,21 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Master Admin Chamber</title>
-</head>
+<head><script src="https://cdn.tailwindcss.com"></script><title>Admin | RW</title></head>
 <body class="bg-slate-950 text-white min-h-screen p-8 font-sans">
-    
-    <div class="max-w-7xl mx-auto flex justify-between items-center mb-10 bg-slate-900 p-6 rounded-[2rem] border border-white/5">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-xl font-black italic">RW</div>
-            <h1 class="text-xl font-black uppercase italic tracking-tighter">Command Chamber</h1>
-        </div>
-        <a href="/logout" class="text-[10px] font-black text-red-500 uppercase">Terminate Session</a>
-    </div>
-
     <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 text-center shadow-xl">
+        <div class="bg-slate-900 p-8 rounded-[2.5rem] border border-white/5 text-center">
             <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Live Network Jobs</p>
             <p class="text-6xl font-black italic text-blue-500">{{ job_count }}</p>
         </div>
@@ -24,54 +12,25 @@
             <p class="text-6xl font-black italic text-white">{{ all_users|length }}</p>
         </div>
     </div>
-
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div class="lg:col-span-5 space-y-10">
             <div class="bg-slate-900 p-10 rounded-[3rem] border border-yellow-500/20 shadow-2xl">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-6 text-yellow-500">Treasury Settlement</h3>
+                <h3 class="text-xs font-black uppercase text-yellow-500 mb-6">Treasury Settlement</h3>
                 <form action="/update_treasury" method="POST" class="space-y-4">
-                    <input type="text" name="acc_name" placeholder="ACCOUNT NAME" value="{{ treasury.account_name if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black uppercase">
-                    <input type="text" name="acc_num" placeholder="ACCOUNT NUMBER" value="{{ treasury.account_number if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" name="bank" placeholder="BANK" value="{{ treasury.bank_name if treasury }}" class="bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black uppercase">
-                        <input type="text" name="branch" placeholder="BRANCH" value="{{ treasury.branch_code if treasury }}" class="bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
-                    </div>
-                    <button class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white transition-all">Lock Treasury</button>
-                </form>
-            </div>
-
-            <div class="bg-slate-900 p-10 rounded-[3rem] border border-blue-500/20 shadow-2xl">
-                <h3 class="text-xs font-black uppercase tracking-widest mb-6 text-blue-500">Deploy New Admin</h3>
-                <form action="/register_admin" method="POST" class="space-y-4">
-                    <input type="text" name="username" placeholder="USERNAME" required class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black uppercase">
-                    <input type="email" name="email" placeholder="EMAIL" required class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
-                    <input type="password" name="passcode" placeholder="PASSCODE" required class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
-                    <button class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Authorize Access</button>
+                    <input type="text" name="acc_name" placeholder="ACC NAME" value="{{ treasury.account_name if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black uppercase">
+                    <input type="text" name="acc_num" placeholder="ACC NUMBER" value="{{ treasury.account_number if treasury }}" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-[10px] font-black">
+                    <button class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase text-[10px]">Lock Treasury</button>
                 </form>
             </div>
         </div>
-
-        <div class="lg:col-span-7 bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl">
+        <div class="lg:col-span-7 bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden">
             <table class="w-full">
-                <thead class="bg-slate-800/50 text-[10px] font-black uppercase tracking-widest">
-                    <tr><th class="p-8">Identity</th><th class="p-8">Role</th><th class="p-8 text-right">Dismantle</th></tr>
-                </thead>
-                <tbody class="divide-y divide-white/5">
+                <thead class="bg-slate-800/50 text-[10px] font-black uppercase"><tr><th class="p-8">Identity</th><th class="p-8 text-right">Protocol</th></tr></thead>
+                <tbody>
                     {% for u in all_users %}
-                    <tr class="hover:bg-white/5 transition-all">
+                    <tr class="border-t border-white/5 hover:bg-white/5">
                         <td class="p-8 italic font-bold uppercase text-xs">{{ u.username }}</td>
-                        <td class="p-8 uppercase text-blue-400 text-[10px] font-black">{{ u.role }}</td>
-                        <td class="p-8 text-right">
-                            {% if u.username.upper() != 'REUBEN' %}
-                            <a href="/dismantle_admin/{{ u.username }}" 
-                               onclick="return confirm('EXTERMINATE IDENTITY: Blacklist forever?')" 
-                               class="inline-flex w-10 h-10 bg-red-600 text-white rounded-lg items-center justify-center hover:bg-white hover:text-red-600 transition-all font-black text-[10px]">
-                               RW
-                            </a>
-                            {% else %}
-                            <span class="text-yellow-500 text-[10px] font-black uppercase italic">Immortal Master</span>
-                            {% endif %}
-                        </td>
+                        <td class="p-8 text-right">{% if u.username.upper() != 'REUBEN' %}<span class="text-red-500 text-[10px] font-black">RW-LINK</span>{% else %}<span class="text-yellow-500 text-[10px] font-black uppercase">Immortal Master</span>{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
