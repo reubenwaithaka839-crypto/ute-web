@@ -1,44 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Admin Chamber | Prestige</title>
-</head>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-slate-950 text-white min-h-screen p-10 font-sans">
-    
-    <div class="max-w-6xl mx-auto bg-slate-900 p-10 rounded-[3.5rem] border border-blue-500/20 mb-12 shadow-2xl">
-        <h3 class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 mb-8">Authorize New Administrator</h3>
-        <form action="/register_admin" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <input type="text" name="username" placeholder="USERNAME" required class="bg-slate-950 border border-white/5 p-5 rounded-2xl text-[10px] font-black focus:border-blue-500 outline-none uppercase">
-            <input type="password" name="passcode" placeholder="PASSCODE" required class="bg-slate-950 border border-white/5 p-5 rounded-2xl text-[10px] font-black focus:border-blue-500 outline-none">
-            <input type="email" name="email" placeholder="EMAIL" required class="bg-slate-950 border border-white/5 p-5 rounded-2xl text-[10px] font-black focus:border-blue-500 outline-none">
-            <button type="submit" class="bg-blue-600 font-black text-[10px] uppercase rounded-2xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20">Grant Clearance</button>
-        </form>
-    </div>
-
-    <div class="max-w-6xl mx-auto bg-slate-900 rounded-[3.5rem] border border-white/5 overflow-hidden shadow-2xl">
+    <h1 class="text-4xl font-black uppercase italic text-center mb-16 tracking-widest text-blue-500">Master Admin Chamber</h1>
+    <div class="max-w-6xl mx-auto bg-slate-900 rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl">
         <table class="w-full text-left">
-            <thead class="bg-slate-800/40 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                <tr><th class="p-8">Prestige Identity</th><th class="p-8">Role</th><th class="p-8 text-right">Status</th></tr>
+            <thead class="bg-slate-800 text-slate-500 text-[10px] font-black uppercase">
+                <tr><th class="p-8">Identity</th><th class="p-8">Protocol</th><th class="p-8 text-right">Action</th></tr>
             </thead>
-            <tbody class="font-bold text-sm">
+            <tbody>
                 {% for u in all_users %}
-                <tr class="border-t border-white/5 hover:bg-white/5 transition-colors">
-                    <td class="p-8 italic flex items-center gap-6">
-                        {% if u.username.upper() != 'REUBEN' %}
-                        <a href="/dismantle_admin/{{ u.username }}" onclick="return confirm('EXTERMINATE IDENTITY: Blacklist this admin forever?')" class="w-12 h-12 bg-slate-800 border border-white/10 rounded-xl flex items-center justify-center text-xs font-black hover:bg-red-600 hover:scale-110 transition-all duration-300">RW</a>
-                        {% else %}
-                        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-xs font-black">RW</div>
-                        {% endif %}
-                        {{ u.username }}
-                    </td>
-                    <td class="p-8 uppercase text-blue-400 text-[10px] font-black tracking-widest">{{ u.role }}</td>
+                <tr class="border-t border-white/5">
+                    <td class="p-8 flex items-center gap-4 italic">{{ u.username }}</td>
+                    <td class="p-8 uppercase text-blue-400 text-[10px] font-black">{{ u.role }}</td>
                     <td class="p-8 text-right">
-                        {% if u.username.upper() == 'REUBEN' %}
-                        <span class="text-yellow-500 text-[9px] uppercase font-black">Immortal Master</span>
-                        {% else %}
-                        <span class="text-green-500 text-[9px] uppercase font-black">Authorized</span>
-                        {% endif %}
+                        {% if u.username.upper() != 'REUBEN' %}
+                        <a href="/dismantle_admin/{{ u.username }}" class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-black hover:bg-red-600 transition-all">RW</a>
+                        {% else %}<span class="text-yellow-500 font-black text-[9px] uppercase">Immortal</span>{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
