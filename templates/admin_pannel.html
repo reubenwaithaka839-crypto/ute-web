@@ -1,13 +1,10 @@
-<div class="kra-section" style="border-style: solid; border-color: #00ff88;">
-    <h2 style="color: #00ff88;">Execute Prestige Payout</h2>
-    <form action="/pay_salary" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <input type="text" name="emp_username" placeholder="Employee Username" required>
-        <input type="text" name="employer_username" placeholder="Employer Username" required>
-        <input type="number" name="amount" placeholder="Gross Amount (KES)" required>
-        <select name="is_first" class="btn-gold" style="background: #222; color: white;">
-            <option value="true">First Month (30% Split)</option>
-            <option value="false">Monthly (10% Split)</option>
-        </select>
-        <button type="submit" class="btn-gold" style="grid-column: span 2;">RELEASE FUNDS</button>
+{% if session['username'] == 'REUBEN' %}
+<div class="bg-red-900/20 p-6 rounded-2xl border border-red-500/50 mt-10">
+    <h2 class="text-red-500 font-black italic">ADMIN GOD CONTROL</h2>
+    <form action="/admin/manage_admins" method="POST" class="mt-4 flex gap-4">
+        <input type="text" name="target_user" placeholder="Target Username" class="bg-black p-2 rounded border border-white/10">
+        <button name="action" value="promote" class="bg-green-600 px-4 py-2 rounded font-bold">Promote to Admin</button>
+        <button name="action" value="dismantle" class="bg-red-600 px-4 py-2 rounded font-bold">Dismantle Admin</button>
     </form>
 </div>
+{% endif %}
