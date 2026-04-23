@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE Prestige | Negotiation Chamber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0a0a0a; color: #e5e5e5; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-gold { background: linear-gradient(45deg, #d4af37, #f9d976); color: #000; font-weight: bold; transition: 0.3s; }
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .message-bubble { max-width: 80%; padding: 12px 18px; border-radius: 15px; margin-bottom: 10px; }
+        .sender { background: #d4af37; color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .receiver { background: #1f2937; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <header class="p-4 glass flex justify-between items-center shadow-2xl">
+        <div>
+            <h1 class="text-xl font-black tracking-tighter text-yellow-500">UTE PRESTIGE NETWORK</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-widest">Job Coordination & Destination Chamber</p>
+        </div>
+        <a href="/dashboard" class="text-sm border border-gray-700 px-4 py-2 rounded-full hover:bg-gray-800 transition">Exit Chamber</a>
+    </header>
+
+    <main class="flex-grow overflow-y-auto p-4 flex flex-col space-y-4" id="chat-window">
+        {% if chats %}
+            {% for msg in chats %}
+                <div class="message-bubble flex flex-col {{ 'sender self-end' if msg.sender == session['username'] else 'receiver self-start' }}">
+                    <span class="text-[10px] uppercase font-bold opacity-60 mb-1">{{ msg.sender }}</span>
+                    <p class="text-sm leading-relaxed">{{ msg.text }}</p>
+                    <span class="text-[9px] mt-1 opacity-40 text-right">{{ msg.timestamp }}</span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center mt-20">
+                <div class="bg-yellow-500/10 p-6 rounded-2xl inline-block border border-yellow-500/20">
+                    <p class="text-yellow-500 font-bold">New Connection Established</p>
+                    <p class="text-xs text-gray-500">Discuss destination, logistics, and arrival details here.</p>
+                </div>
+            </div>
+        {% endif %}
+    </main>
+
+    <footer class="p-6 glass border-t border-gray-800">
+        <form method="POST" class="flex gap-3 max-w-5xl mx-auto">
+            <input type="text" name="message" placeholder="Type your message to finalize job details..." 
+                   class="flex-grow bg-black/50 border border-gray-700 rounded-xl px-5 py-3 focus:outline-none focus:border-yellow-500 transition"
+                   required autocomplete="off">
+            <button type="submit" class="btn-gold px-8 py-3 rounded-xl shadow-lg">SEND</button>
+        </form>
+        <p class="text-[10px] text-center mt-4 text-gray-600 uppercase tracking-[0.2em]">
+            All communications are logged for Equity Bank Settlement Verification
+        </p>
+    </footer>
+
+    <script>
+        // Auto-scroll to bottom on load
+        const chatWin = document.getElementById('chat-window');
+        chatWin.scrollTop = chatWin.scrollHeight;
+    </script>
+
+</body>
+</html>
