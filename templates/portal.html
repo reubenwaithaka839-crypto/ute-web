@@ -2,22 +2,31 @@
 <html lang="en">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>RW PRESTIGE | Supreme Network</title>
+    <title>Login | RW PRESTIGE</title>
 </head>
-<body class="bg-gradient-to-br from-black via-slate-900 to-black min-h-screen text-white">
-    <div class="container mx-auto px-6 py-24 text-center">
-        <div class="w-24 h-24 bg-yellow-500 rounded-3xl mx-auto flex items-center justify-center mb-8 shadow-2xl">
-            <span class="text-3xl font-black text-black">RW</span>
-        </div>
-        <h1 class="text-6xl font-black tracking-tighter uppercase mb-4 bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-            RW PRESTIGE
-        </h1>
-        <p class="text-xl text-slate-400 mb-12">The Hybrid Financial Engine for Talent & Employers.</p>
+<body class="bg-black min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full bg-slate-900 p-10 rounded-3xl border border-white/10 shadow-2xl">
+        <h2 class="text-3xl font-black text-white mb-8 text-center uppercase tracking-tighter">Enter Chamber</h2>
         
-        <div class="space-x-4">
-            <a href="/login" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black uppercase hover:scale-105 transition-transform inline-block">Login</a>
-            <a href="/register" class="border border-yellow-500 text-yellow-500 px-10 py-4 rounded-2xl font-black uppercase hover:bg-yellow-500/10 transition-all inline-block">Join Network</a>
-        </div>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl mb-6 text-sm text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="space-y-6">
+            <input type="text" name="username" placeholder="Username" required 
+                   class="w-full bg-black border border-white/20 p-4 rounded-xl text-white focus:border-yellow-500 outline-none">
+            <input type="password" name="password" placeholder="Passcode" required 
+                   class="w-full bg-black border border-white/20 p-4 rounded-xl text-white focus:border-yellow-500 outline-none">
+            <button type="submit" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase tracking-widest hover:brightness-110 transition-all">
+                Authorize Access
+            </button>
+        </form>
     </div>
 </body>
 </html>
