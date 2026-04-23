@@ -1,67 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Dashboard | RW PRESTIGE</title>
+    <title>Dashboard</title>
 </head>
-<body class="bg-slate-950 text-white min-h-screen">
-    <nav class="p-6 border-b border-white/5 flex justify-between items-center">
-        <span class="text-xl font-black text-yellow-500">RW PRESTIGE</span>
-        <div class="space-x-6 flex items-center">
-            <span class="text-sm font-bold opacity-50">{{ user.username }} ({{ user.role }})</span>
-            <a href="/logout" class="text-red-500 text-sm font-black uppercase">Exit</a>
-        </div>
-    </nav>
+<body class="bg-slate-950 text-white">
 
-    <main class="p-8 max-w-6xl mx-auto">
-        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-1 rounded-3xl mb-12 shadow-xl">
-            <div class="bg-slate-900 rounded-[22px] p-8">
-                <p class="text-xs font-black uppercase text-yellow-500 tracking-widest mb-2">Available Balance</p>
-                <h3 class="text-5xl font-black">KES {{ "{:,.2f}".format(user.balance) }}</h3>
-            </div>
+<nav class="p-4 flex justify-between border-b border-white/10">
+    <span>Welcome {{ user.username }}</span>
+    <a href="/logout" class="text-red-400">Logout</a>
+</nav>
+
+<div class="p-8">
+
+    <h2 class="text-2xl mb-4">Balance: KES {{ user.balance }}</h2>
+
+    {% if user.role in ['employer','admin'] %}
+        <a href="/post_job" class="bg-yellow-500 text-black px-4 py-2 rounded">Post Job</a>
+    {% endif %}
+
+    <h3 class="mt-8 mb-4 text-xl">Jobs</h3>
+
+    {% for job in jobs %}
+    <div class="bg-black p-4 mb-4 rounded flex justify-between">
+        <div>
+            <p class="font-bold">{{ job.title }}</p>
+            <p>KES {{ job.salary }}</p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-8">
-            <section class="bg-slate-900/50 p-8 rounded-3xl border border-white/5">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black uppercase tracking-tighter">Available Jobs</h2>
-                    {% if user.role in ['employer', 'admin'] %}
-                    <a href="/post_job" class="bg-white text-black px-4 py-2 rounded-lg font-bold text-xs uppercase">+ Post Job</a>
-                    {% endif %}
-                </div>
-                
-                <div class="space-y-4">
-                    {% for job in jobs %}
-                    <div class="bg-black/40 p-5 rounded-2xl border border-white/5 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-black text-lg">{{ job.title }}</h4>
-                            <p class="text-yellow-500 font-bold text-sm">KES {{ job.salary }}</p>
-                        </div>
-                        <button class="bg-slate-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-yellow-500 hover:text-black transition-all">Apply</button>
-                    </div>
-                    {% else %}
-                    <p class="text-slate-500 text-sm italic text-center py-10">No jobs listed in the network yet.</p>
-                    {% endfor %}
-                </div>
-            </section>
+        <a href="/apply/{{ job.id }}" class="bg-white text-black px-4 py-2 rounded">
+            Apply
+        </a>
+    </div>
+    {% endfor %}
 
-            {% if user.role == 'admin' %}
-            <section class="bg-slate-900 p-8 rounded-3xl border border-yellow-500/20">
-                <h2 class="text-2xl font-black uppercase text-yellow-500 mb-6">Admin Payout Engine</h2>
-                <form action="/pay_salary" method="POST" class="space-y-4">
-                    <input type="text" name="emp_username" placeholder="Employee Username" required class="w-full bg-black border border-white/10 p-4 rounded-xl outline-none">
-                    <input type="number" name="amount" placeholder="Gross Salary (KES)" required class="w-full bg-black border border-white/10 p-4 rounded-xl outline-none">
-                    <select name="is_first" class="w-full bg-black border border-white/10 p-4 rounded-xl outline-none text-slate-400">
-                        <option value="true">First Month (30% Logic)</option>
-                        <option value="false">Regular Month (10% Logic)</option>
-                    </select>
-                    <button type="submit" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase tracking-widest">
-                        Release Funds
-                    </button>
-                </form>
-            </section>
-            {% endif %}
-        </div>
-    </main>
+</div>
+
 </body>
 </html>
