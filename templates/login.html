@@ -1,46 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>RW Prestige | Register</title>
+    <title>Login</title>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-6">
-    <div class="w-full max-w-xl bg-slate-900 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl">
-        <div class="text-center mb-10">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-2xl font-black italic mx-auto mb-4 shadow-lg shadow-blue-500/20">RW</div>
-            <h2 class="text-2xl font-black italic tracking-tighter">NETWORK ENROLLMENT</h2>
-        </div>
+<body class="bg-black text-white flex items-center justify-center min-h-screen">
 
-        <form action="/login" method="POST" class="space-y-6">
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" name="username" placeholder="USERNAME" required class="bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black uppercase">
-                <input type="email" name="email" placeholder="EMAIL" required class="bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
-            </div>
-            <input type="password" name="passcode" placeholder="SECURE PASSCODE" required class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 outline-none focus:border-blue-600 text-xs font-black">
-            
-            <select name="role" id="roleSelect" class="w-full bg-slate-950 p-5 rounded-2xl border border-white/5 text-xs font-black uppercase" onchange="toggleBank()">
-                <option value="employee">Employee Chamber (Job Seeker)</option>
-                <option value="employer">Employer Chamber (Company)</option>
-            </select>
+<div class="bg-slate-900 p-10 rounded-2xl w-full max-w-md">
 
-            <div id="bankSection" class="p-6 bg-blue-600/5 border border-blue-500/20 rounded-[2rem] space-y-4">
-                <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Settlement Bank Connection</p>
-                <input type="text" name="bank_name" placeholder="BANK NAME" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black uppercase">
-                <input type="text" name="acc_num" placeholder="ACCOUNT NUMBER" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black">
-                <input type="text" name="holder" placeholder="ACCOUNT HOLDER NAME" class="w-full bg-slate-950 p-4 rounded-xl border border-white/5 text-xs font-black uppercase">
-            </div>
+    <h2 class="text-3xl font-bold mb-6 text-center">Login</h2>
 
-            <button type="submit" class="w-full bg-blue-600 py-6 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all">
-                Initialize Prestige Protocol
-            </button>
-        </form>
-    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <div class="mb-4 text-sm text-red-400">{{ message }}</div>
+    {% endfor %}
+    {% endwith %}
 
-    <script>
-        function toggleBank() {
-            const role = document.getElementById('roleSelect').value;
-            document.getElementById('bankSection').style.display = (role === 'employee') ? 'block' : 'none';
-        }
-    </script>
+    <form method="POST" class="space-y-4">
+        <input name="username" placeholder="Username" required class="w-full p-3 bg-black border border-white/20 rounded">
+        <input name="password" type="password" placeholder="Password" required class="w-full p-3 bg-black border border-white/20 rounded">
+        <button class="w-full bg-yellow-500 text-black p-3 rounded font-bold">Login</button>
+    </form>
+
+    <p class="text-sm mt-4 text-center">
+        <a href="/register" class="text-yellow-400">Create account</a>
+    </p>
+
+</div>
+
 </body>
 </html>
