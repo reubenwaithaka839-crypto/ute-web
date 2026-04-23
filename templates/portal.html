@@ -1,32 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Login | RW PRESTIGE</title>
+    <style>
+        .rw-circle {
+            width: 150px; height: 150px;
+            border: 4px solid #C5A021;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: 900; color: #C5A021;
+            box-shadow: 0 0 30px rgba(197, 160, 33, 0.4);
+            margin: 0 auto 20px;
+        }
+    </style>
 </head>
-<body class="bg-black min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-md w-full bg-slate-900 p-10 rounded-3xl border border-white/10 shadow-2xl">
-        <h2 class="text-3xl font-black text-white mb-8 text-center uppercase tracking-tighter">Enter Chamber</h2>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl mb-6 text-sm text-center">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" class="space-y-6">
-            <input type="text" name="username" placeholder="Username" required 
-                   class="w-full bg-black border border-white/20 p-4 rounded-xl text-white focus:border-yellow-500 outline-none">
-            <input type="password" name="password" placeholder="Passcode" required 
-                   class="w-full bg-black border border-white/20 p-4 rounded-xl text-white focus:border-yellow-500 outline-none">
-            <button type="submit" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black uppercase tracking-widest hover:brightness-110 transition-all">
-                Authorize Access
-            </button>
-        </form>
+<body class="bg-black flex items-center justify-center min-h-screen">
+    <div class="text-center">
+        <div class="rw-circle">RW</div>
+        <h1 class="text-white text-2xl font-bold tracking-widest mb-8">WELCOME TO UTE</h1>
+        <a href="/login" class="bg-[#C5A021] text-black px-12 py-4 rounded-full font-black uppercase tracking-tighter hover:scale-110 transition-transform">
+            ENTER SYSTEM
+        </a>
     </div>
 </body>
 </html>
