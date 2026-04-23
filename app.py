@@ -1,104 +1,72 @@
 import os
 import sqlite3
 import ute
-from flask import Flask, render_template, request, redirect, url_for, session, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'PRESTIGE_ULTIMATE_2026_V4')
-DB = ute.DB
+app.secret_key = "RW_PRESTIGE_SUPERMAX_2026"
 
-def init_db():
-    conn = sqlite3.connect(DB)
-    cur = conn.cursor()
-    # USERS & BANKING
-    cur.execute("""CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, 
-        passcode TEXT, email TEXT, role TEXT, 
-        bank_name TEXT, acc_number TEXT, holder_name TEXT)""")
-    
-    # SYSTEM CONFIG (For your KRA PIN and Bank Connection)
-    cur.execute("""CREATE TABLE IF NOT EXISTS system_config (
-        id INTEGER PRIMARY KEY, kra_pin TEXT, bank_status TEXT, 
-        api_connection TEXT DEFAULT 'PENDING')""")
-    
-    # JOBS & APPS
-    cur.execute("CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, salary REAL, employer TEXT)")
-    cur.execute("""CREATE TABLE IF NOT EXISTS applications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, applicant TEXT, 
-        status TEXT DEFAULT 'pending')""")
-    
-    # Ensure config row exists
-    cur.execute("INSERT OR IGNORE INTO system_config (id, kra_pin, bank_status) VALUES (1, 'NOT_SET', 'DISCONNECTED')")
-    
-    conn.commit()
-    conn.close()
-
-def query_db(query, args=(), one=False, commit=False):
-    conn = sqlite3.connect(DB)
+def get_db():
+    conn = sqlite3.connect(ute.DB)
     conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(query, args)
-    if commit: conn.commit()
-    rv = cur.fetchall()
-    conn.close()
-    return (rv[0] if rv else None) if one else rv
-
-init_db()
+    return conn
 
 @app.route('/')
-def portal(): return render_template('portal.html')
+def home():
+    return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/apply/<int:job_id>')
+def apply(job_id):
+    if 'username' not in session: return redirect(url_for('login'))
+    db = get_db()
+    # Create the application
+    db.execute("INSERT INTO applications (job_id, applicant) VALUES (?,?)", (job_id, session['username']))
+    # Generate Chat Room ID (Job ID + Employer Name + Applicant Name)
+    job = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+    room_id = f"chat_{job_id}_{job['poster']}_{session['username']}"
+    db.commit()
+    flash("Applied! Start communicating with the poster below.")
+    return redirect(url_for('chat', room_id=room_id))
+
+@app.route('/chat/<room_id>', methods=['GET', 'POST'])
+def chat(room_id):
+    db = get_db()
     if request.method == 'POST':
-        u = request.form.get('username').strip()
-        session['username'] = u
-        session['role'] = 'admin' if u.upper() == 'REUBEN' else 'user'
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
+        msg = request.form.get('message')
+        db.execute("INSERT INTO messages (room_id, sender, text) VALUES (?,?,?)", (room_id, session['username'], msg))
+        db.commit()
+    
+    chats = db.execute("SELECT * FROM messages WHERE room_id=? ORDER BY timestamp ASC", (room_id,)).fetchall()
+    return render_template('chat.html', chats=chats, room_id=room_id)
 
-@app.route('/dashboard')
-def dashboard():
-    if 'username' not in session: return redirect(url_for('portal'))
-    if session.get('role') == 'admin': return redirect(url_for('admin_panel'))
-    jobs = query_db("SELECT * FROM jobs")
-    return render_template('dashboard.html', jobs=jobs)
-
-@app.route('/admin_chamber')
-def admin_panel():
-    if session.get('username','').upper() != 'REUBEN': abort(403)
+@app.route('/pay_salary', methods=['POST'])
+def pay_salary():
+    # THE REVENUE ENGINE
+    emp_acc = request.form.get('emp_acc')
+    gross = float(request.form.get('amount'))
+    is_first = request.form.get('is_first') == 'true'
     
-    # INVESTOR ANALYTICS
-    total_users = query_db("SELECT COUNT(*) as c FROM users", one=True)['c']
-    total_jobs = query_db("SELECT COUNT(*) as c FROM jobs", one=True)['c']
-    total_apps = query_db("SELECT COUNT(*) as c FROM applications", one=True)['c']
-    total_employers = query_db("SELECT COUNT(DISTINCT employer) as c FROM jobs", one=True)['c']
+    # Run the UTE Formula
+    results = ute.calculate_prestige_split(gross, is_first)
     
-    # KRA & BANK STATUS
-    config = query_db("SELECT * FROM system_config WHERE id=1", one=True)
+    # 1. Deduct from Employer Bank (Simulated Jenga Call)
+    # 2. Add 'Employee_net' to Employee
+    # 3. Add 'Employer_rebate' to Employer
+    # 4. Add 'Treasury_total' to YOUR Equity Account
     
-    recent_users = query_db("SELECT * FROM users ORDER BY id DESC LIMIT 5")
-    
-    return render_template('admin_pannel.html', 
-                           users_count=total_users, 
-                           jobs_count=total_jobs, 
-                           apps_count=total_apps, 
-                           employers_count=total_employers,
-                           config=config,
-                           recent_users=recent_users)
-
-@app.route('/update_kra', methods=['POST'])
-def update_kra():
-    if session.get('username','').upper() != 'REUBEN': abort(403)
-    new_pin = request.form.get('kra_pin')
-    query_db("UPDATE system_config SET kra_pin=?, bank_status='CONNECTED', api_connection='LIVE' WHERE id=1", (new_pin,), commit=True)
-    flash("System Globally Connected to Banking Network!")
+    flash(f"Success! Treasury Earned: {results['treasury_total']} KES")
     return redirect(url_for('admin_panel'))
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('portal'))
+@app.route('/terms')
+def terms():
+    return """
+    <h1>RW Prestige Network: Terms & Conditions</h1>
+    <p>1. Registration: A non-refundable fee of 100 KES applies to all members.</p>
+    <p>2. Transaction Fees: A 3% ecosystem fee applies to all fund movements.</p>
+    <p>3. Revenue Sharing: Employers receive a 10% rebate on first-month placements and 2% monthly thereafter.</p>
+    <p>4. Compliance: All users must provide a valid KRA PIN for Equity Bank settlement.</p>
+    """
 
 if __name__ == '__main__':
+    ute.init_db()
     app.run(host='0.0.0.0', port=10000)
