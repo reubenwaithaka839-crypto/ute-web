@@ -1,11 +1,20 @@
-<form method="POST" class="space-y-4 bg-slate-900 p-10 rounded-[2rem] border border-white/10">
-    <input type="text" name="username" placeholder="Full Name" required class="w-full p-4 bg-black rounded-xl text-white">
-    <input type="email" name="email" placeholder="Email Address" required class="w-full p-4 bg-black rounded-xl text-white">
-    <input type="text" name="contacts" placeholder="Phone Number / WhatsApp" required class="w-full p-4 bg-black rounded-xl text-white">
-    <input type="password" name="password" placeholder="Passcode" required class="w-full p-4 bg-black rounded-xl text-white">
-    <select name="role" class="w-full p-4 bg-black rounded-xl text-[#C5A021] font-bold">
-        <option value="employee">Employee (Talent)</option>
-        <option value="employer">Employer (Company)</option>
-    </select>
-    <button type="submit" class="w-full bg-[#C5A021] text-black py-4 rounded-xl font-bold">CREATE PRESTIGE ACCOUNT</button>
-</form>
+<!DOCTYPE html>
+<html>
+<head><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-black text-white p-8">
+    <div class="max-w-md mx-auto bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
+        <h2 class="text-3xl font-black text-[#C5A021] mb-8 text-center italic">IDENTITY REGISTRY</h2>
+        <form method="POST" class="space-y-6">
+            <input type="text" name="username" placeholder="Full Name" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
+            <input type="email" name="email" placeholder="Email Address" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
+            <input type="text" name="contacts" placeholder="Phone Number" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
+            <input type="password" name="password" placeholder="Secure Passcode" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
+            <select name="role" class="w-full bg-black p-5 rounded-2xl border border-[#C5A021] text-[#C5A021] font-bold">
+                <option value="employee">I am an Employee (Talent)</option>
+                <option value="employer">I am an Employer (Company)</option>
+            </select>
+            <button type="submit" class="w-full bg-[#C5A021] text-black py-5 rounded-2xl font-black uppercase shadow-lg">AUTHORIZE & ACCESS</button>
+        </form>
+    </div>
+</body>
+</html>
