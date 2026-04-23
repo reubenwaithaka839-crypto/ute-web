@@ -2,35 +2,23 @@
 <html lang="en">
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #020617; }
-        .btn-supermax {
-            display: inline-block;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            padding: 2.5rem 5rem;
-            border-radius: 3rem;
-            font-size: 2rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            transition: 0.4s;
-            text-decoration: none;
-            box-shadow: 0 30px 60px rgba(37, 99, 235, 0.4);
-        }
-        .btn-supermax:hover { transform: translateY(-10px); filter: brightness(1.2); }
-        .glass-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(30px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 4rem; padding: 100px; text-align: center; }
-    </style>
+    <title>UTE WEB</title>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="glass-card">
-        <h1 class="text-9xl font-black italic text-white mb-6 tracking-tighter">UTE_WEB</h1>
-        <p class="text-blue-500 font-black tracking-[0.8em] mb-20 text-sm">PREMIUM PAYROLL CONSOLE</p>
-        <a href="/register" class="btn-supermax">GET STARTED</a>
-        <div class="mt-16">
-            <a href="/login" class="text-slate-600 font-bold hover:text-white transition tracking-widest text-xs">AUTHORIZED ACCESS ONLY</a>
-        </div>
+<body class="bg-slate-950 text-white flex items-center justify-center min-h-screen">
+
+<div class="text-center">
+    <h1 class="text-6xl font-black mb-6">UTE WEB</h1>
+    <p class="text-slate-400 mb-10">Premium Payroll Network</p>
+
+    <div class="space-x-6">
+        <a href="/register" class="bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold">
+            Register
+        </a>
+        <a href="/login" class="border border-white px-8 py-4 rounded-xl font-bold">
+            Login
+        </a>
     </div>
+</div>
+
 </body>
 </html>
