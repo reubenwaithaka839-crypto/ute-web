@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-[#020617] text-white p-10">
-    <div class="max-w-2xl mx-auto bg-slate-900 p-10 rounded-[3rem] border border-white/10">
-        <h1 class="text-2xl font-black mb-2 uppercase italic text-yellow-500">Apply: {{ job.title }}</h1>
-        <p class="text-slate-500 text-xs mb-8 font-bold">Employer: {{ job.poster }} | Budget: KES {{ job.salary }}</p>
-        
-        <form method="POST" class="grid grid-cols-2 gap-4">
-            <input type="text" name="full_name" placeholder="Full Legal Name" required class="col-span-2 bg-black border border-white/10 p-4 rounded-2xl">
-            <input type="number" name="age" placeholder="Age" required class="bg-black border border-white/10 p-4 rounded-2xl">
-            <input type="text" name="gender" placeholder="Gender" class="bg-black border border-white/10 p-4 rounded-2xl">
-            <input type="text" name="phone" placeholder="Phone (254...)" required class="bg-black border border-white/10 p-4 rounded-2xl">
-            <input type="email" name="email" placeholder="Email Address" required class="bg-black border border-white/10 p-4 rounded-2xl">
-            <input type="text" name="photo_url" placeholder="Photo URL (Optional)" class="col-span-2 bg-black border border-white/10 p-4 rounded-2xl">
-            <textarea name="skills" placeholder="List your key skills (Coding, Sales, etc.)" required class="col-span-2 bg-black border border-white/10 p-4 rounded-2xl"></textarea>
-            <button type="submit" class="col-span-2 bg-yellow-500 text-black py-5 rounded-2xl font-black uppercase shadow-xl">Submit Application</button>
-        </form>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>APPLY FOR MISSION: {{ job.title }}</h2>
+    <form method="POST">
+        <div class="form-group"><label>FULL NAME</label><input type="text" name="full_name" required></div>
+        <div class="form-group"><label>AGE</label><input type="number" name="age" required></div>
+        <div class="form-group"><label>PHONE</label><input type="text" name="phone" required></div>
+        <div class="form-group"><label>SKILLS SET</label><textarea name="skills" required></textarea></div>
+        <button type="submit" class="btn">SUBMIT APPLICATION</button>
+    </form>
+</div>
+{% endblock %}
