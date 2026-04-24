@@ -11,9 +11,6 @@
         .ledger-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         th, td { padding: 25px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
         th { background: rgba(255,255,255,0.05); color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-        .amount { font-family: monospace; font-weight: 800; font-size: 1.1rem; }
-        .ute-cut { color: #ef4444; } /* Red for deductions */
-        .cashback { color: #22c55e; } /* Green for rewards */
     </style>
 </head>
 <body>
@@ -27,7 +24,7 @@
                 <tr>
                     <th>Date</th>
                     <th>Gross Salary</th>
-                    <th>UTE Share (Your Revenue)</th>
+                    <th>UTE Share</th>
                     <th>Employer Cashback</th>
                     <th>Employee Net</th>
                 </tr>
@@ -36,11 +33,13 @@
                 {% for entry in history %}
                 <tr>
                     <td>{{ entry[6] }}</td>
-                    <td class="amount">KES {{ "{:,.2f}".format(entry[2]) }}</td>
-                    <td class="amount ute-cut">KES {{ "{:,.2f}".format(entry[3]) }}</td>
-                    <td class="amount cashback">KES {{ "{:,.2f}".format(entry[4]) }}</td>
-                    <td class="amount">KES {{ "{:,.2f}".format(entry[5]) }}</td>
+                    <td>KES {{ "{:,.2f}".format(entry[2]) }}</td>
+                    <td style="color:#ef4444">KES {{ "{:,.2f}".format(entry[3]) }}</td>
+                    <td style="color:#22c55e">KES {{ "{:,.2f}".format(entry[4]) }}</td>
+                    <td>KES {{ "{:,.2f}".format(entry[5]) }}</td>
                 </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center; padding:50px; opacity:0.5;">No ledger data available yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
