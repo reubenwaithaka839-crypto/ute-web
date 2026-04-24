@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3
 import os
+from ute import calculate_prestige_split # Import the math logic
 
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
@@ -35,6 +36,7 @@ def force_init_db():
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
 
+    # Admin Creation
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
     conn.commit()
     conn.close()
@@ -48,22 +50,12 @@ def get_db():
 
 def login_required(f):
     def wrap(*args, **kwargs):
-        if 'username' not in session: return redirect(url_for('login'))
+        if 'username' not in session: return redirect(url_for('portal'))
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
 
-def employer_verified_required(f):
-    def wrap(*args, **kwargs):
-        if session.get('role') != 'employer': return redirect(url_for('dashboard'))
-        db = get_db()
-        user = db.execute("SELECT is_verified_business FROM users WHERE username=?", (session['username'],)).fetchone()
-        if not user or user['is_verified_business'] != 1:
-            flash("Access Denied: Business pending admin verification.")
-            return redirect(url_for('dashboard'))
-        return f(*args, **kwargs)
-    wrap.__name__ = f.__name__
-    return wrap
+# --- ROUTES ---
 
 @app.route('/')
 def portal():
@@ -87,10 +79,10 @@ def register():
                         request.form['password'], request.form['role'], request.form.get('business_reg_no', '')))
             db.commit()
             session.pop('terms_accepted', None)
-            flash("Registered successfully.")
+            flash("Identity Verified. System Access Granted.")
             return redirect(url_for('login'))
         except Exception as e:
-            flash(f"Error: {str(e)}")
+            flash(f"Registration Error: {str(e)}")
             return redirect(url_for('register'))
     return render_template('register.html')
 
@@ -108,7 +100,7 @@ def login():
             flash("Access Denied: Invalid Credentials")
             return redirect(url_for('login'))
         except Exception as e:
-            flash(f"DEBUG ERROR: {str(e)}")
+            flash(f"System Error: {str(e)}")
             return redirect(url_for('login'))
     return render_template('login.html')
 
@@ -144,13 +136,13 @@ def profile():
         db.execute("UPDATE users SET location=?, bio_or_company=? WHERE username=?",
                    (request.form['location'], request.form['bio_or_company'], session['username']))
         db.commit()
-        flash("Profile Updated")
+        flash("Profile Data Updated.")
         return redirect(url_for('profile'))
     user = db.execute("SELECT * FROM users WHERE username=?", (session['username'],)).fetchone()
     return render_template('profile.html', user=user)
 
 @app.route('/post_job', methods=['GET', 'POST'])
-@employer_verified_required
+@login_required # Simplified decorator for demo
 def post_job():
     if request.method == 'POST':
         db = get_db()
@@ -160,49 +152,16 @@ def post_job():
                     request.form.get('location', ''), request.form.get('skills_required', ''), 
                     request.form.get('deadline', ''), request.form.get('job_contacts', '')))
         db.commit()
-        flash("Job listed successfully.")
+        flash("Protocol Broadcast: Job listed on Matrix.")
         return redirect(url_for('dashboard'))
     return render_template('post_job.html')
-
-@app.route('/view_applicants/<int:job_id>')
-@employer_verified_required
-def view_applicants(job_id):
-    db = get_db()
-    job = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
-    applicants = db.execute("SELECT * FROM applications WHERE job_id=?", (job_id,)).fetchall()
-    return render_template('view_aplicants.html', job=job, applicants=applicants)
-
-@app.route('/handle_applicant/<int:app_id>/<action>', methods=['POST'])
-@employer_verified_required
-def handle_applicant(app_id, action):
-    db = get_db()
-    application = db.execute("SELECT * FROM applications WHERE id=?", (app_id,)).fetchone()
-    if not application: return redirect(url_for('dashboard'))
-    
-    if action == 'accept':
-        db.execute("UPDATE applications SET status='Accepted' WHERE id=?", (app_id,))
-        db.commit()
-        # Create chat room between employer and employee
-        room_id = "_".join(sorted([session['username'], application['applicant_username']]))
-        flash("Applicant Accepted! Opening negotiation chamber...")
-        return redirect(url_for('chat', room_id=room_id))
-    elif action == 'reject':
-        db.execute("UPDATE applications SET status='Rejected' WHERE id=?", (app_id,))
-        db.commit()
-        flash("Applicant Rejected.")
-        return redirect(url_for('view_applicants', job_id=application['job_id']))
-
-@app.route('/talents')
-@employer_verified_required
-def talents():
-    db = get_db()
-    workers = db.execute("SELECT * FROM users WHERE role='employee' AND skills IS NOT NULL AND skills != ''").fetchall()
-    return render_template('talents.html', workers=workers)
 
 @app.route('/apply/<int:job_id>', methods=['GET', 'POST'])
 @login_required
 def apply_job(job_id):
-    if session.get('role') != 'employee': return redirect(url_for('dashboard'))
+    if session.get('role') != 'employee': 
+        flash("Restricted to Employee Class.")
+        return redirect(url_for('dashboard'))
     db = get_db()
     job = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
     if request.method == 'POST':
@@ -218,6 +177,7 @@ def apply_job(job_id):
     return render_template('apply_job.html', job=job)
 
 @app.route('/apply_success')
+@login_required
 def apply_success():
     return render_template('apply_success.html')
 
@@ -240,16 +200,8 @@ def history():
     transactions = db.execute("SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC", (session['username'], session['username'])).fetchall()
     return render_template('history.html', transactions=transactions)
 
-@app.route('/ledger')
-@login_required
-def ledger():
-    return render_template('ledger.html', history=[])
-
-@app.route('/process_payment', methods=['POST'])
-def process_payment():
-    return {"success": False, "error": "Payment API keys not configured."}
-
 @app.route('/admin_chamber')
+@login_required
 def admin_panel():
     if session.get('username') != 'REUBEN': return "Unauthorized", 403
     db = get_db()
@@ -257,25 +209,40 @@ def admin_panel():
     pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
     return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses)
 
-@app.route('/admin/manage_admins', methods=['POST'])
-def manage_admins():
-    if session.get('username') != 'REUBEN': return "Unauthorized", 403
-    db = get_db()
-    action = request.form['action']
-    target = request.form['target_user']
-    if action == 'promote': db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (target,))
-    elif action == 'dismantle': db.execute("UPDATE users SET is_admin=0 WHERE username=?", (target,))
-    db.commit()
-    return redirect(url_for('admin_panel'))
+# --- NEW: SIMULATION & MATH ROUTES ---
 
-@app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
-def verify_business(user_id):
-    if session.get('username') != 'REUBEN': return "Unauthorized", 403
+@app.route('/simulate_payment', methods=['POST'])
+@login_required
+def simulate_payment():
+    """Simulates a payment transaction and runs the Prestige Math."""
+    amount = request.form.get('amount')
+    is_first = request.form.get('is_first_month') == 'true'
+    
+    if not amount:
+        flash("Error: No input detected.")
+        return redirect(url_for('dashboard'))
+    
+    try:
+        amount = float(amount)
+    except ValueError:
+        flash("Error: Invalid numerical input.")
+        return redirect(url_for('dashboard'))
+
+    # Run the Math Logic
+    split = calculate_prestige_split(amount, is_first)
+    
+    # Log to Database (Simulated)
     db = get_db()
-    db.execute("UPDATE users SET is_verified_business=1 WHERE id=?", (user_id,))
+    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
+                  VALUES (?, ?, ?, ?)""",
+               (session['username'], 'SYSTEM_TREASURY', split['treasury_total'], 'TREASURY_FEE'))
+    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
+                  VALUES (?, ?, ?, ?)""",
+               ('EMPLOYER_WALLET', session['username'], split['employee_net'], 'PAYMENT'))
     db.commit()
-    flash("Business Verified.")
-    return redirect(url_for('admin_panel'))
+    
+    flash(f"Payment Processed: Net {split['employee_net']} | Rebate {split['employer_rebate']} | Treasury {split['treasury_total']}")
+    return redirect(url_for('history'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=True)
