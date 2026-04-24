@@ -1,30 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .rw-circle {
-            width: 160px; height: 160px;
-            border: 6px solid #C5A021;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 4rem; font-weight: 900; color: #C5A021;
-            box-shadow: 0 0 40px rgba(197, 160, 33, 0.3);
-            margin: 0 auto 30px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        body { background: #000; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
-    </style>
-</head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="text-center">
-        <div class="rw-circle">RW</div>
-        <h1 class="text-4xl font-black tracking-widest mb-4 italic">WELCOME TO UTE</h1>
-        <p class="text-gray-500 uppercase tracking-[0.5em] text-xs mb-12">Authorized Personnel Only</p>
-        <a href="/login" class="bg-[#C5A021] text-black px-16 py-5 rounded-full font-black text-xl hover:bg-white transition-all shadow-[0_0_20px_#C5A021]">
-            ENTER CHAMBER
-        </a>
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 10vh;">
+    <h1>Welcome to UTE-WEB</h1>
+    <p style="max-width: 600px; margin: 0 auto 3rem auto; font-size: 1.1rem; color: var(--secondary);">
+        Secure Financial Distribution Matrix.<br>
+        Prestige Split Logic Active.<br>
+        Please Initialize Your Session.
+    </p>
+    <div>
+        <a href="{{ url_for('login') }}" class="btn">LOGIN</a>
+        <a href="{{ url_for('terms') }}" class="btn" style="border-color: var(--secondary); color: var(--secondary);">NEW USER</a>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
