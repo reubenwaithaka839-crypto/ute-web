@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTE-WEB | PRESTIGE SYSTEM</title>
+    <style>
+        :root {
+            --primary: #00ff9d; /* Neon Green */
+            --secondary: #00b8ff; /* Cyber Blue */
+            --alert: #ff0055;
+            --bg: #050505;
+            --glass: rgba(10, 20, 10, 0.85);
+            --border: rgba(0, 255, 157, 0.3);
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--primary);
+            font-family: var(--font-stack);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- Matrix Canvas Background --- */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.25;
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .nav-links a {
+            color: var(--secondary);
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            text-shadow: 0 0 8px var(--secondary);
+            color: #fff;
+        }
+
+        /* --- Cards & Panels --- */
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.1);
+        }
+
+        /* --- Typography --- */
+        h1, h2, h3 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px var(--primary);
+            text-align: center;
+        }
+
+        /* --- Forms --- */
+        .form-group { margin-bottom: 1.5rem; }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px;
+            font-family: var(--font-stack);
+            font-size: 1rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-dim);
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-block;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 10px 25px;
+            font-family: var(--font-stack);
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .btn-danger {
+            border-color: var(--alert);
+            color: var(--alert);
+        }
+
+        .btn-danger:hover {
+            background: var(--alert);
+            color: #fff;
+            box-shadow: 0 0 20px var(--alert);
+        }
+
+        /* --- Tables --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th { color: var(--secondary); }
+
+        /* --- Flash Messages --- */
+        .flash {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--secondary);
+            background: rgba(0, 184, 255, 0.1);
+            text-align: center;
+        }
+
+        /* --- Specific Modules --- */
+        .chamber-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="container">
+        <header>
+            <div class="brand">UTE-WEB // SYSTEMS</div>
+            <nav class="nav-links">
+                {% if session.username %}
+                    <a href="{{ url_for('dashboard') }}">DASHBOARD</a>
+                    {% if session.is_admin %}
+                        <a href="{{ url_for('admin_panel') }}">ADMIN_CHAMBER</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn-danger" style="border:none; margin-left:15px;">LOGOUT</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">LOGIN</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Content Block -->
+        {% block content %}{% endblock %}
+        
+        <footer style="margin-top:50px; text-align:center; color:var(--secondary); font-size:0.8rem; opacity:0.6;">
+            &copy; 2024 UTE-WEB PRESTIGE PROTOCOLS. ALL RIGHTS RESERVED.
+        </footer>
+    </div>
+
+    <!-- Matrix Rain Script -->
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const fontSize = 14;
+        let columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function draw() {
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#00ff9d';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 33);
+    </script>
+</body>
+</html>
