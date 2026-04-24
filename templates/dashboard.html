@@ -4,36 +4,67 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Dashboard</title>
 </head>
-<body class="bg-slate-950 text-white">
+<body class="bg-slate-950 text-white min-h-screen">
 
-<nav class="p-4 flex justify-between border-b border-white/10">
-    <span>Welcome {{ user.username }}</span>
-    <a href="/logout" class="text-red-400">Logout</a>
+<nav class="p-4 flex justify-between items-center border-b border-white/10">
+    <span class="font-bold text-xl">Welcome, {{ user['username'] }}</span>
+    <div class="flex gap-6 items-center">
+        {% if session['username'] == 'REUBEN' %}
+            <a href="/admin_chamber" class="text-red-500 font-bold hover:underline">Admin God Panel</a>
+        {% endif %}
+        <a href="/profile" class="text-blue-400 hover:underline">Profile</a>
+        <a href="/logout" class="text-red-400 hover:underline">Logout</a>
+    </div>
 </nav>
 
-<div class="p-8">
+<div class="p-8 max-w-6xl mx-auto">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}<div class="bg-yellow-900/30 border border-yellow-500 p-4 rounded-xl mb-6 text-yellow-400 font-bold text-sm">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
 
-    <h2 class="text-2xl mb-4">Balance: KES {{ user.balance }}</h2>
-
-    {% if user.role in ['employer','admin'] %}
-        <a href="/post_job" class="bg-yellow-500 text-black px-4 py-2 rounded">Post Job</a>
-    {% endif %}
-
-    <h3 class="mt-8 mb-4 text-xl">Jobs</h3>
-
-    {% for job in jobs %}
-    <div class="bg-black p-4 mb-4 rounded flex justify-between">
+    <div class="bg-slate-900 p-6 rounded-2xl border border-white/10 mb-8 flex justify-between items-center">
         <div>
-            <p class="font-bold">{{ job.title }}</p>
-            <p>KES {{ job.salary }}</p>
+            <h2 class="text-2xl font-black">Network Balance</h2>
+            <p class="text-3xl font-black text-yellow-500">KES {{ "{:,.2f}".format(user['balance'] or 0) }}</p>
         </div>
-
-        <a href="/apply/{{ job.id }}" class="bg-white text-black px-4 py-2 rounded">
-            Apply
-        </a>
+        <div class="text-right">
+            <p class="text-slate-500 text-xs font-bold uppercase">Clearance Status</p>
+            <p class="text-lg font-bold text-green-500">
+                {% if user['role'] == 'employer' %}
+                    {% if user['is_verified_business'] == 1 %} VERIFIED CORPORATION {% else %} UNVERIFIED {% endif %}
+                {% else %} ACTIVE TALENT {% endif %}
+            </p>
+        </div>
     </div>
-    {% endfor %}
 
+    <div class="flex gap-4 mb-8 flex-wrap">
+        {% if user['role'] in ['employer','admin'] %}
+            <a href="/post_job" class="bg-yellow-500 text-black px-6 py-3 rounded-xl font-bold hover:bg-yellow-400 transition">Post Job</a>
+            <a href="/talents" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-500 transition">View Talent Grid</a>
+        {% endif %}
+        <a href="/history" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 transition">Audit Trail</a>
+    </div>
+
+    <h3 class="mt-8 mb-4 text-xl font-black">Available Roles</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for job in jobs %}
+        <div class="bg-black p-6 rounded-2xl border border-white/10 flex flex-col justify-between">
+            <div>
+                <p class="font-black text-xl text-white mb-2">{{ job['title'] }}</p>
+                <p class="text-slate-400 text-sm mb-4">{{ job['description'] }}</p>
+                <p class="text-yellow-500 font-black text-lg">KES {{ "{:,.2f}".format(job['salary']) }}</p>
+            </div>
+            <div class="mt-6 flex gap-3">
+                {% if session['role'] == 'employee' %}
+                    <a href="/apply/{{ job['id'] }}" class="w-full bg-white text-black py-3 rounded-xl text-center font-bold hover:bg-slate-200 transition block">Apply</a>
+                {% elif session['role'] == 'employer' and user['is_verified_business'] == 1 %}
+                    <a href="/view_applicants/{{ job['id'] }}" class="w-full bg-blue-600 text-white py-3 rounded-xl text-center font-bold hover:bg-blue-500 transition block">View Applicants</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
 </div>
 
 </body>
