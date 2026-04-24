@@ -4,11 +4,19 @@
 <body class="bg-black text-white p-8">
     <div class="max-w-md mx-auto bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
         <h2 class="text-3xl font-black text-[#C5A021] mb-8 text-center italic">IDENTITY REGISTRY</h2>
+        
+        {% with messages = get_flashed_messages() %}
+            {% for message in messages %}<div class="mb-4 text-sm text-red-400 bg-red-900/20 p-3 rounded-xl text-center">{{ message }}</div>{% endfor %}
+        {% endwith %}
+
         <form method="POST" class="space-y-6">
             <input type="text" name="username" placeholder="Full Name" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
             <input type="email" name="email" placeholder="Email Address" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
             <input type="text" name="contacts" placeholder="Phone Number" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
             <input type="password" name="password" placeholder="Secure Passcode" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
+            
+            <input type="text" name="business_reg_no" id="biz_reg" placeholder="Company Registration Number (Required for Employers)" class="w-full bg-black p-5 rounded-2xl border border-white/10 hidden">
+            
             <select name="role" class="w-full bg-black p-5 rounded-2xl border border-[#C5A021] text-[#C5A021] font-bold">
                 <option value="employee">I am an Employee (Talent)</option>
                 <option value="employer">I am an Employer (Company)</option>
@@ -16,5 +24,18 @@
             <button type="submit" class="w-full bg-[#C5A021] text-black py-5 rounded-2xl font-black uppercase shadow-lg">AUTHORIZE & ACCESS</button>
         </form>
     </div>
+
+    <script>
+        document.querySelector('select[name="role"]').addEventListener('change', function(){
+            const regInput = document.getElementById('biz_reg');
+            if(this.value === 'employer') {
+                regInput.classList.remove('hidden');
+                regInput.setAttribute('required', 'true');
+            } else {
+                regInput.classList.add('hidden');
+                regInput.removeAttribute('required');
+            }
+        });
+    </script>
 </body>
 </html>
