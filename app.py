@@ -4,7 +4,6 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
-
 DB_PATH = "rw_prestige_final.db"
 
 def force_init_db():
@@ -16,24 +15,19 @@ def force_init_db():
         balance REAL DEFAULT 0.0, location TEXT, bio_or_company TEXT, skills TEXT,
         expected_salary REAL, photo_url TEXT,
         business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0)""")
-        
     cur.execute("""CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY, title TEXT, description TEXT, salary REAL, 
         poster TEXT, status TEXT DEFAULT 'active')""")
-        
     cur.execute("""CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY, room_id TEXT, sender TEXT, text TEXT, 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-        
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY, job_id INTEGER, applicant_username TEXT,
         full_name TEXT, age INTEGER, gender TEXT, phone TEXT, email TEXT,
         photo_url TEXT, skills TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-        
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
     conn.commit()
     conn.close()
@@ -47,14 +41,16 @@ def get_db():
 
 def login_required(f):
     def wrap(*args, **kwargs):
-        if 'username' not in session: return redirect(url_for('login'))
+        if 'username' not in session:
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
 
 def employer_verified_required(f):
     def wrap(*args, **kwargs):
-        if session.get('role') != 'employer': return redirect(url_for('dashboard'))
+        if session.get('role') != 'employer':
+            return redirect(url_for('dashboard'))
         db = get_db()
         user = db.execute("SELECT is_verified_business FROM users WHERE username=?", (session['username'],)).fetchone()
         if not user or user['is_verified_business'] != 1:
@@ -90,11 +86,10 @@ def register():
             flash("Registered successfully.")
             return redirect(url_for('login'))
         except Exception as e:
-            flash(f"Registration Error: {str(e)}")
+            flash(f"Error: {str(e)}")
             return redirect(url_for('register'))
     return render_template('register.html')
 
-# I ADDED ERROR TRAPPING HERE TO SHOW US THE ERROR ON SCREEN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -109,8 +104,7 @@ def login():
             flash("Access Denied: Invalid Credentials")
             return redirect(url_for('login'))
         except Exception as e:
-            # This will print the exact error on the screen instead of Internal Server Error
-            flash(f"CRITICAL DEBUG ERROR: {str(e)}")
+            flash(f"DEBUG ERROR: {str(e)}")
             return redirect(url_for('login'))
     return render_template('login.html')
 
