@@ -1,57 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction History | UTE_WEB</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>.glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }</style>
-</head>
-<body class="bg-[#020617] text-slate-300 min-h-screen p-6 lg:p-12">
-    <div class="max-w-5xl mx-auto">
-        <header class="flex justify-between items-center mb-12">
-            <div>
-                <a href="/dashboard" class="text-blue-500 font-bold hover:underline text-sm"><i class="fa fa-arrow-left mr-2"></i>Dashboard</a>
-                <h1 class="text-4xl font-black text-white mt-2">Audit Trail</h1>
-            </div>
-        </header>
-
-        <div class="glass rounded-[2.5rem] overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-white/5 text-slate-500 text-xs font-bold uppercase tracking-widest">
-                    <tr>
-                        <th class="p-6">Date & Time</th>
-                        <th class="p-6">Description</th>
-                        <th class="p-6">Entity</th>
-                        <th class="p-6 text-right">Amount</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/5">
-                    {% for tx in transactions %}
-                    <tr class="hover:bg-white/[0.02] transition">
-                        <td class="p-6 text-sm text-slate-400">{{ tx['timestamp'] }}</td>
-                        <td class="p-6">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                {{ tx['type'] }}
-                            </span>
-                        </td>
-                        <td class="p-6 font-bold text-white">{{ tx['receiver'] if session['username'] == tx['sender'] else tx['sender'] }}</td>
-                        <td class="p-6 text-right font-black {{ 'text-red-400' if session['username'] == tx['sender'] else 'text-green-400' }}">
-                            {{ '-' if session['username'] == tx['sender'] else '+' }} KES {{ "{:,.2f}".format(tx['amount']) }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            
-            {% if not transactions %}
-            <div class="p-20 text-center">
-                <i class="fa fa-folder-open text-5xl text-slate-700 mb-4 block"></i>
-                <p class="text-slate-500 font-bold">No transactions recorded yet.</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>SYSTEM LEDGER</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>SENDER</th>
+                <th>RECEIVER</th>
+                <th>AMOUNT</th>
+                <th>TYPE</th>
+                <th>TIMESTAMP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transactions %}
+            <tr>
+                <td>{{ tx.id }}</td>
+                <td>{{ tx.sender }}</td>
+                <td>{{ tx.receiver }}</td>
+                <td style="color: var(--primary); font-weight: bold;">${{ tx.amount }}</td>
+                <td>{{ tx.type }}</td>
+                <td>{{ tx.timestamp }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No records found in archive.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
