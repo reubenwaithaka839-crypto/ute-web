@@ -6,6 +6,9 @@ import os
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
 
+# CRITICAL FIX: Force database creation when Render/Gunicorn imports this file
+ute.init_db()
+
 def get_db():
     conn = sqlite3.connect(ute.DB)
     conn.row_factory = sqlite3.Row
@@ -64,7 +67,7 @@ def register():
             return redirect(url_for('login'))
         except Exception as e:
             flash("Error: Identity already exists or invalid data.")
-            return redirect(url_for('register')) # FIX: Prevents ERR_CACHE_MISS
+            return redirect(url_for('register'))
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -78,7 +81,7 @@ def login():
             session['is_admin'] = user['is_admin']
             return redirect(url_for('dashboard'))
         flash("Access Denied: Invalid Credentials")
-        return redirect(url_for('login')) # FIX: Prevents ERR_CACHE_MISS
+        return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/logout')
@@ -158,7 +161,6 @@ def apply_job(job_id):
                     request.form.get('photo_url'), request.form['skills']))
         db.commit()
         
-        # Update user profile with skills so they show up in talents.html
         db.execute("UPDATE users SET skills=? WHERE username=?", (request.form['skills'], session['username']))
         db.commit()
         
@@ -194,16 +196,12 @@ def history():
 @app.route('/ledger')
 @login_required
 def ledger():
-    db = get_db()
-    # Mock history data for ledger structure
-    history = []
-    return render_template('ledger.html', history=history)
+    return render_template('ledger.html', history=[])
 
-# PAYMENT ROUTE (Prevents 404 errors on payment page)
+# PAYMENT ROUTE
 @app.route('/process_payment', methods=['POST'])
 def process_payment():
     try:
-        # Requires IntaSend keys in Render Environment Variables to actually process
         return {"success": False, "error": "Payment API keys not configured in Render environment yet."}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -242,5 +240,4 @@ def verify_business(user_id):
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
-    ute.init_db()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
