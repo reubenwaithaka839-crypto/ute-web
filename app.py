@@ -63,7 +63,8 @@ def register():
             flash("Identity registered. Awaiting login.")
             return redirect(url_for('login'))
         except Exception as e:
-            flash(f"Error: Identity already exists or invalid data.")
+            flash("Error: Identity already exists or invalid data.")
+            return redirect(url_for('register')) # FIX: Prevents ERR_CACHE_MISS
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -77,6 +78,7 @@ def login():
             session['is_admin'] = user['is_admin']
             return redirect(url_for('dashboard'))
         flash("Access Denied: Invalid Credentials")
+        return redirect(url_for('login')) # FIX: Prevents ERR_CACHE_MISS
     return render_template('login.html')
 
 @app.route('/logout')
@@ -196,6 +198,15 @@ def ledger():
     # Mock history data for ledger structure
     history = []
     return render_template('ledger.html', history=history)
+
+# PAYMENT ROUTE (Prevents 404 errors on payment page)
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
+    try:
+        # Requires IntaSend keys in Render Environment Variables to actually process
+        return {"success": False, "error": "Payment API keys not configured in Render environment yet."}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # ADMIN ROUTES
 @app.route('/admin_chamber')
