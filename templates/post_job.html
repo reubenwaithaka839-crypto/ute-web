@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-black text-white flex justify-center items-center min-h-screen p-6">
-<form method="POST" class="bg-slate-900 p-10 rounded-2xl space-y-4 w-full max-w-lg border border-white/10">
-    <h2 class="text-xl font-bold text-yellow-500">Post New Corporate Role</h2>
-    
-    <input name="title" placeholder="Job Title (e.g. Senior Developer)" required class="w-full p-3 bg-black border border-white/20 rounded">
-    <textarea name="description" placeholder="Job Description..." required class="w-full p-3 bg-black border border-white/20 rounded h-24"></textarea>
-    <input name="salary" type="number" step="0.01" placeholder="Salary (e.g. 150000)" required class="w-full p-3 bg-black border border-white/20 rounded">
-    
-    <input name="location" placeholder="Job Location (e.g. Nairobi, Kenya)" required class="w-full p-3 bg-black border border-white/20 rounded">
-    <input name="skills_required" placeholder="Required Skills (e.g. Python, Accounting)" required class="w-full p-3 bg-black border border-white/20 rounded">
-    
-    <div class="grid grid-cols-2 gap-4">
-        <input name="deadline" type="date" class="w-full p-3 bg-black border border-white/20 rounded text-slate-400">
-        <input name="job_contacts" placeholder="Contact Phone/Email" required class="w-full p-3 bg-black border border-white/20 rounded">
-    </div>
-
-    <button class="w-full bg-[#C5A021] text-black p-3 rounded font-bold hover:bg-white transition">Publish to Network</button>
-</form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>UPLOAD NEW MISSION</h2>
+    <form method="POST">
+        <div class="form-group"><label>TITLE</label><input type="text" name="title" required></div>
+        <div class="form-group"><label>DESCRIPTION</label><textarea name="description" rows="4"></textarea></div>
+        <div class="form-group"><label>SALARY OFFER</label><input type="number" name="salary" required></div>
+        <div class="form-group"><label>LOCATION</label><input type="text" name="location"></div>
+        <div class="form-group"><label>REQUIRED SKILLS</label><input type="text" name="skills_required"></div>
+        <button type="submit" class="btn">BROADCAST</button>
+    </form>
+</div>
+{% endblock %}
