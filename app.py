@@ -80,8 +80,8 @@ def register():
     if not session.get('terms_accepted'):
         return redirect(url_for('terms'))
     if request.method == 'POST':
-        db = get_db()
         try:
+            db = get_db()
             db.execute("INSERT INTO users (username, email, contacts, passcode, role, business_reg_no) VALUES (?,?,?,?,?,?)",
                        (request.form['username'], request.form['email'], request.form['contacts'], 
                         request.form['password'], request.form['role'], request.form.get('business_reg_no', '')))
@@ -89,23 +89,29 @@ def register():
             session.pop('terms_accepted', None)
             flash("Registered successfully.")
             return redirect(url_for('login'))
-        except:
-            flash("Error: Identity exists.")
+        except Exception as e:
+            flash(f"Registration Error: {str(e)}")
             return redirect(url_for('register'))
     return render_template('register.html')
 
+# I ADDED ERROR TRAPPING HERE TO SHOW US THE ERROR ON SCREEN
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
-        if user and user['passcode'] == request.form['password']:
-            session['username'] = user['username']
-            session['role'] = user['role']
-            session['is_admin'] = user['is_admin']
-            return redirect(url_for('dashboard'))
-        flash("Access Denied: Invalid Credentials")
-        return redirect(url_for('login'))
+        try:
+            db = get_db()
+            user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
+            if user and user['passcode'] == request.form['password']:
+                session['username'] = user['username']
+                session['role'] = user['role']
+                session['is_admin'] = user['is_admin']
+                return redirect(url_for('dashboard'))
+            flash("Access Denied: Invalid Credentials")
+            return redirect(url_for('login'))
+        except Exception as e:
+            # This will print the exact error on the screen instead of Internal Server Error
+            flash(f"CRITICAL DEBUG ERROR: {str(e)}")
+            return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/logout')
