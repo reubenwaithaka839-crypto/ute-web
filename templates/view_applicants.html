@@ -1,28 +1,66 @@
 <!DOCTYPE html>
 <html>
-<head><script src="https://cdn.tailwindcss.com"></script></head>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes acceptGlow {
+            0% { box-shadow: 0 0 5px #22c55e, 0 0 10px #22c55e; }
+            50% { box-shadow: 0 0 20px #22c55e, 0 0 40px #22c55e; }
+            100% { box-shadow: 0 0 5px #22c55e, 0 0 10px #22c55e; }
+        }
+        @keyframes rejectGlow {
+            0% { box-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444; }
+            50% { box-shadow: 0 0 20px #ef4444, 0 0 40px #ef4444; }
+            100% { box-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444; }
+        }
+        .glow-accept { animation: acceptGlow 1.5s infinite; }
+        .glow-reject { animation: rejectGlow 1.5s infinite; }
+    </style>
+</head>
 <body class="bg-[#020617] text-white p-10">
     <div class="max-w-6xl mx-auto">
         <a href="/dashboard" class="text-blue-400 font-bold hover:underline text-sm mb-8 inline-block">← Back to Dashboard</a>
-        <h1 class="text-3xl font-black mb-10 italic">Registry: <span class="text-blue-500">{{ job['title'] }}</span></h1>
+        <h1 class="text-3xl font-black mb-2 italic">Registry: <span class="text-blue-500">{{ job['title'] }}</span></h1>
+        <p class="text-slate-500 mb-10">Review candidates and initiate contracts.</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for app in applicants %}
-            <div class="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 text-center relative hover:border-blue-500/40 transition">
-                <div class="relative w-28 h-28 mx-auto mb-6 bg-slate-800 rounded-full flex items-center justify-center text-4xl font-black text-blue-500">
+            <div class="bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center relative hover:border-white/20 transition
+                        {% if app['status'] == 'Rejected' %} opacity-50 {% elif app['status'] == 'Accepted' %} border-green-500/50 {% endif %}">
+                
+                <div class="absolute top-4 right-4 text-[10px] font-black px-3 py-1 rounded-full 
+                            {% if app['status'] == 'Pending' %} bg-yellow-500/20 text-yellow-400 {% elif app['status'] == 'Accepted' %} bg-green-500/20 text-green-400 {% else %} bg-red-500/20 text-red-400 {% endif %}">
+                    {{ app['status'] }}
+                </div>
+
+                <div class="w-24 h-24 mx-auto mb-6 bg-slate-800 rounded-full flex items-center justify-center text-4xl font-black text-blue-500">
                     {{ app['full_name'][0]|upper }}
                 </div>
                 
                 <h2 class="text-xl font-black mb-1">{{ app['full_name'] }}</h2>
-                <p class="text-[10px] text-slate-500 font-bold uppercase mb-6 tracking-widest">Age: {{ app['age'] }} | {{ app['gender'] }}</p>
+                <p class="text-[10px] text-slate-500 font-bold uppercase mb-6 tracking-widest">{{ app['gender'] }} | Age: {{ app['age'] }}</p>
 
                 <div class="text-left space-y-2 text-[11px] text-slate-400 bg-black/20 p-4 rounded-2xl mb-6">
                     <p><b>PHONE:</b> {{ app['phone'] }}</p>
                     <p><b>EMAIL:</b> {{ app['email'] }}</p>
                     <p><b>SKILLS:</b> {{ app['skills'] }}</p>
+                    {% if app['documents_url'] %}
+                    <a href="{{ app['documents_url'] }}" target="_blank" class="text-blue-400 underline block mt-2">View CV / Documents</a>
+                    {% endif %}
                 </div>
 
-                <a href="tel:{{ app['phone'] }}" class="block w-full bg-blue-600 py-4 rounded-2xl font-black text-xs uppercase hover:bg-blue-500 transition">Hire Candidate</a>
+                {% if app['status'] == 'Pending' %}
+                <div class="flex gap-3 mt-4">
+                    <form action="/handle_applicant/{{ app['id'] }}/reject" method="POST" class="w-1/2">
+                        <button type="submit" class="w-full glow-reject bg-red-600 py-3 rounded-xl font-black text-xs uppercase hover:bg-red-500 transition">Reject</button>
+                    </form>
+                    <form action="/handle_applicant/{{ app['id'] }}/accept" method="POST" class="w-1/2">
+                        <button type="submit" class="w-full glow-accept bg-green-600 py-3 rounded-xl font-black text-xs uppercase hover:bg-green-500 transition">Accept & Chat</button>
+                    </form>
+                </div>
+                {% elif app['status'] == 'Accepted' %}
+                <a href="/chat/{{ session['username'] }}_{{ app['applicant_username'] }}" class="block w-full bg-blue-600 py-3 rounded-xl font-black text-xs uppercase hover:bg-blue-500 transition mt-4">Open Chat Chamber</a>
+                {% endif %}
             </div>
             {% else %}
             <div class="col-span-3 text-center text-slate-500 py-20 bg-white/5 rounded-3xl">No applicants for this role yet.</div>
