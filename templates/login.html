@@ -5,28 +5,23 @@
     <title>Login</title>
 </head>
 <body class="bg-black text-white flex items-center justify-center min-h-screen">
-
 <div class="bg-slate-900 p-10 rounded-2xl w-full max-w-md">
-
     <h2 class="text-3xl font-bold mb-6 text-center">Login</h2>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <div class="mb-4 text-sm text-red-400">{{ message }}</div>
-    {% endfor %}
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <div class="mb-4 text-sm text-red-400 bg-red-900/20 p-3 rounded-xl">{{ message }}</div>
+        {% endfor %}
     {% endwith %}
 
     <form method="POST" class="space-y-4">
         <input name="username" placeholder="Username" required class="w-full p-3 bg-black border border-white/20 rounded">
         <input name="password" type="password" placeholder="Password" required class="w-full p-3 bg-black border border-white/20 rounded">
-        <button class="w-full bg-yellow-500 text-black p-3 rounded font-bold">Login</button>
+        <button class="w-full bg-yellow-500 text-black p-3 rounded font-bold hover:bg-yellow-400 transition">Login</button>
     </form>
-
     <p class="text-sm mt-4 text-center">
-        <a href="/register" class="text-yellow-400">Create account</a>
+        <a href="/terms" class="text-yellow-400 hover:underline">Create account</a>
     </p>
-
 </div>
-
 </body>
 </html>
