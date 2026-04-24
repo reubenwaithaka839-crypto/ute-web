@@ -4,14 +4,12 @@ import ute
 from intasend import APIService, Environment
 import uuid
 
-# Keys from IntaSend Sandbox (No KRA needed for Sandbox)
 INTASEND_TOKEN = os.environ.get("INTASEND_TOKEN")
 INTASEND_PUB_KEY = os.environ.get("INTASEND_PUB_KEY")
 DB = ute.DB
 
 class RWPrestigePayments:
     def __init__(self):
-        # We use Environment.SANDBOX for students/testing
         self.service = APIService(
             token=INTASEND_TOKEN,
             publishable_key=INTASEND_PUB_KEY,
