@@ -3,32 +3,31 @@
 <head><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-[#020617] text-white p-10">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-black mb-10 italic">Registry: <span class="text-blue-500">{{ job.title }}</span></h1>
+        <a href="/dashboard" class="text-blue-400 font-bold hover:underline text-sm mb-8 inline-block">← Back to Dashboard</a>
+        <h1 class="text-3xl font-black mb-10 italic">Registry: <span class="text-blue-500">{{ job['title'] }}</span></h1>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for app in applicants %}
             <div class="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 text-center relative hover:border-blue-500/40 transition">
-                <div class="relative w-28 h-28 mx-auto mb-6">
-                    <img src="{{ app.photo_url }}" class="w-full h-full rounded-full object-cover border-4 border-blue-600 shadow-2xl shadow-blue-600/20">
-                    {% if app.is_verified %}
-                    <div class="absolute bottom-1 right-1 bg-yellow-500 text-black text-[7px] font-black px-2 py-1 rounded-full border-2 border-[#020617]">GOLD VERIFIED</div>
-                    {% endif %}
+                <div class="relative w-28 h-28 mx-auto mb-6 bg-slate-800 rounded-full flex items-center justify-center text-4xl font-black text-blue-500">
+                    {{ app['full_name'][0]|upper }}
                 </div>
                 
-                <h2 class="text-xl font-black mb-1">{{ app.full_name }}</h2>
-                <p class="text-[10px] text-slate-500 font-bold uppercase mb-6 tracking-widest">{{ app.location }}</p>
+                <h2 class="text-xl font-black mb-1">{{ app['full_name'] }}</h2>
+                <p class="text-[10px] text-slate-500 font-bold uppercase mb-6 tracking-widest">Age: {{ app['age'] }} | {{ app['gender'] }}</p>
 
                 <div class="text-left space-y-2 text-[11px] text-slate-400 bg-black/20 p-4 rounded-2xl mb-6">
-                    <p><b>ID:</b> {{ app.id_number }}</p>
-                    <p><b>PHONE:</b> {{ app.phone }}</p>
-                    <p><b>SKILLS:</b> {{ app.skills }}</p>
+                    <p><b>PHONE:</b> {{ app['phone'] }}</p>
+                    <p><b>EMAIL:</b> {{ app['email'] }}</p>
+                    <p><b>SKILLS:</b> {{ app['skills'] }}</p>
                 </div>
 
-                <a href="tel:{{ app.phone }}" class="block w-full bg-blue-600 py-4 rounded-2xl font-black text-xs uppercase hover:bg-blue-500 transition">Hire Candidate</a>
+                <a href="tel:{{ app['phone'] }}" class="block w-full bg-blue-600 py-4 rounded-2xl font-black text-xs uppercase hover:bg-blue-500 transition">Hire Candidate</a>
             </div>
+            {% else %}
+            <div class="col-span-3 text-center text-slate-500 py-20 bg-white/5 rounded-3xl">No applicants for this role yet.</div>
             {% endfor %}
         </div>
-        <a href="/" class="mt-12 inline-block text-slate-500 text-[10px] font-black uppercase">← Back to Console</a>
     </div>
 </body>
 </html>
