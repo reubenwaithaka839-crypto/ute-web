@@ -4,12 +4,11 @@
 <body class="bg-[#020617] text-white flex items-center justify-center min-h-screen p-6">
     <div class="max-w-md bg-white/5 p-10 rounded-[3rem] border border-blue-500/30 text-center shadow-2xl">
         <h1 class="text-2xl font-black mb-4 italic text-blue-500">Security Verification</h1>
-        <p class="text-slate-400 text-xs mb-8 uppercase tracking-widest leading-loose">To prevent system pollution, UTE requires a 100 KES listing fee. Your task goes live instantly after verification.</p>
+        <p class="text-slate-400 text-xs mb-8 uppercase tracking-widest leading-loose">To prevent system pollution, UTE requires a 100 KES listing fee.</p>
         
         <div class="bg-blue-600 p-8 rounded-3xl mb-8 shadow-inner">
-            <p class="text-[10px] uppercase font-black text-blue-200 mb-2">Payment Target (Paybill/Till)</p>
+            <p class="text-[10px] uppercase font-black text-blue-200 mb-2">Payment Target</p>
             <p class="text-3xl font-black tracking-tighter">012 345 678</p>
-            <p class="text-[10px] font-bold mt-2">REUBEN MASTER ACCT</p>
         </div>
 
         <form action="/verify_payment/{{ job_id }}" method="POST" class="space-y-4">
