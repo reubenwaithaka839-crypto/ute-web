@@ -1,41 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Admin Panel</title>
-</head>
-<body class="bg-black text-white p-10">
+{% extends "base.html" %}
 
-<div class="max-w-4xl mx-auto">
+{% block content %}
+<div class="card">
+    <h2 style="color: var(--alert);">ADMIN CHAMBER // ROOT ACCESS</h2>
+    <p>Total Entities: {{ users_count }}</p>
 
-    <h1 class="text-3xl font-bold mb-6 text-red-500">ADMIN CONTROL PANEL</h1>
-
-    <div class="bg-slate-900 p-6 rounded mb-6">
-        <p>Total Users: {{ users_count }}</p>
-    </div>
-
-    <div class="bg-red-900/20 p-6 rounded-2xl border border-red-500/50 mt-10">
-        <h2 class="text-red-500 font-black italic">ADMIN GOD CONTROL</h2>
-
-        <form action="/admin/manage_admins" method="POST" class="mt-4 flex gap-4">
-            <input type="text" name="target_user" placeholder="Target Username"
-                   class="bg-black p-2 rounded border border-white/10">
-
-            <button name="action" value="promote"
-                    class="bg-green-600 px-4 py-2 rounded font-bold">
-                Promote
-            </button>
-
-            <button name="action" value="dismantle"
-                    class="bg-red-600 px-4 py-2 rounded font-bold">
-                Remove
-            </button>
-        </form>
-    </div>
-
-    <a href="/dashboard" class="inline-block mt-6 text-blue-400">Back</a>
-
+    <h3>PENDING BUSINESS VERIFICATIONS</h3>
+    {% if pending_businesses %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>USERNAME</th>
+                    <th>BUSINESS REG</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for biz in pending_businesses %}
+                <tr>
+                    <td>{{ biz.id }}</td>
+                    <td>{{ biz.username }}</td>
+                    <td>{{ biz.business_reg_no }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('verify_business', user_id=biz.id) }}">
+                            <button type="submit" class="btn" style="padding: 5px;">VERIFY</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No pending verifications.</p>
+    {% endif %}
 </div>
-
-</body>
-</html>
+{% endblock %}
