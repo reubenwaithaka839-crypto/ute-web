@@ -15,19 +15,26 @@ def force_init_db():
         balance REAL DEFAULT 0.0, location TEXT, bio_or_company TEXT, skills TEXT,
         expected_salary REAL, photo_url TEXT,
         business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0)""")
+        
     cur.execute("""CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY, title TEXT, description TEXT, salary REAL, 
-        poster TEXT, status TEXT DEFAULT 'active')""")
+        poster TEXT, status TEXT DEFAULT 'active',
+        location TEXT, skills_required TEXT, deadline TEXT, job_contacts TEXT)""")
+        
     cur.execute("""CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY, room_id TEXT, sender TEXT, text TEXT, 
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+        
     cur.execute("""CREATE TABLE IF NOT EXISTS applications (
         id INTEGER PRIMARY KEY, job_id INTEGER, applicant_username TEXT,
         full_name TEXT, age INTEGER, gender TEXT, phone TEXT, email TEXT,
-        photo_url TEXT, skills TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+        photo_url TEXT, skills TEXT, documents_url TEXT, status TEXT DEFAULT 'Pending',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+        
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
     conn.commit()
     conn.close()
@@ -41,20 +48,18 @@ def get_db():
 
 def login_required(f):
     def wrap(*args, **kwargs):
-        if 'username' not in session:
-            return redirect(url_for('login'))
+        if 'username' not in session: return redirect(url_for('login'))
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
 
 def employer_verified_required(f):
     def wrap(*args, **kwargs):
-        if session.get('role') != 'employer':
-            return redirect(url_for('dashboard'))
+        if session.get('role') != 'employer': return redirect(url_for('dashboard'))
         db = get_db()
         user = db.execute("SELECT is_verified_business FROM users WHERE username=?", (session['username'],)).fetchone()
         if not user or user['is_verified_business'] != 1:
-            flash("Access Denied: Business pending verification.")
+            flash("Access Denied: Business pending admin verification.")
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
@@ -73,8 +78,7 @@ def terms():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if not session.get('terms_accepted'):
-        return redirect(url_for('terms'))
+    if not session.get('terms_accepted'): return redirect(url_for('terms'))
     if request.method == 'POST':
         try:
             db = get_db()
@@ -117,9 +121,13 @@ def logout():
 @login_required
 def dashboard():
     db = get_db()
-    jobs = db.execute("SELECT * FROM jobs WHERE status='active'").fetchall()
+    search_query = request.args.get('q', '')
+    if search_query:
+        jobs = db.execute("SELECT * FROM jobs WHERE status='active' AND (title LIKE ? OR skills_required LIKE ?)", ('%'+search_query+'%', '%'+search_query+'%')).fetchall()
+    else:
+        jobs = db.execute("SELECT * FROM jobs WHERE status='active'").fetchall()
     user = db.execute("SELECT * FROM users WHERE username=?", (session['username'],)).fetchone()
-    return render_template('dashboard.html', jobs=jobs, user=user)
+    return render_template('dashboard.html', jobs=jobs, user=user, q=search_query)
 
 @app.route('/jobs')
 @login_required
@@ -146,10 +154,13 @@ def profile():
 def post_job():
     if request.method == 'POST':
         db = get_db()
-        db.execute("INSERT INTO jobs (title, description, salary, poster) VALUES (?,?,?,?)",
-                   (request.form['title'], request.form.get('description', 'No description'), request.form['salary'], session['username']))
+        db.execute("""INSERT INTO jobs (title, description, salary, poster, location, skills_required, deadline, job_contacts) 
+                      VALUES (?,?,?,?,?,?,?,?)""",
+                   (request.form['title'], request.form.get('description', ''), request.form['salary'], session['username'],
+                    request.form.get('location', ''), request.form.get('skills_required', ''), 
+                    request.form.get('deadline', ''), request.form.get('job_contacts', '')))
         db.commit()
-        flash("Job listed.")
+        flash("Job listed successfully.")
         return redirect(url_for('dashboard'))
     return render_template('post_job.html')
 
@@ -160,6 +171,26 @@ def view_applicants(job_id):
     job = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
     applicants = db.execute("SELECT * FROM applications WHERE job_id=?", (job_id,)).fetchall()
     return render_template('view_aplicants.html', job=job, applicants=applicants)
+
+@app.route('/handle_applicant/<int:app_id>/<action>', methods=['POST'])
+@employer_verified_required
+def handle_applicant(app_id, action):
+    db = get_db()
+    application = db.execute("SELECT * FROM applications WHERE id=?", (app_id,)).fetchone()
+    if not application: return redirect(url_for('dashboard'))
+    
+    if action == 'accept':
+        db.execute("UPDATE applications SET status='Accepted' WHERE id=?", (app_id,))
+        db.commit()
+        # Create chat room between employer and employee
+        room_id = "_".join(sorted([session['username'], application['applicant_username']]))
+        flash("Applicant Accepted! Opening negotiation chamber...")
+        return redirect(url_for('chat', room_id=room_id))
+    elif action == 'reject':
+        db.execute("UPDATE applications SET status='Rejected' WHERE id=?", (app_id,))
+        db.commit()
+        flash("Applicant Rejected.")
+        return redirect(url_for('view_applicants', job_id=application['job_id']))
 
 @app.route('/talents')
 @employer_verified_required
@@ -175,11 +206,11 @@ def apply_job(job_id):
     db = get_db()
     job = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
     if request.method == 'POST':
-        db.execute("""INSERT INTO applications (job_id, applicant_username, full_name, age, gender, phone, email, photo_url, skills) 
-                      VALUES (?,?,?,?,?,?,?,?,?)""",
+        db.execute("""INSERT INTO applications (job_id, applicant_username, full_name, age, gender, phone, email, photo_url, skills, documents_url) 
+                      VALUES (?,?,?,?,?,?,?,?,?,?)""",
                    (job_id, session['username'], request.form['full_name'], request.form['age'],
                     request.form.get('gender'), request.form['phone'], request.form['email'],
-                    request.form.get('photo_url'), request.form['skills']))
+                    request.form.get('photo_url'), request.form['skills'], request.form.get('documents_url')))
         db.commit()
         db.execute("UPDATE users SET skills=? WHERE username=?", (request.form['skills'], session['username']))
         db.commit()
@@ -232,10 +263,8 @@ def manage_admins():
     db = get_db()
     action = request.form['action']
     target = request.form['target_user']
-    if action == 'promote':
-        db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (target,))
-    elif action == 'dismantle':
-        db.execute("UPDATE users SET is_admin=0 WHERE username=?", (target,))
+    if action == 'promote': db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (target,))
+    elif action == 'dismantle': db.execute("UPDATE users SET is_admin=0 WHERE username=?", (target,))
     db.commit()
     return redirect(url_for('admin_panel'))
 
