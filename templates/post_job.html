@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html>
-<head><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-[#020617] text-white p-10">
-    <div class="max-w-2xl mx-auto bg-slate-900 p-10 rounded-[3rem] border border-white/10 shadow-2xl">
-        <h1 class="text-3xl font-black mb-8 italic text-blue-500 uppercase">Post New Listing</h1>
-        <form method="POST" class="space-y-6">
-            <div>
-                <label class="block text-[10px] font-black uppercase mb-2 text-slate-500">Job Title</label>
-                <input type="text" name="title" required class="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black uppercase mb-2 text-slate-500">Compensation (KES)</label>
-                <input type="number" name="salary" required class="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500">
-            </div>
-            <div>
-                <label class="block text-[10px] font-black uppercase mb-2 text-slate-500">Description</label>
-                <textarea name="description" rows="4" class="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"></textarea>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-white hover:text-blue-600 transition-all">Launch Listing</button>
-        </form>
-    </div>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Post Job</title>
+</head>
+<body class="bg-black text-white flex justify-center items-center min-h-screen">
+
+<form method="POST" class="bg-slate-900 p-10 rounded space-y-4 w-full max-w-md">
+
+    <h2 class="text-xl font-bold text-yellow-500">Post Job</h2>
+
+    <input name="title" placeholder="Job Title" required
+           class="w-full p-3 bg-black border rounded">
+
+    <input name="salary" type="number" placeholder="Salary" required
+           class="w-full p-3 bg-black border rounded">
+
+    <button class="w-full bg-yellow-500 text-black p-3 rounded font-bold">
+        Post Job
+    </button>
+
+</form>
+
 </body>
 </html>
