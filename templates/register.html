@@ -1,41 +1,90 @@
 <!DOCTYPE html>
-<html>
-<head><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="bg-black text-white p-8">
-    <div class="max-w-md mx-auto bg-slate-900 p-10 rounded-[3rem] border border-white/5 shadow-2xl">
-        <h2 class="text-3xl font-black text-[#C5A021] mb-8 text-center italic">IDENTITY REGISTRY</h2>
-        
-        {% with messages = get_flashed_messages() %}
-            {% for message in messages %}<div class="mb-4 text-sm text-red-400 bg-red-900/20 p-3 rounded-xl text-center">{{ message }}</div>{% endfor %}
-        {% endwith %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register | UTE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-        <form method="POST" class="space-y-6">
-            <input type="text" name="username" placeholder="Full Name" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
-            <input type="email" name="email" placeholder="Email Address" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
-            <input type="text" name="contacts" placeholder="Phone Number" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
-            <input type="password" name="password" placeholder="Secure Passcode" required class="w-full bg-black p-5 rounded-2xl border border-white/10">
-            
-            <input type="text" name="business_reg_no" id="biz_reg" placeholder="Company Registration Number (Required for Employers)" class="w-full bg-black p-5 rounded-2xl border border-white/10 hidden">
-            
-            <select name="role" class="w-full bg-black p-5 rounded-2xl border border-[#C5A021] text-[#C5A021] font-bold">
-                <option value="employee">I am an Employee (Talent)</option>
-                <option value="employer">I am an Employer (Company)</option>
-            </select>
-            <button type="submit" class="w-full bg-[#C5A021] text-black py-5 rounded-2xl font-black uppercase shadow-lg">AUTHORIZE & ACCESS</button>
-        </form>
-    </div>
+<body class="bg-black text-white flex items-center justify-center min-h-screen p-6">
 
-    <script>
-        document.querySelector('select[name="role"]').addEventListener('change', function(){
-            const regInput = document.getElementById('biz_reg');
-            if(this.value === 'employer') {
-                regInput.classList.remove('hidden');
-                regInput.setAttribute('required', 'true');
-            } else {
-                regInput.classList.add('hidden');
-                regInput.removeAttribute('required');
-            }
-        });
-    </script>
+<div class="max-w-md w-full bg-slate-900 p-10 rounded-2xl border border-white/10">
+
+    <h2 class="text-3xl font-bold mb-6 text-center text-yellow-500">
+        Create Account
+    </h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 text-sm text-red-400">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="space-y-4">
+
+        <!-- Basic Info -->
+        <input type="text" name="username" placeholder="Full Name" required
+               class="w-full p-3 bg-black border border-white/20 rounded">
+
+        <input type="email" name="email" placeholder="Email Address" required
+               class="w-full p-3 bg-black border border-white/20 rounded">
+
+        <input type="text" name="contacts" placeholder="Phone Number" required
+               class="w-full p-3 bg-black border border-white/20 rounded">
+
+        <input type="password" name="password" placeholder="Password" required
+               class="w-full p-3 bg-black border border-white/20 rounded">
+
+        <!-- Role -->
+        <select name="role" id="roleSelect" required
+                class="w-full p-3 bg-black border border-yellow-500 text-yellow-500 rounded font-bold">
+            <option value="employee">Employee</option>
+            <option value="employer">Employer (Business)</option>
+        </select>
+
+        <!-- Business Fields (Hidden unless employer) -->
+        <div id="businessFields" class="space-y-4 hidden">
+
+            <input type="text" name="business_name"
+                   placeholder="Registered Business Name"
+                   class="w-full p-3 bg-black border border-white/20 rounded">
+
+            <input type="text" name="registration_number"
+                   placeholder="Business Registration Number"
+                   class="w-full p-3 bg-black border border-white/20 rounded">
+
+        </div>
+
+        <!-- Submit -->
+        <button type="submit"
+                class="w-full bg-yellow-500 text-black p-3 rounded font-bold">
+            Register
+        </button>
+
+    </form>
+
+    <p class="text-sm mt-4 text-center">
+        Already have an account?
+        <a href="/login" class="text-yellow-400">Login</a>
+    </p>
+
+</div>
+
+<!-- Script to toggle business fields -->
+<script>
+document.getElementById('roleSelect').addEventListener('change', function () {
+    const businessFields = document.getElementById('businessFields');
+
+    if (this.value === 'employer') {
+        businessFields.classList.remove('hidden');
+    } else {
+        businessFields.classList.add('hidden');
+    }
+});
+</script>
+
 </body>
 </html>
