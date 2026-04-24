@@ -3,16 +3,15 @@
 <head>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white flex justify-center items-center min-h-screen">
+<body class="bg-black text-white flex justify-center items-center min-h-screen p-6">
+<form method="POST" class="bg-slate-900 p-10 rounded-2xl space-y-4 w-full max-w-md border border-white/10">
+    <h2 class="text-xl font-bold">Post New Role</h2>
+    
+    <input name="title" placeholder="Job Title (e.g. Senior Developer)" required class="w-full p-3 bg-black border border-white/20 rounded">
+    <textarea name="description" placeholder="Job Description & Requirements..." required class="w-full p-3 bg-black border border-white/20 rounded h-32"></textarea>
+    <input name="salary" type="number" step="0.01" placeholder="Salary (e.g. 150000)" required class="w-full p-3 bg-black border border-white/20 rounded">
 
-<form method="POST" class="bg-slate-900 p-10 rounded space-y-4 w-full max-w-md">
-    <h2 class="text-xl font-bold">Post Job</h2>
-
-    <input name="title" placeholder="Job Title" required class="w-full p-3 bg-black border rounded">
-    <input name="salary" placeholder="Salary" required class="w-full p-3 bg-black border rounded">
-
-    <button class="w-full bg-yellow-500 text-black p-3 rounded">Post</button>
+    <button class="w-full bg-yellow-500 text-black p-3 rounded font-bold hover:bg-yellow-400 transition">Publish to Network</button>
 </form>
-
 </body>
 </html>
