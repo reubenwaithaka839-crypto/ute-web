@@ -1,44 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3
 import os
+import requests
 from datetime import datetime
-from flask_daraja import Daraja
 from ute import calculate_prestige_split 
 
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
 DB_PATH = "rw_prestige_final.db"
 
-# ==============================
-# DARAJA API CONFIGURATION (M-PESA)
-# ==============================
-# GET THESE FROM https://developer.safaricom.co.ke
-# 1. CONSUMER_KEY
-# 2. CONSUMER_SECRET
-# 3. PASS_KEY (Lipa Na M-Pesa Online Shortcode Password)
-# 4. CallBackURL: This must be a public URL (Use Ngrok for testing) e.g., https://your-app.ngrok.io/mpesa/callback
-# ==============================
+# --- INTASEND API CONFIGURATION ---
+# GET YOUR KEY FROM: https://intasend.com/
+INTASEND_API_KEY = "YOUR_INTASEND_API_KEY"
+INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
+CALLBACK_URL = "https://your-domain.com/mpesa/callback" # Use Ngrok for local testing
 
-CONSUMER_KEY = "YOUR_SAFARICOM_CONSUMER_KEY_HERE"
-CONSUMER_SECRET = "YOUR_SAFARICOM_CONSUMER_SECRET_HERE"
-PASS_KEY = "YOUR_SAFARICOM_PASSKEY_HERE"
-
-# Initialize Daraja
-# Environment: "sandbox" for testing, "production" for real money
-try:
-    daraja = Daraja(
-        consumer_key=CONSUMER_KEY, 
-        consumer_secret=CONSUMER_SECRET, 
-        app_key=PASS_KEY, 
-        environment="sandbox"
-    )
-except Exception as e:
-    print(f"DARAJA WARNING: API keys not set yet. {e}")
-    daraja = None
-
-# ==============================
-# DATABASE INITIALIZATION
-# ==============================
+# --- DATABASE FUNCTIONS ---
 def force_init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -68,10 +45,9 @@ def force_init_db():
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     
-    # --- HARDCODED GOD ADMIN (REUBEN) ---
+    # HARDODED GOD ADMIN
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
                ('REUBEN', 'I LOVE MY MOTHER 20071975OCTDEC', 'admin'))
-    
     conn.commit()
     conn.close()
 
@@ -90,7 +66,6 @@ def login_required(f):
     return wrap
 
 def super_admin_required(f):
-    """Only 'REUBEN' can access this."""
     def wrap(*args, **kwargs):
         if 'username' not in session: return redirect(url_for('portal'))
         if session['username'] != 'REUBEN': return redirect(url_for('dashboard'))
@@ -98,9 +73,7 @@ def super_admin_required(f):
     wrap.__name__ = f.__name__
     return wrap
 
-# ==============================
-# WEB ROUTES
-# ==============================
+# --- ROUTES ---
 
 @app.route('/')
 def portal():
@@ -243,21 +216,12 @@ def history():
     transactions = db.execute("SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC", (session['username'], session['username'])).fetchall()
     return render_template('history.html', transactions=transactions)
 
-# ==============================
-# M-PESA DARAJA API ROUTES
-# ==============================
+# --- INTASEND MPESA ROUTES ---
 
 @app.route('/mpesa/stkpush', methods=['POST'])
 @login_required
 def mpesa_stkpush():
-    """
-    Initiates an M-Pesa payment prompt (STK Push).
-    This is what happens when you click 'PAY VIA MPESA' on dashboard.
-    """
-    if not daraja:
-        flash("API ERROR: Safaricom Keys not configured.")
-        return redirect(url_for('dashboard'))
-
+    """Initiates M-Pesa STK Push via IntaSend."""
     phone = request.form.get('phone')
     amount = request.form.get('amount')
     
@@ -265,79 +229,66 @@ def mpesa_stkpush():
     if phone.startswith('0'):
         phone = '254' + phone[1:]
 
+    # IntaSend Payload
+    payload = {
+        "api_key": INTASEND_API_KEY,
+        "amount": int(amount),
+        "phone_number": phone,
+        "transaction_reference": "UTE_JOB_PAYMENT",
+        "callback_url": CALLBACK_URL
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
     try:
-        # Call Daraja
-        # IMPORTANT: callback_url MUST be reachable by Safaricom (Not localhost)
-        response = daraja.stk_push(
-            phone=phone,
-            amount=amount,
-            callback_url="https://your-domain.com/mpesa/callback", # CHANGE THIS
-            account_reference="UTE_JOB_PAYMENT",
-            transaction_desc="Salary Payment via UTE-WEB",
-            transaction_type="CustomerPayBillOnline"
-        )
-        
-        if response.response_code == '0':
-            flash("M-Pesa Prompt Sent to Phone. Enter your PIN to proceed.")
+        # Send Request to IntaSend
+        response = requests.post(INTASEND_URL, json=payload, headers=headers)
+        data = response.json()
+
+        # Check IntaSend response
+        # IntaSend returns "status": "Success" or "Fail"
+        if data.get('status') == 'Success' or data.get('status') == 'Success (Test)':
+            flash("M-Pesa Prompt Sent! Check your phone and enter PIN.")
         else:
-            flash(f"Payment Failed: {response.response_description}")
+            # Get specific error message
+            error_msg = data.get('message', data.get('status', 'Unknown Error'))
+            flash(f"Payment Failed: {error_msg}")
             
     except Exception as e:
-        flash(f"API Connection Error: {str(e)}")
+        flash(f"Connection Error: {str(e)}")
         
     return redirect(url_for('dashboard'))
 
 @app.route('/mpesa/callback', methods=['POST'])
 def mpesa_callback():
-    """
-    This is where Safaricom sends the result after user enters PIN.
-    """
+    """Receives notification from IntaSend when payment is complete."""
     data = request.get_json()
     
-    # Parse the nested Safaricom JSON
-    # Structure: Body -> stkCallback
-    body = data.get('Body', {})
-    callback = body.get('stkCallback', {})
-    result_code = callback.get('ResultCode')
-    
-    if result_code == '0': # Success
-        # Extract metadata
-        metadata = callback.get('CallbackMetadata', {})
-        items = metadata.get('Item', [])
-        
-        amount = 0
-        mpesa_receipt = ""
-        phone = ""
-        
-        for item in items:
-            name = item.get('Name')
-            value = item.get('Value')
-            if name == 'Amount':
-                amount = value
-            elif name == 'MpesaReceiptNumber':
-                mpesa_receipt = value
-            elif name == 'PhoneNumber':
-                phone = value
+    # Print to console for debugging
+    print("IntaSend Callback Data:", data)
 
-        # --- LOGIC TO PROCESS THE PAYMENT ---
-        # Run the Prestige Math
-        is_first = True # Logic to determine this based on user history could go here
-        split = calculate_prestige_split(amount, is_first)
+    # IntaSend sends status in different ways, checking standard keys
+    # Successful payments usually have 'status': 'success'
+    if data.get('status') == 'success' or data.get('status') == 'Success':
         
+        # Extract details
+        amount = data.get('amount')
+        phone = data.get('phone_number')
+        receipt = data.get('transaction_reference')
+
+        # LOG TO DATABASE
         db = get_db()
-        # Log the transaction
-        db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
-                      VALUES (?, ?, ?, ?)""",
-                   (phone, 'SYSTEM_TREASURY', split['treasury_total'], 'MPESA_DEPOSIT'))
+        db.execute("INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)",
+                   (str(phone), 'SYSTEM_TREASURY', amount, 'MPESA_DEPOSIT'))
         db.commit()
         
-        print(f"PAYMENT SUCCESS: KES {amount} from {phone}")
+        print(f"Transaction Confirmed: KES {amount} from {phone}")
         
-    return jsonify({"ResultCode": 0, "ResultDesc": "Success"}), 200
+    return jsonify({"ResultCode": 0}), 200
 
-# ==============================
-# ADMIN PANEL ROUTES
-# ==============================
+# --- ADMIN ROUTES ---
 
 @app.route('/admin_chamber')
 @super_admin_required
@@ -345,10 +296,7 @@ def admin_panel():
     db = get_db()
     users_count = db.execute("SELECT COUNT(*) as count FROM users").fetchone()['count']
     pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
-    
-    # Get all admins to manage them
     all_admins = db.execute("SELECT * FROM users WHERE is_admin=1").fetchall()
-    
     return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses, all_admins=all_admins)
 
 @app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
@@ -364,7 +312,6 @@ def verify_business(user_id):
 @super_admin_required
 def delete_user(target_user):
     db = get_db()
-    
     if target_user == 'REUBEN' and session['username'] != 'REUBEN':
         flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED.")
         db.execute("DELETE FROM users WHERE username=?", (session['username'],))
