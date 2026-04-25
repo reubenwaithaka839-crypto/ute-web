@@ -7,25 +7,26 @@ from ute import calculate_prestige_split
 
 app = Flask(__name__)
 # --- CONFIGURATION ---
+# Uses Environment Variable on Render, falls back to hardcoded for local
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
 
-# DATABASE PATH
-# Uses relative path by default (saves to project folder), or Render env var
+# DATABASE PATH (Global Declaration at Top Level)
+# Simplified path. If Render provides DB_PATH, uses it. Otherwise uses local file.
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
 # --- INTASEND API CONFIGURATION ---
 INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
-# RENDER CONFIGURATION
-# Reads public URL provided by Render automatically
+# DYNAMIC CALLBACK URL
+# Reads the URL provided by Render automatically
 # Fallback to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
-# --- DATABASE INITIALIZATION (FIXED) ---
+# --- DATABASE INITIALIZATION ---
 def force_init_db():
-    # Get absolute path
+    # Get absolute path using the GLOBAL DB_PATH defined above
     db_file = os.path.abspath(DB_PATH)
     db_dir = os.path.dirname(db_file)
     
@@ -40,6 +41,7 @@ def force_init_db():
     # Connect and Create Tables
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
+    
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
         passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
