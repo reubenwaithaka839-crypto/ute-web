@@ -1,38 +1,85 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <h2 style="color: var(--alert);">ADMIN CHAMBER // ROOT ACCESS</h2>
-    <p>Total Entities: {{ users_count }}</p>
+<div class="container min-h-screen py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        
+        <!-- Left Column: Stats & Verifications -->
+        <div>
+            <div class="card-cyber border-l-4 border-[#00F3FF] mb-12">
+                <h2 class="font-tech text-2xl text-[#00F3FF] mb-4">SYSTEM OVERSIGHT</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-black/50 p-4 rounded text-center">
+                        <div class="text-gray-500 text-xs uppercase font-mono">Total Entities</div>
+                        <div class="text-3xl font-bold text-white mt-2">{{ users_count }}</div>
+                    </div>
+                    <div class="bg-black/50 p-4 rounded text-center">
+                        <div class="text-gray-500 text-xs uppercase font-mono">Pending Verifications</div>
+                        <div class="text-3xl font-bold text-yellow-500 mt-2">{{ pending_businesses|length }}</div>
+                    </div>
+                </div>
+            </div>
 
-    <h3>PENDING BUSINESS VERIFICATIONS</h3>
-    {% if pending_businesses %}
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>USERNAME</th>
-                    <th>BUSINESS REG</th>
-                    <th>ACTION</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for biz in pending_businesses %}
-                <tr>
-                    <td>{{ biz.id }}</td>
-                    <td>{{ biz.username }}</td>
-                    <td>{{ biz.business_reg_no }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('verify_business', user_id=biz.id) }}">
-                            <button type="submit" class="btn" style="padding: 5px;">VERIFY</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No pending verifications.</p>
-    {% endif %}
+            <!-- Pending Businesses -->
+            <div class="card-cyber">
+                <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">PENDING BUSINESS VERIFICATION</h3>
+                {% if pending_businesses %}
+                    <div class="space-y-4">
+                        {% for biz in pending_businesses %}
+                        <div class="bg-black/30 p-4 rounded border border-gray-700 flex justify-between items-center">
+                            <div>
+                                <div class="text-[#00F3FF] font-bold">{{ biz.username }}</div>
+                                <div class="text-xs text-gray-400">Reg: {{ biz.business_reg_no }}</div>
+                            </div>
+                            <form method="POST" action="{{ url_for('verify_business', user_id=biz.id) }}">
+                                <button type="submit" class="btn-cyber btn-blue px-4 py-2 text-sm">VERIFY</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-gray-500 text-center py-6 font-mono">No pending requests.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Admin Management -->
+        <div class="card-cyber border-t-4 border-red-600 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-2 opacity-10 text-6xl text-red-500 font-black pointer-events-none">GOD</div>
+            <h3 class="font-tech text-2xl text-red-500 mb-6 relative z-10">ADMINISTRATOR ACCESS</h3>
+
+            <!-- Create New Admin Form -->
+            <div class="mb-8 p-4 border border-red-900/50 bg-red-900/10 rounded relative z-10">
+                <p class="text-xs text-red-400 font-mono mb-3">PROMOTE USER TO ADMIN</p>
+                <form method="POST" action="{{ url_for('promote_admin') }}" class="flex gap-2">
+                    <input type="text" name="username" placeholder="Enter Username" required class="input-cyber border-red-900">
+                    <button type="submit" class="btn-cyber btn-red w-32">PROMOTE</button>
+                </form>
+            </div>
+
+            <!-- List of Existing Admins -->
+            <div class="relative z-10">
+                <h4 class="text-white font-bold mb-4 font-mono text-sm">ACTIVE ADMINISTRATORS</h4>
+                <div class="space-y-3">
+                    {% for admin in all_admins %}
+                    <div class="flex justify-between items-center bg-black/50 p-3 rounded border border-gray-800">
+                        <span class="text-[#FFD700] font-bold">{{ admin.username }}</span>
+                        
+                        {% if admin.username != 'REUBEN' %}
+                            <!-- Dismantle Button -->
+                            <form method="POST" action="{{ url_for('delete_user', target_user=admin.username) }}" onsubmit="return confirm('Are you sure you want to DISMANTLE this admin?');">
+                                <button type="submit" class="text-red-500 hover:text-red-300 text-sm font-mono border border-red-500 px-3 py-1 rounded hover:bg-red-900/20 transition">
+                                    DISMANTLE
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="text-gray-600 text-xs font-mono border border-gray-800 px-3 py-1 rounded">SUPER ADMIN</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
