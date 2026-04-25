@@ -1,25 +1,44 @@
-Understood. I have removed the `/setup` route and **hardcoded your God Admin credentials** directly into the database initialization.
-
-Here is the full, updated `app.py`.
-
-**Your God Admin Credentials:**
-*   **Username:** `REUBEN`
-*   **Password:** `I LOVE MY MOTHER 20071975OCTDEC`
-
-Just replace your current `app.py` with this code. You do **not** need the `setup.html` file anymore.
-
-### `app.py`
-
-```python
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3
 import os
+from datetime import datetime
+from flask_daraja import Daraja
 from ute import calculate_prestige_split 
 
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
 DB_PATH = "rw_prestige_final.db"
 
+# ==============================
+# DARAJA API CONFIGURATION (M-PESA)
+# ==============================
+# GET THESE FROM https://developer.safaricom.co.ke
+# 1. CONSUMER_KEY
+# 2. CONSUMER_SECRET
+# 3. PASS_KEY (Lipa Na M-Pesa Online Shortcode Password)
+# 4. CallBackURL: This must be a public URL (Use Ngrok for testing) e.g., https://your-app.ngrok.io/mpesa/callback
+# ==============================
+
+CONSUMER_KEY = "YOUR_SAFARICOM_CONSUMER_KEY_HERE"
+CONSUMER_SECRET = "YOUR_SAFARICOM_CONSUMER_SECRET_HERE"
+PASS_KEY = "YOUR_SAFARICOM_PASSKEY_HERE"
+
+# Initialize Daraja
+# Environment: "sandbox" for testing, "production" for real money
+try:
+    daraja = Daraja(
+        consumer_key=CONSUMER_KEY, 
+        consumer_secret=CONSUMER_SECRET, 
+        app_key=PASS_KEY, 
+        environment="sandbox"
+    )
+except Exception as e:
+    print(f"DARAJA WARNING: API keys not set yet. {e}")
+    daraja = None
+
+# ==============================
+# DATABASE INITIALIZATION
+# ==============================
 def force_init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -49,10 +68,7 @@ def force_init_db():
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     
-    # --- HARDCODED GOD ADMIN ---
-    # This creates the Super Admin automatically every time the app starts.
-    # INSERT OR IGNORE ensures it doesn't overwrite if you change it manually, 
-    # but for this system, this locks in the GOD credentials.
+    # --- HARDCODED GOD ADMIN (REUBEN) ---
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
                ('REUBEN', 'I LOVE MY MOTHER 20071975OCTDEC', 'admin'))
     
@@ -78,11 +94,13 @@ def super_admin_required(f):
     def wrap(*args, **kwargs):
         if 'username' not in session: return redirect(url_for('portal'))
         if session['username'] != 'REUBEN': return redirect(url_for('dashboard'))
-        return f(*args, **kwargs}
+        return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
 
-# --- ROUTES ---
+# ==============================
+# WEB ROUTES
+# ==============================
 
 @app.route('/')
 def portal():
@@ -225,37 +243,101 @@ def history():
     transactions = db.execute("SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC", (session['username'], session['username'])).fetchall()
     return render_template('history.html', transactions=transactions)
 
-@app.route('/simulate_payment', methods=['POST'])
+# ==============================
+# M-PESA DARAJA API ROUTES
+# ==============================
+
+@app.route('/mpesa/stkpush', methods=['POST'])
 @login_required
-def simulate_payment():
+def mpesa_stkpush():
+    """
+    Initiates an M-Pesa payment prompt (STK Push).
+    This is what happens when you click 'PAY VIA MPESA' on dashboard.
+    """
+    if not daraja:
+        flash("API ERROR: Safaricom Keys not configured.")
+        return redirect(url_for('dashboard'))
+
+    phone = request.form.get('phone')
     amount = request.form.get('amount')
-    is_first = request.form.get('is_first_month') == 'true'
     
-    if not amount:
-        flash("Error: No input detected.")
-        return redirect(url_for('dashboard'))
-    
+    # Format phone: 07... -> 2547...
+    if phone.startswith('0'):
+        phone = '254' + phone[1:]
+
     try:
-        amount = float(amount)
-    except ValueError:
-        flash("Error: Invalid numerical input.")
-        return redirect(url_for('dashboard'))
+        # Call Daraja
+        # IMPORTANT: callback_url MUST be reachable by Safaricom (Not localhost)
+        response = daraja.stk_push(
+            phone=phone,
+            amount=amount,
+            callback_url="https://your-domain.com/mpesa/callback", # CHANGE THIS
+            account_reference="UTE_JOB_PAYMENT",
+            transaction_desc="Salary Payment via UTE-WEB",
+            transaction_type="CustomerPayBillOnline"
+        )
+        
+        if response.response_code == '0':
+            flash("M-Pesa Prompt Sent to Phone. Enter your PIN to proceed.")
+        else:
+            flash(f"Payment Failed: {response.response_description}")
+            
+    except Exception as e:
+        flash(f"API Connection Error: {str(e)}")
+        
+    return redirect(url_for('dashboard'))
 
-    split = calculate_prestige_split(amount, is_first)
+@app.route('/mpesa/callback', methods=['POST'])
+def mpesa_callback():
+    """
+    This is where Safaricom sends the result after user enters PIN.
+    """
+    data = request.get_json()
     
-    db = get_db()
-    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
-                  VALUES (?, ?, ?, ?)""",
-               (session['username'], 'SYSTEM_TREASURY', split['treasury_total'], 'TREASURY_FEE'))
-    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
-                  VALUES (?, ?, ?, ?)""",
-               ('EMPLOYER_WALLET', session['username'], split['employee_net'], 'PAYMENT'))
-    db.commit()
+    # Parse the nested Safaricom JSON
+    # Structure: Body -> stkCallback
+    body = data.get('Body', {})
+    callback = body.get('stkCallback', {})
+    result_code = callback.get('ResultCode')
     
-    flash(f"Payment Processed: Net {split['employee_net']} | Rebate {split['employer_rebate']} | Treasury {split['treasury_total']}")
-    return redirect(url_for('history'))
+    if result_code == '0': # Success
+        # Extract metadata
+        metadata = callback.get('CallbackMetadata', {})
+        items = metadata.get('Item', [])
+        
+        amount = 0
+        mpesa_receipt = ""
+        phone = ""
+        
+        for item in items:
+            name = item.get('Name')
+            value = item.get('Value')
+            if name == 'Amount':
+                amount = value
+            elif name == 'MpesaReceiptNumber':
+                mpesa_receipt = value
+            elif name == 'PhoneNumber':
+                phone = value
 
-# --- ADMIN ACCESS PANEL ---
+        # --- LOGIC TO PROCESS THE PAYMENT ---
+        # Run the Prestige Math
+        is_first = True # Logic to determine this based on user history could go here
+        split = calculate_prestige_split(amount, is_first)
+        
+        db = get_db()
+        # Log the transaction
+        db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
+                      VALUES (?, ?, ?, ?)""",
+                   (phone, 'SYSTEM_TREASURY', split['treasury_total'], 'MPESA_DEPOSIT'))
+        db.commit()
+        
+        print(f"PAYMENT SUCCESS: KES {amount} from {phone}")
+        
+    return jsonify({"ResultCode": 0, "ResultDesc": "Success"}), 200
+
+# ==============================
+# ADMIN PANEL ROUTES
+# ==============================
 
 @app.route('/admin_chamber')
 @super_admin_required
@@ -283,16 +365,13 @@ def verify_business(user_id):
 def delete_user(target_user):
     db = get_db()
     
-    # SECURITY PROTOCOL: If someone tries to delete 'REUBEN', delete the attacker instead.
     if target_user == 'REUBEN' and session['username'] != 'REUBEN':
         flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED.")
-        # Dismantle the attacker
         db.execute("DELETE FROM users WHERE username=?", (session['username'],))
         db.commit()
         session.clear()
         return redirect(url_for('portal'))
 
-    # Normal deletion
     db.execute("DELETE FROM users WHERE username=?", (target_user,))
     db.commit()
     flash(f"User {target_user} removed from system.")
@@ -310,4 +389,3 @@ def promote_admin():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
-```
