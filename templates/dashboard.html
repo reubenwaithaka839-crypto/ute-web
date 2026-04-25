@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container min-h-screen py-12"> <!-- Extra padding for "Fancy Open Gap" -->
+<div class="container min-h-screen py-12">
     
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-gray-800 pb-8 gap-8">
@@ -21,31 +21,35 @@
         </div>
     </div>
 
-    <!-- CHAMBER SIMULATOR (Big Form) -->
+    <!-- CHAMBER SIMULATOR / M-PESA GATEWAY -->
     <div class="card-cyber mb-16 border-l-4 border-[#00F3FF] shadow-[0_0_20px_rgba(0,243,255,0.1)]">
-        <h3 class="text-3xl font-tech text-[#00F3FF] mb-8 tracking-widest">PRESTIGE SPLIT SIMULATOR</h3>
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-3xl font-tech text-[#00F3FF] tracking-widest">PAYMENT GATEWAY</h3>
+            <i class="fas fa-mobile-alt text-2xl text-gray-600"></i>
+        </div>
         
-        <form method="POST" action="{{ url_for('simulate_payment') }}" class="flex flex-col md:flex-row gap-6 items-end">
+        <form method="POST" action="{{ url_for('mpesa_stkpush') }}" class="flex flex-col md:flex-row gap-6 items-end">
             <div class="flex-1 w-full">
-                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">INJECTION AMOUNT ($)</label>
-                <input type="number" name="amount" placeholder="1000" required step="0.01" class="input-cyber">
+                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">AMOUNT (KES)</label>
+                <input type="number" name="amount" placeholder="Enter Amount" required step="1" class="input-cyber">
             </div>
             
-            <div class="w-full md:w-48">
-                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">CYCLE TYPE</label>
-                <select name="is_first_month" class="input-cyber">
-                    <option value="true">FIRST MONTH (30/10)</option>
-                    <option value="false">SUBSEQUENT (10/2)</option>
-                </select>
+            <div class="w-full md:w-64">
+                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">MPESA PHONE</label>
+                <input type="text" name="phone" placeholder="0712..." required class="input-cyber">
             </div>
 
-            <button type="submit" class="btn-cyber btn-gold w-full md:w-auto px-12">
-                EXECUTE SIMULATION
+            <button type="submit" class="btn-cyber btn-gold w-full md:w-auto px-12 shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_25px_rgba(255,215,0,0.8)]">
+                PAY VIA MPESA
             </button>
         </form>
+        <p class="text-xs text-gray-500 mt-6 font-mono border-t border-gray-800 pt-4">
+            <span class="text-[#00F3FF]">SYSTEM STATUS:</span> API INTEGRATED. <br>
+            You will receive an STK Push prompt on your phone to authorize the transaction.
+        </p>
     </div>
 
-    <!-- VISUAL CHAMBERS (Big Gap) -->
+    <!-- VISUAL CHAMBERS (Stats) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
         <div class="card-cyber text-center border-t-4 border-[#FFD700] hover:transform hover:-translate-y-2 transition duration-300">
             <h4 class="text-gray-400 font-mono text-xs tracking-widest mb-4">EMPLOYEE NET</h4>
@@ -64,7 +68,7 @@
         </div>
     </div>
 
-    <!-- JOB FEED (Open Spacing) -->
+    <!-- JOB FEED -->
     <div class="card-cyber">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-3xl font-tech text-white">ACTIVE MISSIONS</h3>
