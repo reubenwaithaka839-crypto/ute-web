@@ -1,56 +1,60 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card" style="max-width: 500px; margin: 20px auto; border-top: 3px solid var(--primary);">
-    <h2 class="font-tech text-center text-2xl text-[#00F3FF] mb-6">NEW IDENTITY REGISTRATION</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label>USERNAME</label>
-            <input type="text" name="username" required class="bg-black border border-gray-700 text-white">
-        </div>
-        <div class="form-group">
-            <label>EMAIL FREQUENCY</label>
-            <input type="email" name="email" required class="bg-black border border-gray-700 text-white">
-        </div>
-        <div class="form-group">
-            <label>CONTACT NEXUS</label>
-            <input type="text" name="contacts" required class="bg-black border border-gray-700 text-white">
-        </div>
-        <div class="form-group">
-            <label>CLASS (ROLE)</label>
-            <select name="role" id="role-select">
-                <!-- JS will auto-select based on URL param -->
-                <option value="employee">EMPLOYEE</option>
-                <option value="employer">EMPLOYER</option>
-            </select>
-        </div>
-        <div class="form-group" id="biz-reg-group" style="display:none;">
-            <label>BUSINESS REGISTRATION NO</label>
-            <input type="text" name="business_reg_no" class="bg-black border border-gray-700 text-white">
-        </div>
-        <div class="form-group">
-            <label>SET PASSCODE</label>
-            <input type="password" name="password" required class="bg-black border border-gray-700 text-white">
-        </div>
-        <button type="submit" class="btn w-full mt-4 font-tech">INITIALIZE PROFILE</button>
-    </form>
+<div class="flex justify-center items-center min-h-[80vh]">
+    <div class="card-cyber w-full max-w-lg border-t-4 border-[#00F3FF]">
+        <h2 class="font-tech text-3xl text-center text-[#00F3FF] mb-8 tracking-widest">NEW IDENTITY</h2>
+        
+        <form method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-400 mb-2 font-mono text-xs">USERNAME</label>
+                    <input type="text" name="username" required class="input-cyber">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2 font-mono text-xs">EMAIL</label>
+                    <input type="email" name="email" required class="input-cyber">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-400 mb-2 font-mono text-xs">CONTACT NEXUS</label>
+                <input type="text" name="contacts" required class="input-cyber">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-400 mb-2 font-mono text-xs">CLASS (ROLE)</label>
+                <select name="role" id="role-select" class="input-cyber">
+                    <option value="employee">EMPLOYEE</option>
+                    <option value="employer">EMPLOYER</option>
+                </select>
+            </div>
+
+            <div class="mb-4" id="biz-reg-group" style="display:none;">
+                <label class="block text-gray-400 mb-2 font-mono text-xs">BUSINESS REG NO</label>
+                <input type="text" name="business_reg_no" class="input-cyber">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-400 mb-2 font-mono text-xs">SET PASSCODE</label>
+                <input type="password" name="password" required class="input-cyber">
+            </div>
+            
+            <button type="submit" class="btn-cyber btn-blue">
+                INITIALIZE PROFILE
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>
-    // Auto-select role if coming from portal selection
     const urlParams = new URLSearchParams(window.location.search);
     const role = urlParams.get('role');
-    if(role) {
-        document.getElementById('role-select').value = role;
-    }
+    if(role) document.getElementById('role-select').value = role;
 
     document.getElementById('role-select').addEventListener('change', function() {
         const bizGroup = document.getElementById('biz-reg-group');
-        if (this.value === 'employer') {
-            bizGroup.style.display = 'block';
-        } else {
-            bizGroup.style.display = 'none';
-        }
+        bizGroup.style.display = this.value === 'employer' ? 'block' : 'none';
     });
 </script>
 {% endblock %}
