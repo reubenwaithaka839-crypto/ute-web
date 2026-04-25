@@ -7,36 +7,39 @@ from ute import calculate_prestige_split
 
 app = Flask(__name__)
 # --- CONFIGURATION ---
-# Uses Environment Variable on Render, falls back to hardcoded for local
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
 
 # DATABASE PATH
-# Simplified path. If Render provides DB_PATH, uses it. Otherwise uses local file.
+# Uses relative path by default (saves to project folder), or Render env var
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
-# INTASEND API CONFIGURATION
+# --- INTASEND API CONFIGURATION ---
 INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
 # RENDER CONFIGURATION
-# Gets the public URL provided by Render automatically
+# Reads public URL provided by Render automatically
 # Fallback to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
 # --- DATABASE INITIALIZATION (FIXED) ---
 def force_init_db():
-    # FIX: Explicitly declare global at the very top to avoid SyntaxError
-    global DB_PATH
-    
-    # FIX: Use absolute path. If DB_PATH is "rw_prestige_final.db", abspath makes it full path.
-    # If Render sets DB_PATH to "/var/data/...", abspath handles it.
+    # Get absolute path
     db_file = os.path.abspath(DB_PATH)
+    db_dir = os.path.dirname(db_file)
     
-    # Connect (sqlite3 creates the file automatically if it doesn't exist)
+    # Create directory if it doesn't exist (Fix for Render)
+    if not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir)
+            print(f"[SYSTEM] Created database directory: {db_dir}")
+        except Exception as e:
+            print(f"[SYSTEM] Error creating directory: {e}")
+    
+    # Connect and Create Tables
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
         passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
