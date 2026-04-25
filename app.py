@@ -6,14 +6,20 @@ from datetime import datetime
 from ute import calculate_prestige_split 
 
 app = Flask(__name__)
-app.secret_key = "RW_SUPERMAX_SECRET_2026"
-DB_PATH = "rw_prestige_final.db"
+# --- SECRET KEY ---
+# Uses Environment Variable on Render, falls back to hardcoded for local
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
+DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
 # --- INTASEND API CONFIGURATION ---
-# YOUR KEY IS NOW INSERTED BELOW
 INTASEND_API_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
-CALLBACK_URL = "https://your-domain.com/mpesa/callback" # Use Ngrok for local testing
+
+# RENDER CONFIGURATION
+# Gets the public URL provided by Render automatically
+# Fallback to localhost for local testing
+base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
+CALLBACK_URL = f"{base_url}/mpesa/callback"
 
 # --- DATABASE FUNCTIONS ---
 def force_init_db():
@@ -45,7 +51,7 @@ def force_init_db():
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     
-    # HARDODED GOD ADMIN
+    # HARDCODED GOD ADMIN
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
                ('REUBEN', 'I LOVE MY MOTHER 20071975OCTDEC', 'admin'))
     conn.commit()
@@ -248,7 +254,6 @@ def mpesa_stkpush():
         data = response.json()
 
         # Check IntaSend response
-        # IntaSend returns "status": "Success" or "Fail"
         if data.get('status') == 'Success' or data.get('status') == 'Success (Test)':
             flash("M-Pesa Prompt Sent! Check your phone and enter PIN.")
         else:
@@ -270,7 +275,6 @@ def mpesa_callback():
     print("IntaSend Callback Data:", data)
 
     # IntaSend sends status in different ways, checking standard keys
-    # Successful payments usually have 'status': 'success'
     if data.get('status') == 'success' or data.get('status') == 'Success':
         
         # Extract details
@@ -284,7 +288,7 @@ def mpesa_callback():
                    (str(phone), 'SYSTEM_TREASURY', amount, 'MPESA_DEPOSIT'))
         db.commit()
         
-        print(f"Transaction Confirmed: KES {amount} from {phone}")
+        print(f"Transaction Confirmed: KES {amount} from {phone} via Receipt {receipt}")
         
     return jsonify({"ResultCode": 0}), 200
 
@@ -335,4 +339,6 @@ def promote_admin():
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
+    # Render uses port 10000 usually, but we respect env var
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
