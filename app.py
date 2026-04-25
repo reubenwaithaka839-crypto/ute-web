@@ -10,8 +10,8 @@ app.secret_key = "RW_SUPERMAX_SECRET_2026"
 DB_PATH = "rw_prestige_final.db"
 
 # --- INTASEND API CONFIGURATION ---
-# GET YOUR KEY FROM: https://intasend.com/
-INTASEND_API_KEY = "YOUR_INTASEND_API_KEY"
+# YOUR KEY IS NOW INSERTED BELOW
+INTASEND_API_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 CALLBACK_URL = "https://your-domain.com/mpesa/callback" # Use Ngrok for local testing
 
