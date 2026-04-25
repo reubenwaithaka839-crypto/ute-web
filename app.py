@@ -11,40 +11,32 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
 
 # DATABASE PATH
-# Simplified path (saves to project folder on Render/Local)
+# Simplified path. If Render provides DB_PATH, uses it. Otherwise uses local file.
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
-# --- INTASEND API CONFIGURATION ---
-# YOUR SECRET KEY (Corrected from Public Key provided earlier)
+# INTASEND API CONFIGURATION
 INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
-# DYNAMIC CALLBACK URL
-# Reads the URL from Render, defaults to localhost for local testing
+# RENDER CONFIGURATION
+# Gets the public URL provided by Render automatically
+# Fallback to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
-# --- DATABASE INITIALIZATION (FIXED FOR RENDER) ---
+# --- DATABASE INITIALIZATION (FIXED) ---
 def force_init_db():
-    # Get absolute path
+    # FIX: Explicitly declare global at the very top to avoid SyntaxError
+    global DB_PATH
+    
+    # FIX: Use absolute path. If DB_PATH is "rw_prestige_final.db", abspath makes it full path.
+    # If Render sets DB_PATH to "/var/data/...", abspath handles it.
     db_file = os.path.abspath(DB_PATH)
-    db_dir = os.path.dirname(db_file)
     
-    # Create directory if it doesn't exist (Fix for Render)
-    if not os.path.exists(db_dir):
-        try:
-            os.makedirs(db_dir)
-            print(f"[SYSTEM] Created database directory: {db_dir}")
-        except Exception as e:
-            print(f"[SYSTEM] Error creating directory: {e}")
-            # Fallback to current directory if Render path fails
-            global DB_PATH
-            DB_PATH = "rw_prestige_final.db"
-            db_file = DB_PATH
-    
-    # Connect and Create Tables
+    # Connect (sqlite3 creates the file automatically if it doesn't exist)
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
+    
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
         passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
