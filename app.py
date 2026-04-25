@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 import os
-from ute import calculate_prestige_split # Import the math logic
+from ute import calculate_prestige_split 
 
 app = Flask(__name__)
 app.secret_key = "RW_SUPERMAX_SECRET_2026"
@@ -15,7 +15,7 @@ def force_init_db():
         passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
         balance REAL DEFAULT 0.0, location TEXT, bio_or_company TEXT, skills TEXT,
         expected_salary REAL, photo_url TEXT,
-        business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0)""")
+        business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0, kra_pin TEXT)""")
         
     cur.execute("""CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY, title TEXT, description TEXT, salary REAL, 
@@ -35,9 +35,6 @@ def force_init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-
-    # Admin Creation
-    cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
     conn.commit()
     conn.close()
 
@@ -55,11 +52,41 @@ def login_required(f):
     wrap.__name__ = f.__name__
     return wrap
 
+def super_admin_required(f):
+    """Only the main owner (REUBEN) can access this"""
+    def wrap(*args, **kwargs):
+        if 'username' not in session: return redirect(url_for('portal'))
+        if session['username'] != 'REUBEN': return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    wrap.__name__ = f.__name__
+    return wrap
+
 # --- ROUTES ---
 
 @app.route('/')
 def portal():
     return render_template('portal.html')
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup_admin():
+    """First-time setup to create the GOD ADMIN. Locks after creation."""
+    db = get_db()
+    # Check if any admin exists
+    existing_admin = db.execute("SELECT * FROM users WHERE is_admin=1").fetchone()
+    if existing_admin:
+        flash("System already initialized. Use standard login.")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        # Create the God Admin
+        db.execute("INSERT INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
+                   (username, password, 'admin'))
+        db.commit()
+        flash("GOD ADMIN INSTALLED. WELCOME, MASTER.")
+        return redirect(url_for('login'))
+    return render_template('setup.html')
 
 @app.route('/terms', methods=['GET', 'POST'])
 def terms():
@@ -74,12 +101,14 @@ def register():
     if request.method == 'POST':
         try:
             db = get_db()
-            db.execute("INSERT INTO users (username, email, contacts, passcode, role, business_reg_no) VALUES (?,?,?,?,?,?)",
+            db.execute("""INSERT INTO users (username, email, contacts, passcode, role, business_reg_no, kra_pin, equity_acc) 
+                          VALUES (?,?,?,?,?,?,?,?)""",
                        (request.form['username'], request.form['email'], request.form['contacts'], 
-                        request.form['password'], request.form['role'], request.form.get('business_reg_no', '')))
+                        request.form['password'], request.form['role'], request.form.get('business_reg_no', ''),
+                        request.form.get('kra_pin', ''), request.form.get('equity_account', '')))
             db.commit()
             session.pop('terms_accepted', None)
-            flash("Identity Verified. System Access Granted.")
+            flash("Identity Verified. Banking Details Linked.")
             return redirect(url_for('login'))
         except Exception as e:
             flash(f"Registration Error: {str(e)}")
@@ -89,19 +118,15 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        try:
-            db = get_db()
-            user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
-            if user and user['passcode'] == request.form['password']:
-                session['username'] = user['username']
-                session['role'] = user['role']
-                session['is_admin'] = user['is_admin']
-                return redirect(url_for('dashboard'))
-            flash("Access Denied: Invalid Credentials")
-            return redirect(url_for('login'))
-        except Exception as e:
-            flash(f"System Error: {str(e)}")
-            return redirect(url_for('login'))
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
+        if user and user['passcode'] == request.form['password']:
+            session['username'] = user['username']
+            session['role'] = user['role']
+            session['is_admin'] = user['is_admin']
+            return redirect(url_for('dashboard'))
+        flash("Access Denied: Invalid Credentials")
+        return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/logout')
@@ -142,7 +167,7 @@ def profile():
     return render_template('profile.html', user=user)
 
 @app.route('/post_job', methods=['GET', 'POST'])
-@login_required # Simplified decorator for demo
+@login_required
 def post_job():
     if request.method == 'POST':
         db = get_db()
@@ -200,21 +225,9 @@ def history():
     transactions = db.execute("SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC", (session['username'], session['username'])).fetchall()
     return render_template('history.html', transactions=transactions)
 
-@app.route('/admin_chamber')
-@login_required
-def admin_panel():
-    if session.get('username') != 'REUBEN': return "Unauthorized", 403
-    db = get_db()
-    users_count = db.execute("SELECT COUNT(*) as count FROM users").fetchone()['count']
-    pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
-    return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses)
-
-# --- NEW: SIMULATION & MATH ROUTES ---
-
 @app.route('/simulate_payment', methods=['POST'])
 @login_required
 def simulate_payment():
-    """Simulates a payment transaction and runs the Prestige Math."""
     amount = request.form.get('amount')
     is_first = request.form.get('is_first_month') == 'true'
     
@@ -228,10 +241,8 @@ def simulate_payment():
         flash("Error: Invalid numerical input.")
         return redirect(url_for('dashboard'))
 
-    # Run the Math Logic
     split = calculate_prestige_split(amount, is_first)
     
-    # Log to Database (Simulated)
     db = get_db()
     db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
                   VALUES (?, ?, ?, ?)""",
@@ -244,5 +255,58 @@ def simulate_payment():
     flash(f"Payment Processed: Net {split['employee_net']} | Rebate {split['employer_rebate']} | Treasury {split['treasury_total']}")
     return redirect(url_for('history'))
 
+# --- ADMIN ACCESS PANEL ---
+
+@app.route('/admin_chamber')
+@super_admin_required
+def admin_panel():
+    db = get_db()
+    users_count = db.execute("SELECT COUNT(*) as count FROM users").fetchone()['count']
+    pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
+    
+    # Get all admins to manage them
+    all_admins = db.execute("SELECT * FROM users WHERE is_admin=1").fetchall()
+    
+    return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses, all_admins=all_admins)
+
+@app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
+@super_admin_required
+def verify_business(user_id):
+    db = get_db()
+    db.execute("UPDATE users SET is_verified_business=1 WHERE id=?", (user_id,))
+    db.commit()
+    flash("Business Verified.")
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/delete_user/<target_user>', methods=['POST'])
+@super_admin_required
+def delete_user(target_user):
+    db = get_db()
+    
+    # SECURITY PROTOCOL: If someone tries to delete 'REUBEN', delete the attacker instead.
+    if target_user == 'REUBEN' and session['username'] != 'REUBEN':
+        flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED.")
+        # Dismantle the attacker
+        db.execute("DELETE FROM users WHERE username=?", (session['username'],))
+        db.commit()
+        session.clear()
+        return redirect(url_for('portal'))
+
+    # Normal deletion
+    db.execute("DELETE FROM users WHERE username=?", (target_user,))
+    db.commit()
+    flash(f"User {target_user} removed from system.")
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/promote_admin', methods=['POST'])
+@super_admin_required
+def promote_admin():
+    db = get_db()
+    username = request.form['username']
+    db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (username,))
+    db.commit()
+    flash(f"User {username} promoted to Admin.")
+    return redirect(url_for('admin_panel'))
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
