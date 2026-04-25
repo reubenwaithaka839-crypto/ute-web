@@ -6,37 +6,33 @@ from datetime import datetime
 from ute import calculate_prestige_split 
 
 app = Flask(__name__)
+
 # --- CONFIGURATION ---
-# Uses Environment Variable on Render, falls back to hardcoded for local
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
 
-# DATABASE PATH (Global Declaration at Top Level)
-# Simplified path. If Render provides DB_PATH, uses it. Otherwise uses local file.
+# DATABASE PATH
+# Logic:
+# 1. Use Render Environment Variable 'DB_PATH' if set (e.g., pointing to Persistent Disk).
+# 2. Otherwise, use relative path 'rw_prestige_final.db' (saves in project folder).
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
-# --- INTASEND API CONFIGURATION ---
+# INTASEND API CONFIGURATION
 INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
-# DYNAMIC CALLBACK URL
-# Reads the URL provided by Render automatically
+# RENDER CONFIGURATION
+# Gets the public URL provided by Render automatically
 # Fallback to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
 # --- DATABASE INITIALIZATION ---
 def force_init_db():
-    # Get absolute path using the GLOBAL DB_PATH defined above
+    # Use the global DB_PATH defined above
     db_file = os.path.abspath(DB_PATH)
-    db_dir = os.path.dirname(db_file)
     
-    # Create directory if it doesn't exist (Fix for Render)
-    if not os.path.exists(db_dir):
-        try:
-            os.makedirs(db_dir)
-            print(f"[SYSTEM] Created database directory: {db_dir}")
-        except Exception as e:
-            print(f"[SYSTEM] Error creating directory: {e}")
+    # We DO NOT use os.makedirs here to avoid Permission Denied errors on Render.
+    # SQLite3 will automatically create the db file if it doesn't exist in the current directory.
     
     # Connect and Create Tables
     conn = sqlite3.connect(db_file)
