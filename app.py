@@ -6,24 +6,44 @@ from datetime import datetime
 from ute import calculate_prestige_split 
 
 app = Flask(__name__)
-# --- SECRET KEY ---
+# --- CONFIGURATION ---
 # Uses Environment Variable on Render, falls back to hardcoded for local
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
+
+# DATABASE PATH
+# Simplified path (saves to project folder on Render/Local)
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
 # --- INTASEND API CONFIGURATION ---
-INTASEND_API_KEY = "ISPubKey_test_5311493a-867d-4ee0-9985-e97bd72f6f71"
+# YOUR SECRET KEY (Corrected from Public Key provided earlier)
+INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
-# RENDER CONFIGURATION
-# Gets the public URL provided by Render automatically
-# Fallback to localhost for local testing
+# DYNAMIC CALLBACK URL
+# Reads the URL from Render, defaults to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
-# --- DATABASE FUNCTIONS ---
+# --- DATABASE INITIALIZATION (FIXED FOR RENDER) ---
 def force_init_db():
-    conn = sqlite3.connect(DB_PATH)
+    # Get absolute path
+    db_file = os.path.abspath(DB_PATH)
+    db_dir = os.path.dirname(db_file)
+    
+    # Create directory if it doesn't exist (Fix for Render)
+    if not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir)
+            print(f"[SYSTEM] Created database directory: {db_dir}")
+        except Exception as e:
+            print(f"[SYSTEM] Error creating directory: {e}")
+            # Fallback to current directory if Render path fails
+            global DB_PATH
+            DB_PATH = "rw_prestige_final.db"
+            db_file = DB_PATH
+    
+    # Connect and Create Tables
+    conn = sqlite3.connect(db_file)
     cur = conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
@@ -59,8 +79,9 @@ def force_init_db():
 
 force_init_db()
 
+# --- HELPERS ---
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(os.path.abspath(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -288,7 +309,7 @@ def mpesa_callback():
                    (str(phone), 'SYSTEM_TREASURY', amount, 'MPESA_DEPOSIT'))
         db.commit()
         
-        print(f"Transaction Confirmed: KES {amount} from {phone} via Receipt {receipt}")
+        print(f"Transaction Confirmed: KES {amount} from {phone}")
         
     return jsonify({"ResultCode": 0}), 200
 
@@ -339,6 +360,5 @@ def promote_admin():
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
-    # Render uses port 10000 usually, but we respect env var
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
