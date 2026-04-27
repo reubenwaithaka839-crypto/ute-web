@@ -10,7 +10,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
 
 # DATABASE PATH (Simple and Robust)
-# Uses relative path (saves to project folder on Render/Local)
 DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
 
 # --- INTASEND API CONFIGURATION ---
@@ -18,8 +17,6 @@ INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
 INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
 
 # RENDER CONFIGURATION
-# Reads the public URL provided by Render automatically
-# Fallback to localhost for local testing
 base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
 CALLBACK_URL = f"{base_url}/mpesa/callback"
 
@@ -57,9 +54,16 @@ def force_init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+
+    # SECURITY LOGS TABLE
+    # Logs unauthorized attempts to access admin areas
+    cur.execute("""CREATE TABLE IF NOT EXISTS security_logs (
+        id INTEGER PRIMARY KEY, username TEXT, action TEXT, details TEXT, 
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     
     # HARDCODED GOD ADMIN
-    # NOTE: The password is CASE-SENSITIVE and must be entered exactly as written below.
+    # NOTE: The password is CASE-SENSITIVE. 
+    # This user is the only one who can create other admins.
     cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
                ('REUBEN', 'I LOVE MY MOTHER 20071975OCTDEC', 'admin'))
     conn.commit()
@@ -81,9 +85,28 @@ def login_required(f):
     return wrap
 
 def super_admin_required(f):
+    """
+    Restricts access to 'REUBEN' only.
+    Logs the attempt if anyone else tries to access the route.
+    """
     def wrap(*args, **kwargs):
-        if 'username' not in session: return redirect(url_for('portal'))
-        if session['username'] != 'REUBEN': return redirect(url_for('dashboard'))
+        if 'username' not in session: 
+            return redirect(url_for('portal'))
+        
+        if session['username'] != 'REUBEN':
+            # SPY PROTOCOL: Log the unauthorized attempt
+            try:
+                db = get_db()
+                db.execute("INSERT INTO security_logs (username, action, details) VALUES (?, ?, ?)",
+                           (session['username'], 'UNAUTHORIZED_ADMIN_ACCESS', 'Attempted to access Super Admin Chamber'))
+                db.commit()
+                db.close()
+            except:
+                pass # Fail silently if logging fails to avoid alerting the hacker
+            
+            flash("CRITICAL SECURITY ALERT: Your attempt has been logged and reported to REUBEN.")
+            return redirect(url_for('dashboard'))
+            
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
@@ -106,11 +129,19 @@ def register():
     if not session.get('terms_accepted'): return redirect(url_for('terms'))
     if request.method == 'POST':
         try:
+            role_input = request.form.get('role', 'employee')
+            
+            # SECURITY BLOCK: No one can register as 'admin' directly
+            # Only 'employer' or 'employee' allowed during registration
+            if role_input == 'admin':
+                role_input = 'employee' # Force downgrade
+                flash("System Alert: Direct Admin Registration is prohibited. Account created as Employee.")
+
             db = get_db()
             db.execute("""INSERT INTO users (username, email, contacts, passcode, role, business_reg_no, kra_pin, equity_acc) 
                           VALUES (?,?,?,?,?,?,?,?)""",
                        (request.form['username'], request.form['email'], request.form['contacts'], 
-                        request.form['password'], request.form['role'], request.form.get('business_reg_no', ''),
+                        request.form['password'], role_input, request.form.get('business_reg_no', ''),
                         request.form.get('kra_pin', ''), request.form.get('equity_account', '')))
             db.commit()
             session.pop('terms_accepted', None)
@@ -127,7 +158,7 @@ def login():
         try:
             db = get_db()
             user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
-            # COMPARE PASSWORD: Check if user exists AND password matches EXACTLY (Case Sensitive)
+            
             if user and user['passcode'] == request.form['password']:
                 session['username'] = user['username']
                 session['role'] = user['role']
@@ -264,15 +295,12 @@ def mpesa_stkpush():
     }
 
     try:
-        # Send Request to IntaSend
         response = requests.post(INTASEND_URL, json=payload, headers=headers)
         data = response.json()
 
-        # Check IntaSend response
         if data.get('status') == 'Success' or data.get('status') == 'Success (Test)':
             flash("M-Pesa Prompt Sent! Check your phone and enter PIN.")
         else:
-            # Get specific error message
             error_msg = data.get('message', data.get('status', 'Unknown Error'))
             flash(f"Payment Failed: {error_msg}")
             
@@ -285,29 +313,22 @@ def mpesa_stkpush():
 def mpesa_callback():
     """Receives notification from IntaSend when payment is complete."""
     data = request.get_json()
-    
-    # Print to console for debugging
     print("IntaSend Callback Data:", data)
 
-    # IntaSend sends status in different ways, checking standard keys
     if data.get('status') == 'success' or data.get('status') == 'Success':
-        
-        # Extract details
         amount = data.get('amount')
         phone = data.get('phone_number')
         receipt = data.get('transaction_reference')
 
-        # LOG TO DATABASE
         db = get_db()
         db.execute("INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)",
                    (str(phone), 'SYSTEM_TREASURY', amount, 'MPESA_DEPOSIT'))
         db.commit()
-        
         print(f"Transaction Confirmed: KES {amount} from {phone}")
         
     return jsonify({"ResultCode": 0}), 200
 
-# --- ADMIN ROUTES ---
+# --- GOD ADMIN ROUTES ---
 
 @app.route('/admin_chamber')
 @super_admin_required
@@ -316,7 +337,19 @@ def admin_panel():
     users_count = db.execute("SELECT COUNT(*) as count FROM users").fetchone()['count']
     pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
     all_admins = db.execute("SELECT * FROM users WHERE is_admin=1").fetchall()
-    return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses, all_admins=all_admins)
+    
+    # SECURITY LOGS: Show who tried to access admin
+    security_alerts = db.execute("SELECT * FROM security_logs ORDER BY timestamp DESC LIMIT 20").fetchall()
+
+    # List of non-admins available to be promoted
+    potential_admins = db.execute("SELECT * FROM users WHERE is_admin=0 AND username != 'REUBEN'").fetchall()
+    
+    return render_template('admin_pannel.html', 
+                          users_count=users_count, 
+                          pending_businesses=pending_businesses, 
+                          all_admins=all_admins,
+                          security_alerts=security_alerts,
+                          potential_admins=potential_admins)
 
 @app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
 @super_admin_required
@@ -332,25 +365,50 @@ def verify_business(user_id):
 def delete_user(target_user):
     db = get_db()
     if target_user == 'REUBEN' and session['username'] != 'REUBEN':
-        flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED.")
-        db.execute("DELETE FROM users WHERE username=?", (session['username'],))
-        db.commit()
-        session.clear()
-        return redirect(url_for('portal'))
+        # This block is theoretically unreachable due to decorator, but kept for safety
+        flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED.")
+        return redirect(url_for('admin_panel'))
 
     db.execute("DELETE FROM users WHERE username=?", (target_user,))
     db.commit()
     flash(f"User {target_user} removed from system.")
     return redirect(url_for('admin_panel'))
 
-@app.route('/admin/promote_admin', methods=['POST'])
+@app.route('/admin/grant_admin_access', methods=['POST'])
 @super_admin_required
-def promote_admin():
+def grant_admin_access():
+    """
+    REUBEN uses this to manually create a new admin.
+    He selects the user and sets their password manually.
+    """
     db = get_db()
-    username = request.form['username']
-    db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (username,))
+    username = request.form.get('username')
+    new_password = request.form.get('new_password')
+    
+    if username and new_password:
+        db.execute("UPDATE users SET is_admin=1, passcode=?, is_verified_business=1 WHERE username=?",
+                   (new_password, username))
+        db.commit()
+        flash(f"User {username} has been promoted to ADMIN. Password set manually.")
+    else:
+        flash("Error: Username and Password are required.")
+        
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/dismantle_admin/<target_user>', methods=['POST'])
+@super_admin_required
+def dismantle_admin(target_user):
+    """
+    Reuben can remove admin status from a user without deleting their account.
+    """
+    db = get_db()
+    if target_user == 'REUBEN':
+        flash("You cannot dismantle the God Admin.")
+        return redirect(url_for('admin_panel'))
+        
+    db.execute("UPDATE users SET is_admin=0 WHERE username=?", (target_user,))
     db.commit()
-    flash(f"User {username} promoted to Admin.")
+    flash(f"User {target_user} has been stripped of Admin powers.")
     return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
