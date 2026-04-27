@@ -3,160 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RW Prestige - Portal</title>
+    <title>RW Prestige - System Initialization</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
         :root {
-            --bg-dark: #050a14;
-            --accent-cyan: #06b6d4;
-            --accent-green: #10b981;
-            --grid-color: rgba(6, 182, 212, 0.15);
+            --accent-cyan: #00ff41; /* Matrix Green/Cyan */
+            --dark-bg: #000;
         }
 
-        body {
-            background-color: var(--bg-dark);
-            /* HIGH TECH GRID BACKGROUND */
-            background-image: 
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-position: center top;
-            color: #fff;
-            height: 100vh;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif; /* Sci-Fi Font */
+        }
+
+        /* --- THE MATRIX CANVAS BACKGROUND --- */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            opacity: 0.6; /* Slight transparency to make content readable */
+        }
+
+        /* --- INTRO OVERLAY (Click to Start) --- */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 999;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            margin: 0;
+            color: #fff;
+            cursor: pointer;
         }
 
-        /* --- THE RW CIRCLE LOGO (PURE CSS) --- */
-        .logo-container {
+        .blink-text {
+            animation: blink 1.5s infinite;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            border: 2px solid var(--accent-cyan);
+            padding: 20px 40px;
+            font-size: 1.2rem;
+            background: rgba(0, 255, 65, 0.1);
+            transition: all 0.3s;
+        }
+
+        .blink-text:hover {
+            box-shadow: 0 0 30px var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan);
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* --- MAIN CONTENT (Hidden initially) --- */
+        #main-content {
             position: relative;
+            z-index: 10;
+            display: none; /* Hidden until click */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- RW LOGO CIRCLE --- */
+        .logo-container {
             margin-bottom: 2rem;
+            position: relative;
         }
 
         .rw-circle {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border: 4px solid var(--accent-cyan);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
+            font-size: 80px;
             font-weight: 900;
-            color: var(--accent-cyan);
-            background: rgba(6, 182, 212, 0.05);
-            box-shadow: 0 0 30px var(--accent-cyan), inset 0 0 20px var(--accent-cyan);
-            animation: pulse-glow 3s infinite ease-in-out;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 30px var(--accent-cyan), inset 0 0 30px var(--accent-cyan);
+            text-shadow: 0 0 10px #fff;
             position: relative;
             z-index: 2;
+            animation: pulse-ring 3s infinite;
         }
 
-        .rw-circle::after {
+        /* Rotating rings around logo */
+        .rw-circle::before, .rw-circle::after {
             content: '';
             position: absolute;
-            top: -10px; left: -10px; right: -10px; bottom: -10px;
-            border: 2px dashed rgba(6, 182, 212, 0.5);
             border-radius: 50%;
+            border: 1px solid rgba(0, 255, 65, 0.4);
+        }
+
+        .rw-circle::before {
+            top: -20px; left: -20px; right: -20px; bottom: -20px;
+            border-style: dashed;
             animation: spin 10s linear infinite;
         }
 
-        @keyframes pulse-glow {
+        .rw-circle::after {
+            top: -35px; left: -35px; right: -35px; bottom: -35px;
+            border: 2px solid var(--accent-cyan);
+            animation: spin-reverse 15s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+        @keyframes pulse-ring {
             0% { box-shadow: 0 0 20px var(--accent-cyan); }
-            50% { box-shadow: 0 0 50px var(--accent-cyan), inset 0 0 30px var(--accent-cyan); }
+            50% { box-shadow: 0 0 50px var(--accent-cyan); }
             100% { box-shadow: 0 0 20px var(--accent-cyan); }
         }
 
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* --- BUTTON STYLES --- */
-        .btn-cyber-main {
-            background: rgba(6, 182, 212, 0.1);
-            color: var(--accent-cyan);
-            border: 2px solid var(--accent-cyan);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            font-weight: 800;
-            padding: 18px 45px;
-            border-radius: 5px;
-            transition: all 0.4s ease;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
-            display: inline-block;
-            min-width: 220px;
-        }
-
-        .btn-cyber-main:hover {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 50px var(--accent-cyan);
-            transform: translateY(-5px);
-            text-shadow: none;
-        }
-
-        .btn-cyber-sec {
-            background: transparent;
-            border: 2px solid #fff;
+        /* --- TEXT --- */
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
             color: #fff;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 18px 45px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            min-width: 220px;
-        }
-
-        .btn-cyber-sec:hover {
-            background: #fff;
-            color: #000;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 10px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px var(--accent-cyan);
+            margin-bottom: 5px;
         }
 
         .hero-sub {
-            color: #94a3b8;
-            letter-spacing: 4px;
+            color: var(--accent-cyan);
+            letter-spacing: 5px;
+            font-size: 1.2rem;
+            margin-bottom: 50px;
             text-transform: uppercase;
-            margin-bottom: 40px;
         }
+
+        /* --- HIGH TECH BUTTONS --- */
+        .btn-group-tech {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-hightech {
+            background: rgba(0, 20, 0, 0.6);
+            border: 2px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 18px 40px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            min-width: 220px;
+        }
+
+        .btn-hightech:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 40px var(--accent-cyan);
+            transform: scale(1.05);
+        }
+
+        .btn-hightech::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-hightech:hover::before {
+            left: 100%;
+        }
+
+        /* Button 2 variant */
+        .btn-hightech-sec {
+            border-color: #fff;
+            color: #fff;
+        }
+        .btn-hightech-sec:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 40px #fff;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container text-center">
-        <!-- THE RW CIRCLE LOGO -->
+    <!-- THE MATRIX RAIN CANVAS -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- INTRO OVERLAY (Required to trigger Audio Context) -->
+    <div id="intro-overlay" onclick="startSystem()">
+        <h1 class="blink-text">[ CLICK TO INITIALIZE SYSTEM ]</h1>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main-content">
         <div class="logo-container">
             <div class="rw-circle">RW</div>
         </div>
 
-        <h1 class="hero-title">Prestige</h1>
+        <h1 class="hero-title">PRESTIGE</h1>
         <p class="hero-sub">Ultimate Job & Talent Ecosystem</p>
-        
-        <div class="d-flex flex-column flex-md-row gap-4 justify-content-center">
-            <!-- Initialize Account Button -->
-            <a href="/terms" class="btn btn-cyber-main">
+
+        <div class="btn-group-tech">
+            <a href="/terms" class="btn btn-hightech">
                 <i class="fas fa-user-plus me-2"></i> Initialize
             </a>
-            
-            <!-- Login Button -->
-            <a href="/login" class="btn btn-cyber-sec">
-                <i class="fas fa-sign-in-alt me-2"></i> Access
+            <a href="/login" class="btn btn-hightech btn-hightech-sec">
+                <i class="fas fa-fingerprint me-2"></i> Access
             </a>
         </div>
     </div>
 
+    <script>
+        // --- 1. SYSTEM START & AUDIO ---
+        function startSystem() {
+            // Play Sci-Fi Beeb Sound
+            playSystemSound();
+
+            // Hide Overlay
+            const overlay = document.getElementById('intro-overlay');
+            overlay.style.transition = 'opacity 1s';
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.getElementById('main-content').style.display = 'flex';
+            }, 1000);
+
+            // Start Matrix Animation
+            initMatrix();
+        }
+
+        function playSystemSound() {
+            // Web Audio API for high-tech sound generation (No external files needed)
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = 'sawtooth'; // Sci-fi buzz
+            osc.frequency.setValueAtTime(110, ctx.currentTime); // Low start
+            osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5); // Pitch up
+            
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5); // Fade out
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 1.5);
+        }
+
+        // --- 2. MATRIX RAIN ANIMATION ---
+        function initMatrix() {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Fullscreen
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Characters (Numbers + Katakana)
+            const chars = '0123456789ABCDEFﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ';
+            const fontSize = 16;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+
+            // Initialize drops
+            for (let x = 0; x < columns; x++) {
+                drops[x] = 1; 
+            }
+
+            function draw() {
+                // Translucent black background creates the "trail" effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#00FF41'; // Matrix Green
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    // Randomly reset drop to top or let it continue
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+
+            // Slow Motion Effect: 35ms interval (Standard is 16ms)
+            setInterval(draw, 35);
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+    </script>
 </body>
 </html>
