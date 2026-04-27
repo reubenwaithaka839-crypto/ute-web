@@ -36,8 +36,8 @@ def force_init_db():
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
 
-    # Admin Creation
-    cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
+    # Updated Admin Creation with new passcode: 112008
+    cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', '112008', 'admin', 1, 1)")
     conn.commit()
     conn.close()
 
@@ -142,7 +142,7 @@ def profile():
     return render_template('profile.html', user=user)
 
 @app.route('/post_job', methods=['GET', 'POST'])
-@login_required # Simplified decorator for demo
+@login_required 
 def post_job():
     if request.method == 'POST':
         db = get_db()
@@ -209,7 +209,7 @@ def admin_panel():
     pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
     return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses)
 
-# --- NEW: SIMULATION & MATH ROUTES ---
+# --- SIMULATION & MATH ROUTES ---
 
 @app.route('/simulate_payment', methods=['POST'])
 @login_required
