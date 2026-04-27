@@ -1,60 +1,132 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #050a14;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Segoe UI', sans-serif;
+            padding-top: 50px;
+            padding-bottom: 50px;
+        }
+        .reg-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .form-control {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+        .form-control:focus {
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+        .form-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        .btn-cyber {
+            width: 100%;
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            padding: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        .btn-cyber:hover {
+            background: var(--accent-green);
+            color: #000;
+            box-shadow: 0 0 30px var(--accent-green);
+        }
+        .section-title {
+            color: var(--accent-cyan);
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
 
-{% block content %}
-<div class="flex justify-center items-center min-h-[80vh]">
-    <div class="card-cyber w-full max-w-lg border-t-4 border-[#00F3FF]">
-        <h2 class="font-tech text-3xl text-center text-[#00F3FF] mb-8 tracking-widest">NEW IDENTITY</h2>
-        
-        <form method="POST">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-gray-400 mb-2 font-mono text-xs">USERNAME</label>
-                    <input type="text" name="username" required class="input-cyber">
-                </div>
-                <div>
-                    <label class="block text-gray-400 mb-2 font-mono text-xs">EMAIL</label>
-                    <input type="email" name="email" required class="input-cyber">
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-gray-400 mb-2 font-mono text-xs">CONTACT NEXUS</label>
-                <input type="text" name="contacts" required class="input-cyber">
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-gray-400 mb-2 font-mono text-xs">CLASS (ROLE)</label>
-                <select name="role" id="role-select" class="input-cyber">
-                    <option value="employee">EMPLOYEE</option>
-                    <option value="employer">EMPLOYER</option>
-                </select>
-            </div>
-
-            <div class="mb-4" id="biz-reg-group" style="display:none;">
-                <label class="block text-gray-400 mb-2 font-mono text-xs">BUSINESS REG NO</label>
-                <input type="text" name="business_reg_no" class="input-cyber">
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-gray-400 mb-2 font-mono text-xs">SET PASSCODE</label>
-                <input type="password" name="password" required class="input-cyber">
-            </div>
+    <div class="container">
+        <div class="reg-container">
+            <h2 class="text-center mb-4" style="color: #fff;">New Identity Registration</h2>
             
-            <button type="submit" class="btn-cyber btn-blue">
-                INITIALIZE PROFILE
-            </button>
-        </form>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-danger">{{ messages[0] }}</div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <h5 class="section-title">Basic Data</h5>
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Role Assignment</label>
+                    <select name="role" class="form-control">
+                        <option value="employee">Employee (Seeker)</option>
+                        <option value="employer">Employer (Poster)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Passcode</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email Contact</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phone Contacts</label>
+                    <input type="text" name="contacts" class="form-control" required>
+                </div>
+
+                <h5 class="section-title">Business Details (Optional)</h5>
+                <div class="mb-3">
+                    <label class="form-label">Business Reg No</label>
+                    <input type="text" name="business_reg_no" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">KRA PIN</label>
+                    <input type="text" name="kra_pin" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Equity Account No</label>
+                    <input type="text" name="equity_account" class="form-control">
+                </div>
+
+                <button type="submit" class="btn btn-cyber">Complete Registration</button>
+            </form>
+            <div class="text-center mt-3">
+                <a href="/" style="color: #64748b; text-decoration: none;">Cancel Protocol</a>
+            </div>
+        </div>
     </div>
-</div>
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const role = urlParams.get('role');
-    if(role) document.getElementById('role-select').value = role;
-
-    document.getElementById('role-select').addEventListener('change', function() {
-        const bizGroup = document.getElementById('biz-reg-group');
-        bizGroup.style.display = this.value === 'employer' ? 'block' : 'none';
-    });
-</script>
-{% endblock %}
+</body>
+</html>
