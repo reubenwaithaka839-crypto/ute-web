@@ -1,30 +1,101 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="flex justify-center items-center min-h-[80vh]">
-    <div class="card-cyber w-full max-w-md border-t-4 border-[#FFD700]">
-        <h2 class="font-tech text-3xl text-center text-[#FFD700] mb-8 tracking-widest">SYSTEM LOGIN</h2>
-        
-        <form method="POST">
-            <div class="mb-6">
-                <label class="block text-gray-400 mb-2 font-mono text-sm">USERNAME</label>
-                <input type="text" name="username" required autocomplete="off" class="input-cyber">
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Access</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #050a14;
+            --accent-cyan: #06b6d4;
+        }
+        body {
+            background-color: var(--bg-dark);
+            background: radial-gradient(circle at top right, #1e293b, #000);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .login-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 450px;
+        }
+        .form-control {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            margin-bottom: 20px;
+            padding: 12px;
+        }
+        .form-control:focus {
+            background: #1e293b;
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+        .btn-cyber {
+            width: 100%;
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+        .btn-cyber:hover {
+            background: #22d3ee;
+            box-shadow: 0 0 30px var(--accent-cyan);
+        }
+        .link-glow {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .link-glow:hover {
+            color: #fff;
+            text-shadow: 0 0 10px var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="container d-flex justify-content-center">
+        <div class="login-card text-center">
+            <h2 class="mb-4" style="color:var(--accent-cyan); font-weight:bold; letter-spacing: 1px;">SYSTEM ACCESS</h2>
             
-            <div class="mb-8">
-                <label class="block text-gray-400 mb-2 font-mono text-sm">PASSCODE</label>
-                <input type="password" name="password" required class="input-cyber">
-            </div>
-            
-            <button type="submit" class="btn-cyber btn-gold">
-                AUTHENTICATE
-            </button>
-        </form>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger mb-3" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.2); color: #fca5a5;">
+                            <i class="fas fa-exclamation-circle"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-        <p class="text-center mt-6 text-sm font-mono">
-            <span class="text-gray-500">New to the matrix?</span> 
-            <a href="{{ url_for('register') }}" class="text-[#00F3FF] hover:underline ml-2">INITIALIZE ID</a>
-        </p>
+            <form method="POST">
+                <input type="text" name="username" class="form-control" placeholder="Username" required>
+                <input type="password" name="password" class="form-control" placeholder="Passcode" required>
+                <button type="submit" class="btn btn-cyber">Log In</button>
+            </form>
+            
+            <div class="mt-4">
+                <p>New Entity? <a href="/terms" class="link-glow">Initialize Protocol (Register)</a></p>
+                <a href="/" class="link-glow"><i class="fas fa-arrow-left"></i> Return to Portal</a>
+            </div>
+        </div>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
