@@ -1,122 +1,749 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RW Prestige System - Deployment Update</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --danger: #ef4444;
+            --success: #22c55e;
+            --code-bg: #0d1117;
+            --border: #334155;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
 
-{% block content %}
-<div class="container min-h-screen py-12">
-    
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-gray-800 pb-8 gap-8">
-        <div>
-            <h2 class="text-5xl font-tech font-bold text-white mb-4">COMMAND CENTER</h2>
-            <p class="text-gray-400 font-mono text-sm">USER: <span class="text-[#FFD700]">{{ user.username }}</span></p>
-        </div>
-        
-        <div class="text-right mt-4 md:mt-0">
-            <div class="flex items-center justify-end gap-2 text-gray-400 font-mono text-xs mb-1">
-                <i class="fas fa-university text-[#FFD700]"></i> LINKED BANK
-            </div>
-            <p class="text-2xl font-tech text-white tracking-widest">
-                EQUITY BANK: ****{{ user.equity_acc[-4:] }}
-            </p>
-            <p class="text-xs text-green-500 font-mono mt-1">VERIFIED STATUS: ACTIVE</p>
-        </div>
-    </div>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    <!-- CHAMBER SIMULATOR / M-PESA GATEWAY -->
-    <div class="card-cyber mb-16 border-l-4 border-[#00F3FF] shadow-[0_0_20px_rgba(0,243,255,0.1)]">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-3xl font-tech text-[#00F3FF] tracking-widest">PAYMENT GATEWAY</h3>
-            <i class="fas fa-mobile-alt text-2xl text-gray-600"></i>
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Layout --- */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* --- Dashboard Grid --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media(min-width: 900px) {
+            .dashboard-grid {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+
+        /* --- Panels --- */
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .panel h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        /* --- Change List --- */
+        .change-list {
+            list-style: none;
+        }
+
+        .change-list li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .change-list li::before {
+            content: "›";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-family: var(--font-mono);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* --- Code Viewer --- */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--bg-primary);
+            background: var(--accent);
+        }
+
+        .code-container {
+            position: relative;
+            background: var(--code-bg);
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-top: none;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #161b22;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .copy-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        pre {
+            margin: 0;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #e6edf3;
+        }
+
+        /* Syntax Highlighting (Simple) */
+        .kw { color: #ff7b72; } /* Keyword */
+        .str { color: #a5d6ff; } /* String */
+        .com { color: #8b949e; font-style: italic; } /* Comment */
+        .num { color: #79c0ff; } /* Number */
+        .func { color: #d2a8ff; } /* Function */
+
+        /* --- Notification Toast --- */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--bg-secondary);
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* Hide sections initially */
+        .code-section {
+            display: none;
+        }
+        .code-section.active {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <!-- Icon: Shield Check -->
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            RW Prestige System
         </div>
-        
-        <form method="POST" action="{{ url_for('mpesa_stkpush') }}" class="flex flex-col md:flex-row gap-6 items-end">
-            <div class="flex-1 w-full">
-                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">AMOUNT (KES)</label>
-                <input type="number" name="amount" placeholder="Enter Amount" required step="1" class="input-cyber">
-            </div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">Deployment Update</div>
+    </header>
+
+    <main>
+        <div class="dashboard-grid">
             
-            <div class="w-full md:w-64">
-                <label class="block text-gray-400 mb-3 font-mono text-xs tracking-widest">MPESA PHONE</label>
-                <input type="text" name="phone" placeholder="0712..." required class="input-cyber">
-            </div>
-
-            <button type="submit" class="btn-cyber btn-gold w-full md:w-auto px-12 shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_25px_rgba(255,215,0,0.8)]">
-                PAY VIA MPESA
-            </button>
-        </form>
-        <p class="text-xs text-gray-500 mt-6 font-mono border-t border-gray-800 pt-4">
-            <span class="text-[#00F3FF]">SYSTEM STATUS:</span> API INTEGRATED. <br>
-            You will receive an STK Push prompt on your phone to authorize the transaction.
-        </p>
-    </div>
-
-    <!-- VISUAL CHAMBERS (Stats) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
-        <div class="card-cyber text-center border-t-4 border-[#FFD700] hover:transform hover:-translate-y-2 transition duration-300">
-            <h4 class="text-gray-400 font-mono text-xs tracking-widest mb-4">EMPLOYEE NET</h4>
-            <div class="text-5xl font-tech text-[#FFD700] my-6 font-bold">~70-90%</div>
-            <p class="text-sm text-gray-500 font-mono">Direct Deposit</p>
-        </div>
-        <div class="card-cyber text-center border-t-4 border-[#00F3FF] hover:transform hover:-translate-y-2 transition duration-300">
-            <h4 class="text-gray-400 font-mono text-xs tracking-widest mb-4">REBATE FUND</h4>
-            <div class="text-5xl font-tech text-[#00F3FF] my-6 font-bold">~2-10%</div>
-            <p class="text-sm text-gray-500 font-mono">Employer Return</p>
-        </div>
-        <div class="card-cyber text-center border-t-4 border-red-500 hover:transform hover:-translate-y-2 transition duration-300">
-            <h4 class="text-gray-400 font-mono text-xs tracking-widest mb-4">TREASURY</h4>
-            <div class="text-5xl font-tech text-red-500 my-6 font-bold">~20-8% + Fees</div>
-            <p class="text-sm text-gray-500 font-mono">System Maintenance</p>
-        </div>
-    </div>
-
-    <!-- JOB FEED -->
-    <div class="card-cyber">
-        <div class="flex justify-between items-center mb-8">
-            <h3 class="text-3xl font-tech text-white">ACTIVE MISSIONS</h3>
-        </div>
-        
-        <div class="mb-8">
-            <form action="{{ url_for('dashboard') }}" method="GET" class="flex gap-4">
-                <input type="text" name="q" placeholder="Search Database..." value="{{ q }}" class="input-cyber">
-                <button type="submit" class="btn-cyber btn-blue w-48">SCAN</button>
-            </form>
-        </div>
-
-        {% if jobs %}
-            <div class="space-y-6">
-                {% for job in jobs %}
-                <div class="bg-black/40 border border-gray-800 p-8 hover:border-[#FFD700] transition duration-300 flex flex-col md:flex-row justify-between items-center gap-6 rounded-lg">
-                    <div class="flex-1">
-                        <h4 class="text-2xl font-bold text-white mb-2">{{ job.title }}</h4>
-                        <div class="flex gap-6 text-sm text-gray-400 mt-1 font-mono">
-                            <span><i class="fas fa-user mr-2 text-[#FFD700]"></i>{{ job.poster }}</span>
-                            <span><i class="fas fa-map-marker-alt mr-2 text-[#FFD700]"></i>{{ job.location }}</span>
-                        </div>
-                        <div class="mt-3 text-xl text-[#FFD700] font-mono">SALARY: KES {{ job.salary }}</div>
-                    </div>
-                    
-                    {% if session.role == 'employee' %}
-                        <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-cyber btn-blue w-full md:w-56 text-center">
-                            APPLY NOW
-                        </a>
-                    {% else %}
-                        <span class="text-gray-600 font-mono text-xs border border-gray-800 px-6 py-3 uppercase tracking-widest">Restricted</span>
-                    {% endif %}
+            <!-- Sidebar: Updates & Info -->
+            <aside>
+                <div class="panel">
+                    <h2>System Updates</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
+                        The following critical changes have been applied to <code>app.py</code> to resolve deployment issues and update administrative access.
+                    </p>
+                    <ul class="change-list">
+                        <li>
+                            Admin Username changed to <span class="highlight">RW</span>
+                        </li>
+                        <li>
+                            Admin Password updated to <span class="highlight">112008</span>
+                        </li>
+                        <li>
+                            Authorization logic (decorators) updated to recognize new credentials.
+                        </li>
+                        <li>
+                            Hardcoded checks in <code>delete_user</code> route corrected.
+                        </li>
+                    </ul>
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-16 text-gray-500 font-mono text-lg tracking-widest border border-dashed border-gray-800 rounded">No active signals found in database.</div>
-        {% endif %}
-    </div>
 
-    <!-- FOOTER ACTIONS -->
-    <div class="flex flex-col md:flex-row justify-center gap-8 mt-16">
-        <a href="{{ url_for('post_job') }}" class="btn-cyber btn-blue">POST NEW MISSION</a>
-        <a href="{{ url_for('history') }}" class="btn-cyber btn-gold">VIEW LEDGER</a>
-        {% if session.is_admin %}
-            <a href="{{ url_for('admin_panel') }}" class="btn-cyber btn-red">ADMIN CHAMBER</a>
-        {% endif %}
-    </div>
+                <div class="panel" style="margin-top: 1.5rem;">
+                    <h2>Instructions</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        1. Copy the content of <code>requirements.txt</code>.<br><br>
+                        2. Copy the content of <code>app.py</code>.<br><br>
+                        3. Overwrite existing files in your Render/Local environment.<br><br>
+                        4. Redeploy the application.
+                    </p>
+                </div>
+            </aside>
 
-</div>
-{% endblock %}
+            <!-- Main: Code Viewer -->
+            <section>
+                <div class="panel" style="padding: 0; overflow: hidden;">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('app')">app.py</button>
+                        <button class="tab-btn" onclick="switchTab('req')">requirements.txt</button>
+                    </div>
+
+                    <!-- APP.PY SECTION -->
+                    <div id="section-app" class="code-section active">
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Python Application Logic</span>
+                                <button class="copy-btn" onclick="copyCode('code-app')">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre id="code-app">
+<span class="kw">from</span> flask <span class="kw">import</span> Flask, render_template, request, redirect, url_for, session, flash, jsonify
+<span class="kw">import</span> sqlite3
+<span class="kw">import</span> os
+<span class="kw">import</span> requests
+<span class="com"># Note: Ensure ute.py exists in your directory</span>
+<span class="kw">from</span> ute <span class="kw">import</span> calculate_prestige_split 
+
+app = Flask(__name__)
+
+<span class="com"># --- CONFIGURATION ---</span>
+<span class="com"># Uses Environment Variable on Render, falls back to hardcoded for local</span>
+app.secret_key = os.environ.get(<span class="str">"FLASK_SECRET_KEY"</span>, <span class="str">"RW_SUPERMAX_SECRET_2026"</span>)
+
+<span class="com"># DATABASE PATH (Simple and Robust)</span>
+<span class="com"># Uses relative path (saves to project folder on Render/Local)</span>
+DB_PATH = os.environ.get(<span class="str">"DB_PATH"</span>, <span class="str">"rw_prestige_final.db"</span>)
+
+<span class="com"># --- INTASEND API CONFIGURATION ---</span>
+INTASEND_API_KEY = <span class="str">"ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"</span>
+INTASEND_URL = <span class="str">"https://api.intasend.com/api/v1/payment-request/"</span>
+
+<span class="com"># RENDER CONFIGURATION</span>
+<span class="com"># Reads the public URL provided by Render automatically</span>
+<span class="com"># Fallback to localhost for local testing</span>
+base_url = os.environ.get(<span class="str">"RENDER_EXTERNAL_URL"</span>, <span class="str">"http://127.0.0.1:5000"</span>)
+CALLBACK_URL = f<span class="str">"{base_url}/mpesa/callback"</span>
+
+<span class="com"># --- DATABASE INITIALIZATION ---</span>
+<span class="kw">def</span> <span class="func">force_init_db</span>():
+    <span class="com"># Get absolute path</span>
+    db_file = os.path.abspath(DB_PATH)
+    
+    <span class="com"># Connect and Create Tables</span>
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    
+    cur.execute(<span class="str">"""CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
+        passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
+        balance REAL DEFAULT 0.0, location TEXT, bio_or_company TEXT, skills TEXT,
+        expected_salary REAL, photo_url TEXT,
+        business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0, kra_pin TEXT)"""</span>)
+        
+    cur.execute(<span class="str">"""CREATE TABLE IF NOT EXISTS jobs (
+        id INTEGER PRIMARY KEY, title TEXT, description TEXT, salary REAL, 
+        poster TEXT, status TEXT DEFAULT 'active',
+        location TEXT, skills_required TEXT, deadline TEXT, job_contacts TEXT)"""</span>)
+        
+    cur.execute(<span class="str">"""CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY, room_id TEXT, sender TEXT, text TEXT, 
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"""</span>)
+        
+    cur.execute(<span class="str">"""CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY, job_id INTEGER, applicant_username TEXT,
+        full_name TEXT, age INTEGER, gender TEXT, phone TEXT, email TEXT,
+        photo_url TEXT, skills TEXT, documents_url TEXT, status TEXT DEFAULT 'Pending',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"""</span>)
+        
+    cur.execute(<span class="str">"""CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
+        type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)"""</span>)
+    
+    <span class="com"># HARDCODED GOD ADMIN - UPDATED CREDENTIALS</span>
+    <span class="com"># Username: RW | Password: 112008</span>
+    cur.execute(<span class="str">"INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)"</span>,
+               (<span class="str">'RW'</span>, <span class="str">'112008'</span>, <span class="str">'admin'</span>))
+    conn.commit()
+    conn.close()
+
+force_init_db()
+
+<span class="com"># --- HELPERS ---</span>
+<span class="kw">def</span> <span class="func">get_db</span>():
+    conn = sqlite3.connect(os.path.abspath(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    <span class="kw">return</span> conn
+
+<span class="kw">def</span> <span class="func">login_required</span>(f):
+    <span class="kw">def</span> wrap(*args, **kwargs):
+        <span class="kw">if</span> <span class="str">'username'</span> <span class="kw">not in</span> session: <span class="kw">return</span> redirect(url_for(<span class="str">'portal'</span>))
+        <span class="kw">return</span> f(*args, **kwargs)
+    wrap.__name__ = f.__name__
+    <span class="kw">return</span> wrap
+
+<span class="kw">def</span> <span class="func">super_admin_required</span>(f):
+    <span class="kw">def</span> wrap(*args, **kwargs):
+        <span class="kw">if</span> <span class="str">'username'</span> <span class="kw">not in</span> session: <span class="kw">return</span> redirect(url_for(<span class="str">'portal'</span>))
+        <span class="com"># Updated check to match new Admin Username 'RW'</span>
+        <span class="kw">if</span> session[<span class="str">'username'</span>] != <span class="str">'RW'</span>: <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+        <span class="kw">return</span> f(*args, **kwargs)
+    wrap.__name__ = f.__name__
+    <span class="kw">return</span> wrap
+
+<span class="com"># --- ROUTES ---</span>
+
+@app.route(<span class="str">'/'</span>)
+<span class="kw">def</span> <span class="func">portal</span>():
+    <span class="kw">return</span> render_template(<span class="str">'portal.html'</span>)
+
+@app.route(<span class="str">'/terms'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="func">terms</span>():
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        session[<span class="str">'terms_accepted'</span>] = <span class="kw">True</span>
+        <span class="kw">return</span> redirect(url_for(<span class="str">'register'</span>))
+    <span class="kw">return</span> render_template(<span class="str">'terms.html'</span>)
+
+@app.route(<span class="str">'/register'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="func">register</span>():
+    <span class="kw">if not</span> session.get(<span class="str">'terms_accepted'</span>): <span class="kw">return</span> redirect(url_for(<span class="str">'terms'</span>))
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        <span class="kw">try</span>:
+            db = get_db()
+            db.execute(<span class="str">"""INSERT INTO users (username, email, contacts, passcode, role, business_reg_no, kra_pin, equity_acc) 
+                          VALUES (?,?,?,?,?,?,?,?)"""</span>,
+                       (request.form[<span class="str">'username'</span>], request.form[<span class="str">'email'</span>], request.form[<span class="str">'contacts'</span>], 
+                        request.form[<span class="str">'password'</span>], request.form[<span class="str">'role'</span>], request.form.get(<span class="str">'business_reg_no'</span>, <span class="str">''</span>),
+                        request.form.get(<span class="str">'kra_pin'</span>, <span class="str">''</span>), request.form.get(<span class="str">'equity_account'</span>, <span class="str">''</span>)))
+            db.commit()
+            session.pop(<span class="str">'terms_accepted'</span>, <span class="kw">None</span>)
+            flash(<span class="str">"Identity Verified. System Access Granted."</span>)
+            <span class="kw">return</span> redirect(url_for(<span class="str">'login'</span>))
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            flash(<span class="str">f"Registration Error: {str(e)}"</span>)
+            <span class="kw">return</span> redirect(url_for(<span class="str">'register'</span>))
+    <span class="kw">return</span> render_template(<span class="str">'register.html'</span>)
+
+@app.route(<span class="str">'/login'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="func">login</span>():
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        <span class="kw">try</span>:
+            db = get_db()
+            user = db.execute(<span class="str">"SELECT * FROM users WHERE username=?"</span>, (request.form[<span class="str">'username'</span>],)).fetchone()
+            <span class="com"># COMPARE PASSWORD: Check if user exists AND password matches EXACTLY (Case Sensitive)</span>
+            <span class="kw">if</span> user <span class="kw">and</span> user[<span class="str">'passcode'</span>] == request.form[<span class="str">'password'</span>]:
+                session[<span class="str">'username'</span>] = user[<span class="str">'username'</span>]
+                session[<span class="str">'role'</span>] = user[<span class="str">'role'</span>]
+                session[<span class="str">'is_admin'</span>] = user[<span class="str">'is_admin'</span>]
+                <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+            
+            flash(<span class="str">"Access Denied: Invalid Credentials"</span>)
+            <span class="kw">return</span> redirect(url_for(<span class="str">'login'</span>))
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            flash(<span class="str">f"System Error: {str(e)}"</span>)
+            <span class="kw">return</span> redirect(url_for(<span class="str">'login'</span>))
+    <span class="kw">return</span> render_template(<span class="str">'login.html'</span>)
+
+@app.route(<span class="str">'/logout'</span>)
+<span class="kw">def</span> <span class="func">logout</span>():
+    session.clear()
+    <span class="kw">return</span> redirect(url_for(<span class="str">'portal'</span>))
+
+@app.route(<span class="str">'/dashboard'</span>)
+@login_required
+<span class="kw">def</span> <span class="func">dashboard</span>():
+    db = get_db()
+    search_query = request.args.get(<span class="str">'q'</span>, <span class="str">''</span>)
+    <span class="kw">if</span> search_query:
+        jobs = db.execute(<span class="str">"SELECT * FROM jobs WHERE status='active' AND (title LIKE ? OR skills_required LIKE ?)"</span>, (<span class="str">'%'</span>+search_query+<span class="str">'%'</span>, <span class="str">'%'</span>+search_query+<span class="str">'%'</span>)).fetchall()
+    <span class="kw">else</span>:
+        jobs = db.execute(<span class="str">"SELECT * FROM jobs WHERE status='active'"</span>).fetchall()
+    user = db.execute(<span class="str">"SELECT * FROM users WHERE username=?"</span>, (session[<span class="str">'username'</span>],)).fetchone()
+    <span class="kw">return</span> render_template(<span class="str">'dashboard.html'</span>, jobs=jobs, user=user, q=search_query)
+
+@app.route(<span class="str">'/jobs'</span>)
+@login_required
+<span class="kw">def</span> <span class="func">jobs</span>():
+    db = get_db()
+    jobs = db.execute(<span class="str">"SELECT * FROM jobs WHERE status='active'"</span>).fetchall()
+    <span class="kw">return</span> render_template(<span class="str">'jobs.html'</span>, jobs=jobs)
+
+@app.route(<span class="str">'/profile'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+@login_required
+<span class="kw">def</span> <span class="func">profile</span>():
+    db = get_db()
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        db.execute(<span class="str">"UPDATE users SET location=?, bio_or_company=? WHERE username=?"</span>,
+                   (request.form[<span class="str">'location'</span>], request.form[<span class="str">'bio_or_company'</span>], session[<span class="str">'username'</span>]))
+        db.commit()
+        flash(<span class="str">"Profile Data Updated."</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="str">'profile'</span>))
+    user = db.execute(<span class="str">"SELECT * FROM users WHERE username=?"</span>, (session[<span class="str">'username'</span>],)).fetchone()
+    <span class="kw">return</span> render_template(<span class="str">'profile.html'</span>, user=user)
+
+@app.route(<span class="str">'/post_job'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+@login_required
+<span class="kw">def</span> <span class="func">post_job</span>():
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        db = get_db()
+        db.execute(<span class="str">"""INSERT INTO jobs (title, description, salary, poster, location, skills_required, deadline, job_contacts) 
+                      VALUES (?,?,?,?,?,?,?,?)"""</span>,
+                   (request.form[<span class="str">'title'</span>], request.form.get(<span class="str">'description'</span>, <span class="str">''</span>), request.form[<span class="str">'salary'</span>], session[<span class="str">'username'</span>],
+                    request.form.get(<span class="str">'location'</span>, <span class="str">''</span>), request.form.get(<span class="str">'skills_required'</span>, <span class="str">''</span>), 
+                    request.form.get(<span class="str">'deadline'</span>, <span class="str">''</span>), request.form.get(<span class="str">'job_contacts'</span>, <span class="str">''</span>)))
+        db.commit()
+        flash(<span class="str">"Protocol Broadcast: Job listed on Matrix."</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+    <span class="kw">return</span> render_template(<span class="str">'post_job.html'</span>)
+
+@app.route(<span class="str">'/apply/&lt;int:job_id&gt;'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+@login_required
+<span class="kw">def</span> <span class="func">apply_job</span>(job_id):
+    <span class="kw">if</span> session.get(<span class="str">'role'</span>) != <span class="str">'employee'</span>: 
+        flash(<span class="str">"Restricted to Employee Class."</span>)
+        <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+    db = get_db()
+    job = db.execute(<span class="str">"SELECT * FROM jobs WHERE id=?"</span>, (job_id,)).fetchone()
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        db.execute(<span class="str">"""INSERT INTO applications (job_id, applicant_username, full_name, age, gender, phone, email, photo_url, skills, documents_url) 
+                      VALUES (?,?,?,?,?,?,?,?,?,?)"""</span>,
+                   (job_id, session[<span class="str">'username'</span>], request.form[<span class="str">'full_name'</span>], request.form[<span class="str">'age'</span>],
+                    request.form.get(<span class="str">'gender'</span>), request.form[<span class="str">'phone'</span>], request.form[<span class="str">'email'</span>],
+                    request.form.get(<span class="str">'photo_url'</span>), request.form[<span class="str">'skills'</span>], request.form.get(<span class="str">'documents_url'</span>)))
+        db.commit()
+        db.execute(<span class="str">"UPDATE users SET skills=? WHERE username=?"</span>, (request.form[<span class="str">'skills'</span>], session[<span class="str">'username'</span>]))
+        db.commit()
+        <span class="kw">return</span> redirect(url_for(<span class="str">'apply_success'</span>))
+    <span class="kw">return</span> render_template(<span class="str">'apply_job.html'</span>, job=job)
+
+@app.route(<span class="str">'/apply_success'</span>)
+@login_required
+<span class="kw">def</span> <span class="func">apply_success</span>():
+    <span class="kw">return</span> render_template(<span class="str">'apply_success.html'</span>)
+
+@app.route(<span class="str">'/chat/&lt;room_id&gt;'</span>, methods=[<span class="str">'GET'</span>, <span class="str">'POST'</span>])
+@login_required
+<span class="kw">def</span> <span class="func">chat</span>(room_id):
+    db = get_db()
+    <span class="kw">if</span> request.method == <span class="str">'POST'</span>:
+        db.execute(<span class="str">"INSERT INTO messages (room_id, sender, text) VALUES (?,?,?)"</span>,
+                   (room_id, session[<span class="str">'username'</span>], request.form[<span class="str">'message'</span>]))
+        db.commit()
+        <span class="kw">return</span> redirect(url_for(<span class="str">'chat'</span>, room_id=room_id))
+    chats = db.execute(<span class="str">"SELECT * FROM messages WHERE room_id=? ORDER BY timestamp ASC"</span>, (room_id,)).fetchall()
+    <span class="kw">return</span> render_template(<span class="str">'chat.html'</span>, chats=chats, room_id=room_id)
+
+@app.route(<span class="str">'/history'</span>)
+@login_required
+<span class="kw">def</span> <span class="func">history</span>():
+    db = get_db()
+    transactions = db.execute(<span class="str">"SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC"</span>, (session[<span class="str">'username'</span>], session[<span class="str">'username'</span>])).fetchall()
+    <span class="kw">return</span> render_template(<span class="str">'history.html'</span>, transactions=transactions)
+
+<span class="com"># --- INTASEND MPESA ROUTES ---</span>
+
+@app.route(<span class="str">'/mpesa/stkpush'</span>, methods=[<span class="str">'POST'</span>])
+@login_required
+<span class="kw">def</span> <span class="func">mpesa_stkpush</span>():
+    <span class="str">"""Initiates M-Pesa STK Push via IntaSend."""</span>
+    phone = request.form.get(<span class="str">'phone'</span>)
+    amount = request.form.get(<span class="str">'amount'</span>)
+    
+    <span class="com"># Format phone: 07... -> 2547...</span>
+    <span class="kw">if</span> phone.startswith(<span class="str">'0'</span>):
+        phone = <span class="str">'254'</span> + phone[<span class="num">1</span>:]
+
+    <span class="com"># IntaSend Payload</span>
+    payload = {
+        <span class="str">"api_key"</span>: INTASEND_API_KEY,
+        <span class="str">"amount"</span>: <span class="kw">int</span>(amount),
+        <span class="str">"phone_number"</span>: phone,
+        <span class="str">"transaction_reference"</span>: <span class="str">"UTE_JOB_PAYMENT"</span>,
+        <span class="str">"callback_url"</span>: CALLBACK_URL
+    }
+
+    headers = {
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>
+    }
+
+    <span class="kw">try</span>:
+        <span class="com"># Send Request to IntaSend</span>
+        response = requests.post(INTASEND_URL, json=payload, headers=headers)
+        data = response.json()
+
+        <span class="com"># Check IntaSend response</span>
+        <span class="kw">if</span> data.get(<span class="str">'status'</span>) == <span class="str">'Success'</span> <span class="kw">or</span> data.get(<span class="str">'status'</span>) == <span class="str">'Success (Test)'</span>:
+            flash(<span class="str">"M-Pesa Prompt Sent! Check your phone and enter PIN."</span>)
+        <span class="kw">else</span>:
+            <span class="com"># Get specific error message</span>
+            error_msg = data.get(<span class="str">'message'</span>, data.get(<span class="str">'status'</span>, <span class="str">'Unknown Error'</span>))
+            flash(<span class="str">f"Payment Failed: {error_msg}"</span>)
+            
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        flash(<span class="str">f"Connection Error: {str(e)}"</span>)
+        
+    <span class="kw">return</span> redirect(url_for(<span class="str">'dashboard'</span>))
+
+@app.route(<span class="str">'/mpesa/callback'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="func">mpesa_callback</span>():
+    <span class="str">"""Receives notification from IntaSend when payment is complete."""</span>
+    data = request.get_json()
+    
+    <span class="com"># Print to console for debugging</span>
+    <span class="kw">print</span>(<span class="str">"IntaSend Callback Data:"</span>, data)
+
+    <span class="com"># IntaSend sends status in different ways, checking standard keys</span>
+    <span class="kw">if</span> data.get(<span class="str">'status'</span>) == <span class="str">'success'</span> <span class="kw">or</span> data.get(<span class="str">'status'</span>) == <span class="str">'Success'</span>:
+        
+        <span class="com"># Extract details</span>
+        amount = data.get(<span class="str">'amount'</span>)
+        phone = data.get(<span class="str">'phone_number'</span>)
+        receipt = data.get(<span class="str">'transaction_reference'</span>)
+
+        <span class="com"># LOG TO DATABASE</span>
+        db = get_db()
+        db.execute(<span class="str">"INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)"</span>,
+                   (<span class="kw">str</span>(phone), <span class="str">'SYSTEM_TREASURY'</span>, amount, <span class="str">'MPESA_DEPOSIT'</span>))
+        db.commit()
+        
+        <span class="kw">print</span>(<span class="str">f"Transaction Confirmed: KES {amount} from {phone}"</span>)
+        
+    <span class="kw">return</span> jsonify({<span class="str">"ResultCode"</span>: <span class="num">0</span>}), <span class="num">200</span>
+
+<span class="com"># --- ADMIN ROUTES ---</span>
+
+@app.route(<span class="str">'/admin_chamber'</span>)
+@super_admin_required
+<span class="kw">def</span> <span class="func">admin_panel</span>():
+    db = get_db()
+    users_count = db.execute(<span class="str">"SELECT COUNT(*) as count FROM users"</span>).fetchone()[<span class="str">'count'</span>]
+    pending_businesses = db.execute(<span class="str">"SELECT * FROM users WHERE role='employer' AND is_verified_business=0"</span>).fetchall()
+    all_admins = db.execute(<span class="str">"SELECT * FROM users WHERE is_admin=1"</span>).fetchall()
+    <span class="kw">return</span> render_template(<span class="str">'admin_pannel.html'</span>, users_count=users_count, pending_businesses=pending_businesses, all_admins=all_admins)
+
+@app.route(<span class="str">'/admin/verify_business/&lt;int:user_id&gt;'</span>, methods=[<span class="str">'POST'</span>])
+@super_admin_required
+<span class="kw">def</span> <span class="func">verify_business</span>(user_id):
+    db = get_db()
+    db.execute(<span class="str">"UPDATE users SET is_verified_business=1 WHERE id=?"</span>, (user_id,))
+    db.commit()
+    flash(<span class="str">"Business Verified."</span>)
+    <span class="kw">return</span> redirect(url_for(<span class="str">'admin_panel'</span>))
+
+@app.route(<span class="str">'/admin/delete_user/&lt;target_user&gt;'</span>, methods=[<span class="str">'POST'</span>])
+@super_admin_required
+<span class="kw">def</span> <span class="func">delete_user</span>(target_user):
+    db = get_db()
+    <span class="com"># Updated protection to match new Admin 'RW'</span>
+    <span class="kw">if</span> target_user == <span class="str">'RW'</span> <span class="kw">and</span> session[<span class="str">'username'</span>] != <span class="str">'RW'</span>:
+        flash(<span class="str">"CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED."</span>)
+        db.execute(<span class="str">"DELETE FROM users WHERE username=?"</span>, (session[<span class="str">'username'</span>],))
+        db.commit()
+        session.clear()
+        <span class="kw">return</span> redirect(url_for(<span class="str">'portal'</span>))
+
+    db.execute(<span class="str">"DELETE FROM users WHERE username=?"</span>, (target_user,))
+    db.commit()
+    flash(<span class="str">f"User {target_user} removed from system."</span>)
+    <span class="kw">return</span> redirect(url_for(<span class="str">'admin_panel'</span>))
+
+@app.route(<span class="str">'/admin/promote_admin'</span>, methods=[<span class="str">'POST'</span>])
+@super_admin_required
+<span class="kw">def</span> <span class="func">promote_admin</span>():
+    db = get_db()
+    username = request.form[<span class="str">'username'</span>]
+    db.execute(<span class="str">"UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?"</span>, (username,))
+    db.commit()
+    flash(<span class="str">f"User {username} promoted to Admin."</span>)
+    <span class="kw">return</span> redirect(url_for(<span class="str">'admin_panel'</span>))
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    port = <span class="kw">int</span>(os.environ.get(<span class="str">"PORT"</span>, <span class="num">5000</span>))
+    app.run(host=<span class="str">'0.0.0.0'</span>, port=port, debug=<span class="kw">False</span>)
+</pre>
+                        </div>
+                    </div>
+
+                    <!-- REQUIREMENTS.TXT SECTION -->
+                    <div id="section-req" class="code-section">
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span>Python Dependencies</span>
+                                <button class="copy-btn" onclick="copyCode('code-req')">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <pre id="code-req">
+Flask==3.0.3
+gunicorn==22.0.0
+Werkzeug==3.1.8
+python-dotenv==1.0.1
+requests==2.31.0</pre>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast">Code copied to clipboard!</div>
+
+    <script>
+        function switchTab(tabName) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Hide all sections
+            document.querySelectorAll('.code-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+
+            // Activate selected
+            if (tabName === 'app') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('section-app').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('section-req').classList.add('active');
+            }
+        }
+
+        function copyCode(elementId) {
+            const codeText = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                showToast();
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    </script>
+</body>
+</html>
