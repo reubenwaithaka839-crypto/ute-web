@@ -9,108 +9,151 @@
     <style>
         :root {
             --bg-dark: #050a14;
-            --panel-bg: #0f172a;
             --accent-cyan: #06b6d4;
-            --text-glow: 0 0 10px rgba(6, 182, 212, 0.7);
+            --accent-green: #10b981;
+            --grid-color: rgba(6, 182, 212, 0.15);
         }
 
         body {
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 50%, #111827 0%, #000000 100%);
+            /* HIGH TECH GRID BACKGROUND */
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center top;
             color: #fff;
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            margin: 0;
         }
 
-        /* THE GLOWING BUTTON CLASS */
-        .btn-cyber {
+        /* --- THE RW CIRCLE LOGO (PURE CSS) --- */
+        .logo-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .rw-circle {
+            width: 150px;
+            height: 150px;
+            border: 4px solid var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
+            box-shadow: 0 0 30px var(--accent-cyan), inset 0 0 20px var(--accent-cyan);
+            animation: pulse-glow 3s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        .rw-circle::after {
+            content: '';
+            position: absolute;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border: 2px dashed rgba(6, 182, 212, 0.5);
+            border-radius: 50%;
+            animation: spin 10s linear infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 20px var(--accent-cyan); }
+            50% { box-shadow: 0 0 50px var(--accent-cyan), inset 0 0 30px var(--accent-cyan); }
+            100% { box-shadow: 0 0 20px var(--accent-cyan); }
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- BUTTON STYLES --- */
+        .btn-cyber-main {
             background: rgba(6, 182, 212, 0.1);
             color: var(--accent-cyan);
             border: 2px solid var(--accent-cyan);
             text-transform: uppercase;
             letter-spacing: 3px;
             font-weight: 800;
-            padding: 15px 40px;
+            padding: 18px 45px;
             border-radius: 5px;
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
             transition: all 0.4s ease;
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2), inset 0 0 10px rgba(6, 182, 212, 0.1);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+            display: inline-block;
+            min-width: 220px;
         }
 
-        .btn-cyber:hover {
+        .btn-cyber-main:hover {
             background: var(--accent-cyan);
             color: #000;
-            box-shadow: 0 0 40px var(--accent-cyan), inset 0 0 20px var(--accent-cyan);
-            transform: scale(1.05);
+            box-shadow: 0 0 50px var(--accent-cyan);
+            transform: translateY(-5px);
             text-shadow: none;
         }
 
-        .btn-cyber-outline {
+        .btn-cyber-sec {
             background: transparent;
             border: 2px solid #fff;
             color: #fff;
             text-transform: uppercase;
             letter-spacing: 2px;
-            padding: 15px 40px;
+            padding: 18px 45px;
             border-radius: 5px;
             transition: all 0.3s ease;
+            min-width: 220px;
         }
 
-        .btn-cyber-outline:hover {
+        .btn-cyber-sec:hover {
             background: #fff;
             color: #000;
             box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 900;
-            color: #fff;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-            margin-bottom: 1rem;
+            letter-spacing: 10px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
         }
 
-        .hero-subtitle {
-            color: var(--accent-cyan);
-            letter-spacing: 2px;
-            margin-bottom: 3rem;
-            text-shadow: 0 0 10px var(--accent-cyan);
-        }
-
-        .floating-card {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
+        .hero-sub {
+            color: #94a3b8;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container text-center floating-card">
-        <h1 class="hero-title">RW Prestige</h1>
-        <h3 class="hero-subtitle">Ultimate Job & Talent Ecosystem</h3>
+    <div class="container text-center">
+        <!-- THE RW CIRCLE LOGO -->
+        <div class="logo-container">
+            <div class="rw-circle">RW</div>
+        </div>
+
+        <h1 class="hero-title">Prestige</h1>
+        <p class="hero-sub">Ultimate Job & Talent Ecosystem</p>
         
-        <div class="d-flex gap-4 justify-content-center mt-5">
-            <!-- Create Account Button -->
-            <a href="/terms" class="btn btn-cyber">
-                <i class="fas fa-user-plus me-2"></i> Initialize Account
+        <div class="d-flex flex-column flex-md-row gap-4 justify-content-center">
+            <!-- Initialize Account Button -->
+            <a href="/terms" class="btn btn-cyber-main">
+                <i class="fas fa-user-plus me-2"></i> Initialize
             </a>
             
             <!-- Login Button -->
-            <a href="/login" class="btn btn-cyber-outline">
-                <i class="fas fa-sign-in-alt me-2"></i> Access Portal
+            <a href="/login" class="btn btn-cyber-sec">
+                <i class="fas fa-sign-in-alt me-2"></i> Access
             </a>
         </div>
     </div>
