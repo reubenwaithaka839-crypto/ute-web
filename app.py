@@ -1,49 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3
 import os
-import requests
-from datetime import datetime
-from ute import calculate_prestige_split 
+from ute import calculate_prestige_split # Import the math logic
 
 app = Flask(__name__)
+app.secret_key = "RW_SUPERMAX_SECRET_2026"
+DB_PATH = "rw_prestige_final.db"
 
-# --- CONFIGURATION ---
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "RW_SUPERMAX_SECRET_2026")
-
-# DATABASE PATH
-# Logic:
-# 1. Use Render Environment Variable 'DB_PATH' if set (e.g., pointing to Persistent Disk).
-# 2. Otherwise, use relative path 'rw_prestige_final.db' (saves in project folder).
-DB_PATH = os.environ.get("DB_PATH", "rw_prestige_final.db")
-
-# INTASEND API CONFIGURATION
-INTASEND_API_KEY = "ISSecretKey_test_a659ccb8-316c-4a4c-8e83-e4890fbb90ba"
-INTASEND_URL = "https://api.intasend.com/api/v1/payment-request/"
-
-# RENDER CONFIGURATION
-# Gets the public URL provided by Render automatically
-# Fallback to localhost for local testing
-base_url = os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000")
-CALLBACK_URL = f"{base_url}/mpesa/callback"
-
-# --- DATABASE INITIALIZATION ---
 def force_init_db():
-    # Use the global DB_PATH defined above
-    db_file = os.path.abspath(DB_PATH)
-    
-    # We DO NOT use os.makedirs here to avoid Permission Denied errors on Render.
-    # SQLite3 will automatically create the db file if it doesn't exist in the current directory.
-    
-    # Connect and Create Tables
-    conn = sqlite3.connect(db_file)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, contacts TEXT, 
         passcode TEXT, role TEXT, is_admin INTEGER DEFAULT 0, equity_acc TEXT,
         balance REAL DEFAULT 0.0, location TEXT, bio_or_company TEXT, skills TEXT,
         expected_salary REAL, photo_url TEXT,
-        business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0, kra_pin TEXT)""")
+        business_reg_no TEXT, is_verified_business INTEGER DEFAULT 0)""")
         
     cur.execute("""CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY, title TEXT, description TEXT, salary REAL, 
@@ -63,32 +35,22 @@ def force_init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY, sender TEXT, receiver TEXT, amount REAL,
         type TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    
-    # HARDCODED GOD ADMIN
-    cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES (?, ?, ?, 1, 1)",
-               ('REUBEN', 'I LOVE MY MOTHER 20071975OCTDEC', 'admin'))
+
+    # Admin Creation
+    cur.execute("INSERT OR IGNORE INTO users (username, passcode, role, is_admin, is_verified_business) VALUES ('REUBEN', 'GOD_MODE_2026', 'admin', 1, 1)")
     conn.commit()
     conn.close()
 
 force_init_db()
 
-# --- HELPERS ---
 def get_db():
-    conn = sqlite3.connect(os.path.abspath(DB_PATH))
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def login_required(f):
     def wrap(*args, **kwargs):
         if 'username' not in session: return redirect(url_for('portal'))
-        return f(*args, **kwargs)
-    wrap.__name__ = f.__name__
-    return wrap
-
-def super_admin_required(f):
-    def wrap(*args, **kwargs):
-        if 'username' not in session: return redirect(url_for('portal'))
-        if session['username'] != 'REUBEN': return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
@@ -112,14 +74,12 @@ def register():
     if request.method == 'POST':
         try:
             db = get_db()
-            db.execute("""INSERT INTO users (username, email, contacts, passcode, role, business_reg_no, kra_pin, equity_acc) 
-                          VALUES (?,?,?,?,?,?,?,?)""",
+            db.execute("INSERT INTO users (username, email, contacts, passcode, role, business_reg_no) VALUES (?,?,?,?,?,?)",
                        (request.form['username'], request.form['email'], request.form['contacts'], 
-                        request.form['password'], request.form['role'], request.form.get('business_reg_no', ''),
-                        request.form.get('kra_pin', ''), request.form.get('equity_account', '')))
+                        request.form['password'], request.form['role'], request.form.get('business_reg_no', '')))
             db.commit()
             session.pop('terms_accepted', None)
-            flash("Identity Verified. Banking Details Linked.")
+            flash("Identity Verified. System Access Granted.")
             return redirect(url_for('login'))
         except Exception as e:
             flash(f"Registration Error: {str(e)}")
@@ -129,15 +89,19 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
-        if user and user['passcode'] == request.form['password']:
-            session['username'] = user['username']
-            session['role'] = user['role']
-            session['is_admin'] = user['is_admin']
-            return redirect(url_for('dashboard'))
-        flash("Access Denied: Invalid Credentials")
-        return redirect(url_for('login'))
+        try:
+            db = get_db()
+            user = db.execute("SELECT * FROM users WHERE username=?", (request.form['username'],)).fetchone()
+            if user and user['passcode'] == request.form['password']:
+                session['username'] = user['username']
+                session['role'] = user['role']
+                session['is_admin'] = user['is_admin']
+                return redirect(url_for('dashboard'))
+            flash("Access Denied: Invalid Credentials")
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash(f"System Error: {str(e)}")
+            return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/logout')
@@ -178,7 +142,7 @@ def profile():
     return render_template('profile.html', user=user)
 
 @app.route('/post_job', methods=['GET', 'POST'])
-@login_required
+@login_required # Simplified decorator for demo
 def post_job():
     if request.method == 'POST':
         db = get_db()
@@ -236,122 +200,49 @@ def history():
     transactions = db.execute("SELECT * FROM transactions WHERE sender=? OR receiver=? ORDER BY timestamp DESC", (session['username'], session['username'])).fetchall()
     return render_template('history.html', transactions=transactions)
 
-# --- INTASEND MPESA ROUTES ---
-
-@app.route('/mpesa/stkpush', methods=['POST'])
-@login_required
-def mpesa_stkpush():
-    """Initiates M-Pesa STK Push via IntaSend."""
-    phone = request.form.get('phone')
-    amount = request.form.get('amount')
-    
-    # Format phone: 07... -> 2547...
-    if phone.startswith('0'):
-        phone = '254' + phone[1:]
-
-    # IntaSend Payload
-    payload = {
-        "api_key": INTASEND_API_KEY,
-        "amount": int(amount),
-        "phone_number": phone,
-        "transaction_reference": "UTE_JOB_PAYMENT",
-        "callback_url": CALLBACK_URL
-    }
-
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    try:
-        # Send Request to IntaSend
-        response = requests.post(INTASEND_URL, json=payload, headers=headers)
-        data = response.json()
-
-        # Check IntaSend response
-        if data.get('status') == 'Success' or data.get('status') == 'Success (Test)':
-            flash("M-Pesa Prompt Sent! Check your phone and enter PIN.")
-        else:
-            # Get specific error message
-            error_msg = data.get('message', data.get('status', 'Unknown Error'))
-            flash(f"Payment Failed: {error_msg}")
-            
-    except Exception as e:
-        flash(f"Connection Error: {str(e)}")
-        
-    return redirect(url_for('dashboard'))
-
-@app.route('/mpesa/callback', methods=['POST'])
-def mpesa_callback():
-    """Receives notification from IntaSend when payment is complete."""
-    data = request.get_json()
-    
-    # Print to console for debugging
-    print("IntaSend Callback Data:", data)
-
-    # IntaSend sends status in different ways, checking standard keys
-    if data.get('status') == 'success' or data.get('status') == 'Success':
-        
-        # Extract details
-        amount = data.get('amount')
-        phone = data.get('phone_number')
-        receipt = data.get('transaction_reference')
-
-        # LOG TO DATABASE
-        db = get_db()
-        db.execute("INSERT INTO transactions (sender, receiver, amount, type) VALUES (?, ?, ?, ?)",
-                   (str(phone), 'SYSTEM_TREASURY', amount, 'MPESA_DEPOSIT'))
-        db.commit()
-        
-        print(f"Transaction Confirmed: KES {amount} from {phone}")
-        
-    return jsonify({"ResultCode": 0}), 200
-
-# --- ADMIN ROUTES ---
-
 @app.route('/admin_chamber')
-@super_admin_required
+@login_required
 def admin_panel():
+    if session.get('username') != 'REUBEN': return "Unauthorized", 403
     db = get_db()
     users_count = db.execute("SELECT COUNT(*) as count FROM users").fetchone()['count']
     pending_businesses = db.execute("SELECT * FROM users WHERE role='employer' AND is_verified_business=0").fetchall()
-    all_admins = db.execute("SELECT * FROM users WHERE is_admin=1").fetchall()
-    return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses, all_admins=all_admins)
+    return render_template('admin_pannel.html', users_count=users_count, pending_businesses=pending_businesses)
 
-@app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
-@super_admin_required
-def verify_business(user_id):
+# --- NEW: SIMULATION & MATH ROUTES ---
+
+@app.route('/simulate_payment', methods=['POST'])
+@login_required
+def simulate_payment():
+    """Simulates a payment transaction and runs the Prestige Math."""
+    amount = request.form.get('amount')
+    is_first = request.form.get('is_first_month') == 'true'
+    
+    if not amount:
+        flash("Error: No input detected.")
+        return redirect(url_for('dashboard'))
+    
+    try:
+        amount = float(amount)
+    except ValueError:
+        flash("Error: Invalid numerical input.")
+        return redirect(url_for('dashboard'))
+
+    # Run the Math Logic
+    split = calculate_prestige_split(amount, is_first)
+    
+    # Log to Database (Simulated)
     db = get_db()
-    db.execute("UPDATE users SET is_verified_business=1 WHERE id=?", (user_id,))
+    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
+                  VALUES (?, ?, ?, ?)""",
+               (session['username'], 'SYSTEM_TREASURY', split['treasury_total'], 'TREASURY_FEE'))
+    db.execute("""INSERT INTO transactions (sender, receiver, amount, type) 
+                  VALUES (?, ?, ?, ?)""",
+               ('EMPLOYER_WALLET', session['username'], split['employee_net'], 'PAYMENT'))
     db.commit()
-    flash("Business Verified.")
-    return redirect(url_for('admin_panel'))
-
-@app.route('/admin/delete_user/<target_user>', methods=['POST'])
-@super_admin_required
-def delete_user(target_user):
-    db = get_db()
-    if target_user == 'REUBEN' and session['username'] != 'REUBEN':
-        flash("CRITICAL ALERT: ATTEMPT TO DELETE SUPER-ADMIN DETECTED. YOUR ACCOUNT HAS BEEN DISMANTLED.")
-        db.execute("DELETE FROM users WHERE username=?", (session['username'],))
-        db.commit()
-        session.clear()
-        return redirect(url_for('portal'))
-
-    db.execute("DELETE FROM users WHERE username=?", (target_user,))
-    db.commit()
-    flash(f"User {target_user} removed from system.")
-    return redirect(url_for('admin_panel'))
-
-@app.route('/admin/promote_admin', methods=['POST'])
-@super_admin_required
-def promote_admin():
-    db = get_db()
-    username = request.form['username']
-    db.execute("UPDATE users SET is_admin=1, is_verified_business=1 WHERE username=?", (username,))
-    db.commit()
-    flash(f"User {username} promoted to Admin.")
-    return redirect(url_for('admin_panel'))
+    
+    flash(f"Payment Processed: Net {split['employee_net']} | Rebate {split['employer_rebate']} | Treasury {split['treasury_total']}")
+    return redirect(url_for('history'))
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=True)
