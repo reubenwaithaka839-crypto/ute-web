@@ -1,85 +1,286 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RW Prestige - God Admin Chamber</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #050a14;
+            --panel-bg: #0f172a;
+            --text-primary: #e2e8f0;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-glow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
 
-{% block content %}
-<div class="container min-h-screen py-12">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
-        <!-- Left Column: Stats & Verifications -->
-        <div>
-            <div class="card-cyber border-l-4 border-[#00F3FF] mb-12">
-                <h2 class="font-tech text-2xl text-[#00F3FF] mb-4">SYSTEM OVERSIGHT</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-black/50 p-4 rounded text-center">
-                        <div class="text-gray-500 text-xs uppercase font-mono">Total Entities</div>
-                        <div class="text-3xl font-bold text-white mt-2">{{ users_count }}</div>
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--accent-cyan);
+            box-shadow: var(--border-glow);
+        }
+
+        .navbar-brand {
+            color: var(--accent-cyan) !important;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .stat-card {
+            background-color: var(--panel-bg);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent-cyan);
+        }
+
+        .section-header {
+            border-bottom: 2px solid var(--accent-cyan);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .user-list {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .user-item {
+            padding: 15px;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info h5 {
+            margin: 0;
+            color: #fff;
+        }
+
+        .user-info small {
+            color: #94a3b8;
+        }
+
+        .btn-neon {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 5px 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .btn-neon:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .btn-danger-neon {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn-danger-neon:hover {
+            background: var(--accent-red);
+            color: #fff;
+            box-shadow: 0 0 15px var(--accent-red);
+        }
+
+        .alert-log {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .form-control {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+        }
+
+        .form-control:focus {
+            background-color: #1e293b;
+            border-color: var(--accent-cyan);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard"><i class="fas fa-network-wired"></i> RW PRESTIGE SYSTEM</a>
+            <div class="navbar-nav ms-auto">
+                <span class="nav-link">God Admin: <strong style="color:var(--accent-green)">REUBEN</strong></span>
+                <a class="nav-link" href="/dashboard">Exit Chamber</a>
+                <a class="nav-link text-danger" href="/logout">Terminate Session</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="background: rgba(239, 68, 68, 0.2); border-color: var(--accent-red); color: #fff;">
+                        <i class="fas fa-exclamation-triangle"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <div class="bg-black/50 p-4 rounded text-center">
-                        <div class="text-gray-500 text-xs uppercase font-mono">Pending Verifications</div>
-                        <div class="text-3xl font-bold text-yellow-500 mt-2">{{ pending_businesses|length }}</div>
-                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Row -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number">{{ users_count }}</div>
+                    <div>Total Registered Entities</div>
                 </div>
             </div>
-
-            <!-- Pending Businesses -->
-            <div class="card-cyber">
-                <h3 class="text-xl font-bold text-white mb-6 border-b border-gray-700 pb-2">PENDING BUSINESS VERIFICATION</h3>
-                {% if pending_businesses %}
-                    <div class="space-y-4">
-                        {% for biz in pending_businesses %}
-                        <div class="bg-black/30 p-4 rounded border border-gray-700 flex justify-between items-center">
-                            <div>
-                                <div class="text-[#00F3FF] font-bold">{{ biz.username }}</div>
-                                <div class="text-xs text-gray-400">Reg: {{ biz.business_reg_no }}</div>
-                            </div>
-                            <form method="POST" action="{{ url_for('verify_business', user_id=biz.id) }}">
-                                <button type="submit" class="btn-cyber btn-blue px-4 py-2 text-sm">VERIFY</button>
-                            </form>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-gray-500 text-center py-6 font-mono">No pending requests.</div>
-                {% endif %}
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-green)">{{ all_admins|length }}</div>
+                    <div>Active Administrators</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-red)">{{ security_alerts|length }}</div>
+                    <div>Security Incidents</div>
+                </div>
             </div>
         </div>
 
-        <!-- Right Column: Admin Management -->
-        <div class="card-cyber border-t-4 border-red-600 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-2 opacity-10 text-6xl text-red-500 font-black pointer-events-none">GOD</div>
-            <h3 class="font-tech text-2xl text-red-500 mb-6 relative z-10">ADMINISTRATOR ACCESS</h3>
-
-            <!-- Create New Admin Form -->
-            <div class="mb-8 p-4 border border-red-900/50 bg-red-900/10 rounded relative z-10">
-                <p class="text-xs text-red-400 font-mono mb-3">PROMOTE USER TO ADMIN</p>
-                <form method="POST" action="{{ url_for('promote_admin') }}" class="flex gap-2">
-                    <input type="text" name="username" placeholder="Enter Username" required class="input-cyber border-red-900">
-                    <button type="submit" class="btn-cyber btn-red w-32">PROMOTE</button>
-                </form>
+        <!-- Promote New Admin -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="section-header"><i class="fas fa-user-plus"></i> Grant New Clearance</div>
+                <div class="p-3" style="background: var(--panel-bg); border-radius: 8px; border: 1px solid #334155;">
+                    <form action="/admin/grant_admin_access" method="POST" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">Select User</label>
+                            <select name="username" class="form-select form-control">
+                                {% for user in potential_admins %}
+                                    <option value="{{ user.username }}">{{ user.username }} ({{ user.role }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">Set Admin Password</label>
+                            <input type="text" name="new_password" class="form-control" placeholder="Enter secure password" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-neon w-100"><i class="fas fa-check"></i> Authorize Admin</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+        </div>
 
-            <!-- List of Existing Admins -->
-            <div class="relative z-10">
-                <h4 class="text-white font-bold mb-4 font-mono text-sm">ACTIVE ADMINISTRATORS</h4>
-                <div class="space-y-3">
-                    {% for admin in all_admins %}
-                    <div class="flex justify-between items-center bg-black/50 p-3 rounded border border-gray-800">
-                        <span class="text-[#FFD700] font-bold">{{ admin.username }}</span>
-                        
+        <!-- Security Logs -->
+        {% if security_alerts %}
+        <div class="section-header"><i class="fas fa-shield-alt"></i> Security Intrusion Logs</div>
+        <div class="user-list mb-4">
+            {% for log in security_alerts %}
+                <div class="user-item">
+                    <div class="user-info">
+                        <h5 style="color: var(--accent-red)"><i class="fas fa-user-secret"></i> {{ log.username }}</h5>
+                        <small>{{ log.timestamp }} | ATTEMPT: {{ log.action }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-danger">Threat Detected</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Existing Admins -->
+        <div class="section-header"><i class="fas fa-users-cog"></i> Current Administration</div>
+        <div class="user-list mb-4">
+            {% for admin in all_admins %}
+                <div class="user-item">
+                    <div class="user-info">
+                        <h5>{{ admin.username }}</h5>
+                        <small>Role: {{ admin.role }} | Verified: {{ 'Yes' if admin.is_verified_business else 'No' }}</small>
+                    </div>
+                    <div>
                         {% if admin.username != 'REUBEN' %}
-                            <!-- Dismantle Button -->
-                            <form method="POST" action="{{ url_for('delete_user', target_user=admin.username) }}" onsubmit="return confirm('Are you sure you want to DISMANTLE this admin?');">
-                                <button type="submit" class="text-red-500 hover:text-red-300 text-sm font-mono border border-red-500 px-3 py-1 rounded hover:bg-red-900/20 transition">
-                                    DISMANTLE
-                                </button>
-                            </form>
+                        <form action="/admin/dismantle_admin/{{ admin.username }}" method="POST" style="display:inline;">
+                            <button class="btn btn-neon btn-danger-neon"><i class="fas fa-trash"></i> Revoke Access</button>
+                        </form>
                         {% else %}
-                            <span class="text-gray-600 text-xs font-mono border border-gray-800 px-3 py-1 rounded">SUPER ADMIN</span>
+                        <span class="badge bg-success">GOD ADMIN</span>
                         {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
-            </div>
+            {% endfor %}
         </div>
+
+        <!-- Pending Business Verifications -->
+        <div class="section-header"><i class="fas fa-building"></i> Pending Business Verification</div>
+        <div class="user-list">
+            {% if pending_businesses %}
+                {% for biz in pending_businesses %}
+                <div class="user-item">
+                    <div class="user-info">
+                        <h5>{{ biz.username }}</h5>
+                        <small>{{ biz.email }} | Reg: {{ biz.business_reg_no }}</small>
+                    </div>
+                    <form action="/admin/verify_business/{{ biz.id }}" method="POST">
+                        <button class="btn btn-neon"><i class="fas fa-check-circle"></i> Verify Entity</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="p-3 text-center text-muted">No pending business verifications.</div>
+            {% endif %}
+        </div>
+
     </div>
-</div>
-{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
