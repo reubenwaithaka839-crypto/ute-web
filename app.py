@@ -312,7 +312,7 @@ def admin_panel():
 @app.route('/admin/verify_business/<int:user_id>', methods=['POST'])
 @super_admin_required
 def verify_business(user_id):
-    db = get_db()
+    db = get_db()I LOVE YOU MUM EDIT THIS LINE FOR IT TO BE LIVE AND INTERNAL SERVEERB ERROR
     db.execute("UPDATE users SET is_verified_business=1 WHERE id=?", (user_id,))
     db.commit()
     flash("Business Verified.")
